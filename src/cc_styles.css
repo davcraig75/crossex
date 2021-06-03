@@ -1,0 +1,422 @@
+/* Main –––––––––––––––––––––––––––––––––––––––––––––––––– */
+.cc {
+	margin: 0 auto;
+	position: relative;
+	vertical-align: top;
+	padding: 0px 0px 0px 0px;
+	width:100%;
+	height:100%;
+	font-size: 12px;
+	line-height:12px;
+	display: block;	
+	color: #1c1f2a;
+}
+.cc_graph {
+	background: transparent;
+	margin: 0 auto;
+	margin-block-start: 0px;
+	margin-block-end: 0px;
+	margin-inline-start: 0px;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    margin-inline-end: 0px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+	
+	width:100%;
+	height:100%;
+	display: flex;	
+}
+.cc_graph_container {
+	width: 100%;
+    height: 100%;
+	background: white;
+	padding:8px;
+    border-bottom-right-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom: 0.5px solid #999;
+	border-top: 0.5px solid #CCC;
+    border-right: 0.5px solid #CCC;
+}
+
+p.itg-emph {
+    font-size: 10px;
+    line-height: 11px;
+	width:90px;
+    font-family: Verdana, Arial, sans-serif;
+    font-weight: bold;
+    color: #1c1f2a;
+    background-color: #cccccc;
+    letter-spacing: 0;
+    text-align: center;
+    margin-block-start: 0em;
+    margin-block-end: 0em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+}
+.cc_container {
+	position: relative;
+	display: contents !important;
+	vertical-align: top;
+	box-sizing: border-box;
+	display:contents;
+	width: 100%;
+}
+.cc_container:after {
+	content: '';
+	display: contents;
+	clear: both;
+}
+.marks {
+	width:100%;
+	height:auto;
+}
+.cc_tab {
+    background-color: #cccccc;
+    border-left: 0.5px solid #CCC;
+    border-bottom: 0.5px solid #CCC;
+    width: 18px;
+    height: inherit;
+	opacity:0.5;
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+    margin: 0;
+    z-index: 1;
+}
+.cc_tabscontent {
+    width: min-content;
+    background: #eeeeee;
+    /* border-bottom-left-radius: 6px; */
+    border-top: 0.5px solid #CCC;
+    border-left: #999 0.5px solid;
+	border-right: 0.5px solid #CCC;
+    border-bottom-left-radius: 4px;
+	border-bottom: 0.5px solid #ccc;
+    z-index: 2;
+}
+button.cc_tablinks>img {
+	width: 14px;
+	padding-right: 4px;
+	opacity:0.75;
+}	
+button.cc_tablinks:hover>img {
+	width: 20px;
+	opacity:1;
+}
+
+
+
+.cc_tab button {
+    display: block;
+    background-color: transparent;
+    border-bottom-left-radius: 4px;
+    border-top-left-radius: 4px;
+    border: none;
+    height: 30px;
+    outline: none;
+    cursor: pointer;
+    width: 20px;
+    transition: 0.05s;
+    padding: 0px;
+	margin: 0px 1px 1px 1px;
+}
+button.active.cc_tablinks>img {
+    margin-left: 4px;
+	width: 16px;
+	opacity:1;
+}
+.cc_tab button:hover {
+    background-color: #eee;
+    box-shadow: -1px 1px 4px 0px #843939;
+}
+.cc_tab button.active {
+    background-color: #eee;
+    width: 100%;
+    padding: 0px;
+    border-left: 0.5px solid #999;
+    box-shadow: -0.5px 1px 1px 0px #999;
+    z-index: 2;
+}
+
+.cc_tabcontent {
+    float: left;
+    padding: 2px;
+    background-color: #eee;
+    margin: 0px 0px 0px 0px;
+    z-index: 5;
+    /* border-right: #DDD solid 1px; */
+    width: min-content !important;
+    width: 88px;
+    /* border-left: 1px solid #aaa; */
+}
+.cc_panel {
+	padding-right: 0px;
+	width: min-content;
+    margin-left: -30px;
+    padding-right: 0px;
+    z-index:3;
+    margin: 0px;
+    margin-inline-end: 0px;
+    margin-inline-start: 0px;
+    height: inherit;
+    display: inline-block;
+    vertical-align: top;
+}
+.cc_panel-top {
+	opacity: 0.5;
+}
+.cc_panel-top:hover {
+	opacity: 1;
+}
+
+/* crossex –––––––––––––––––––––––––––––––––––––––––––––––––– */
+.vega-embed {
+	background: transparent;
+}
+div.vega-bind {
+	margin: 1px;
+	padding: 1px 2px;
+	width: 100%;
+	display: block;
+	text-align: left;
+	font-size: 0.8em;
+}
+div.vega-bind select {
+    font-size: 0.8em;
+}
+.vega-bind-radio input {
+	font-size: 0.8em;
+}
+#vg-tooltip-element {
+	visibility: hidden;
+	padding: 0.7em;
+	line-height: 0.9em;
+	position: fixed;
+	z-index: 1000;
+	font-family: sans-serif;
+	font-size: 0.8em;
+	border-radius: 3px;
+	box-shadow: 2px 2px 0.5em rgba(0, 0, 0, 0.1);
+	background-color: rgba(255, 255, 255, 0.95);
+	border: 1px solid #dcdcdc;
+	color: black;
+}
+
+div.vega-bind > label > input[type="text"] {
+    width: 60px;
+    font-size: 0.8em;
+}
+#vg-tooltip-element {
+	visibility: hidden;
+	padding: 8px;
+	position: fixed;
+	z-index: 1000;
+	font-family: sans-serif;
+	font-size: 9px;
+	border-radius: 3px;
+	box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+	background-color: rgba(255, 255, 255, 0.95);
+	border: 1px solid #dcdcdc;
+	color: black;
+}
+#vg-tooltip-element table tr td {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	padding-top: 0.5px;
+	padding-bottom: 0.5px;
+}
+
+.vega-embed summary svg {
+    width: 10px;
+    height: 10px;
+}
+.vega-embed.has-actions {
+	padding: 0px;
+}
+.vega-embed summary {
+	list-style: none;
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 2px;
+    z-index: 1000;
+    background: white;
+    box-shadow: 1px 1px 3px rgb(0 0 0 / 10%);
+    color: #1b1e23;
+    border: 1px solid #aaa;
+    border-radius: 999px;
+    opacity: 0.2;
+    /* transition: opacity 0.4s ease-in; */
+    /* outline: none; */
+    cursor: pointer;
+    line-height: 0px;
+}
+.vega-embed .vega-actions {
+    position: absolute;
+    z-index: 1001;
+    top: 20px;
+    right: 3px;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 3px;
+    padding-top: 3px;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 20%);
+    border: 1px solid #d9d9d9;
+    background: white;
+    animation-duration: 0.15s;
+    animation-name: scale-in;
+    animation-timing-function: cubic-bezier(0.2, 0, 0.13, 1.5);
+    text-align: left;
+}
+.vega-embed .vega-actions a {
+    padding: 2px 4px;
+    font-family: sans-serif;
+    font-size: 12px;
+    font-weight: normal;
+    white-space: nowrap;
+    color: #434a56;
+    text-decoration: none;
+}
+div.vega-bind > label > input[type="range"] {
+	height: 0px;
+	-webkit-appearance: none;
+	margin: 0px 0;
+	width: 72px;
+}
+div.vega-bind > label > div.vega-bind > label > input[type=range]:focus {
+	outline: none;
+}
+input[type=range]::-webkit-slider-runnable-track {
+	width: 60px;
+	height: 4px;
+	cursor: pointer;
+	box-shadow: 1px 1px 1px #50555C;
+	background: #50585C;
+	border-radius: 6px;
+	border: 0px solid #000000;
+}
+input[type=range]::-webkit-slider-thumb {
+	box-shadow: 0px 0px 0px #000000;
+	border: 0px solid #000000;
+	height: 10px;
+	width: 6px;
+	border-radius: 5px;
+	background: #529DE1;
+	cursor: pointer;
+	-webkit-appearance: none;
+	margin-top: -3px;
+}
+div.vega-bind > label > input[type=range]:focus::-webkit-slider-runnable-track {
+	background: #50585C;
+}
+div.vega-bind > label > input[type=range]::-moz-range-track {
+	width: 60px;
+	height: 4px;
+	cursor: pointer;
+	background: #50585C;
+	border-radius: 6px;
+	border: 0px solid #000000;
+}
+div.vega-bind > label > input[type=range]::-moz-range-thumb {
+	box-shadow: 0px 0px 0px #000000;
+	border: 0px solid #000000;
+	height: 10px;
+	width: 6px;
+	border-radius: 5px;
+	background: #529DE1;
+	cursor: pointer;
+}
+div.vega-bind > label > input[type=range]::-ms-track {
+	width: 60px;
+	height: 4px;
+	cursor: pointer;
+	background: transparent;
+	border-color: transparent;
+	color: transparent;
+}
+div.vega-bind>label>span {
+	font-size: 8px;
+	vertical-align: top;
+	position: relative;
+	margin: 0px 0px 0px 0px;
+	color: #666;
+}
+div.vega-bind > label > input[type=range]::-ms-fill-lower {
+	background: #50585C;
+	border: 0px solid #000000;
+	border-radius: 12px;
+	box-shadow: 1px 1px 1px #50555C;
+}
+div.vega-bind > label > input[type=range]::-ms-fill-upper {
+	background: #50585C;
+	border: 0px solid #000000;
+	border-radius: 12px;
+	box-shadow: 1px 1px 1px #50555C;
+}
+div.vega-bind > label > input[type=range]::-ms-thumb {
+	margin-top: 1px;
+	box-shadow: 0px 0px 0px #000000;
+	border: 0px solid #000000;
+	height: 10px;
+	width: 6px;
+	border-radius: 5px;
+	background: #529DE1;
+	cursor: pointer;
+}
+div.vega-bind > label > input[type=range]:focus::-ms-fill-lower {
+	background: #50585C;
+}
+div.vega-bind > label > input[type=range]:focus::-ms-fill-upper {
+	background: #50585C;
+}
+
+div.vega-bind > label > input[type="color"] {
+	height: auto;
+	border-width: 0px;
+}
+.vega-bindings {
+	display: inline-block;
+}
+.vega-bind-name {
+	text-align: left;
+	display: block;
+	color: #333;
+	padding: 0px;
+	display: inline;
+}
+div.vega-bind select {
+	-webkit-appearance: menulist;
+	-moz-appearance: menulist;
+	align-items: center;
+	-webkit-rtl-ordering: logical;
+	text-align: center;
+	background-color: transparent;
+	color: #333;
+	margin: 0px;
+	font-size: 1em;
+	width: 60px;
+	display: block;
+	position: relative;
+	transparent-space: nowrap;
+	text-overflow: ellipsis;
+	border-width: 1px;
+	width: 85px;
+	border-style: solid;
+	border-color: rgb(194, 194, 194);
+	overflow: hidden;
+}
+.vega-bind-radio input {
+	font-size: 0.8em;
+}
+div.vega-bind > label > input[type="checkbox"] {
+	background-color: initial;
+	height: 10px;
+	cursor: default;
+	appearance: checkbox;
+	float: right;
+	box-sizing: border-box;
+	margin: 1px;
+	padding: initial;
+	border: initial;
+}

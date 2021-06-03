@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Authorship Viewport
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->  
+    <title>crossex</title>
+    <meta content="Institute of Translational Genomics, USC 2020 David W. Craig" name="author">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+
+    
+
+</head>
+<body>
+    <div class="container-fluid">
+        <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
+          <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
+            <img src="crossex.120.png" alt="mdo" width="32" height="32" >
+            <span class="fs-4">crossex</span>
+          </a>
+        </header>
+    </div>
+    <div class="container-fluid">
+      
+        <div class="input-group">
+            <span class="input-group-text">Paste CSV/TSV</span>
+            <textarea id="inputData" class="form-control" aria-label="With textarea" style="font-size: xx-small;"> </textarea>
+            <button id="submit_data" class="btn btn-primary" type="submit">Graph</button>
+            <button id="submit_demo" class="btn btn-primary" type="submit">Demo</button>
+
+        </div> 
+    </div> 
+    
+    <div class="row" style="padding:5px;margin:5px;">
+        <div class="container-fluid" id="smartplot_id"></div>
+    </div>
+
+
+
+    
+   
+   
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vega/5.20.2/vega.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vega-embed/6.17.0/vega-embed.min.js"></script>
+    <script type="text/javascript" src="crossex.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js" integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf" crossorigin="anonymous"></script>
+    <script>
+        document.getElementById("submit_demo").onclick = function fun() {
+            document.getElementById("inputData").innerHTML = 
+`sepal_length,sepal_width,petal_length,petal_width,species
+5.1,3.5,1.4,0.2,setosa
+4.9,3,1.4,0.2,setosa
+4.7,3.2,1.3,0.2,setosa
+4.6,3.1,1.5,0.2,setosa
+5,3.6,1.4,0.2,setosa
+5.4,3.9,1.7,0.4,setosa
+4.6,3.4,1.4,0.3,setosa
+5,3.4,1.5,0.2,setosa
+4.4,2.9,1.4,0.2,setosa
+4.9,3.1,1.5,0.1,setosa
+5.4,3.7,1.5,0.2,setosa
+4.8,3.4,1.6,0.2,setosa
+4.8,3,1.4,0.1,setosa
+4.3,3,1.1,0.1,setosa
+5.8,4,1.2,0.2,setosa
+5.7,4.4,1.5,0.4,setosa
+5.4,3.9,1.3,0.4,setosa
+5.1,3.5,1.4,0.3,setosa
+5.7,3.8,1.7,0.3,setosa
+5.1,3.8,1.5,0.3,setosa
+5.4,3.4,1.7,0.2,setosa
+5.1,3.7,1.5,0.4,setosa
+4.6,3.6,1,0.2,setosa
+5.1,3.3,1.7,0.5,setosa
+4.8,3.4,1.9,0.2,setosa
+5,3,1.6,0.2,setosa
+5,3.4,1.6,0.4,setosa
+5.2,3.5,1.5,0.2,setosa
+5.2,3.4,1.4,0.2,setosa
+4.7,3.2,1.6,0.2,setosa
+4.8,3.1,1.6,0.2,setosa
+5.4,3.4,1.5,0.4,setosa
+5.2,4.1,1.5,0.1,setosa
+5.5,4.2,1.4,0.2,setosa
+4.9,3.1,1.5,0.1,setosa
+5,3.2,1.2,0.2,setosa
+5.5,3.5,1.3,0.2,setosa
+4.9,3.1,1.5,0.1,setosa
+4.4,3,1.3,0.2,setosa
+5.1,3.4,1.5,0.2,setosa
+5,3.5,1.3,0.3,setosa
+4.5,2.3,1.3,0.3,setosa
+4.4,3.2,1.3,0.2,setosa
+5,3.5,1.6,0.6,setosa
+5.1,3.8,1.9,0.4,setosa
+4.8,3,1.4,0.3,setosa
+5.1,3.8,1.6,0.2,setosa
+4.6,3.2,1.4,0.2,setosa
+5.3,3.7,1.5,0.2,setosa
+5,3.3,1.4,0.2,setosa
+7,3.2,4.7,1.4,versicolor
+6.4,3.2,4.5,1.5,versicolor
+6.9,3.1,4.9,1.5,versicolor
+5.5,2.3,4,1.3,versicolor
+6.5,2.8,4.6,1.5,versicolor
+5.7,2.8,4.5,1.3,versicolor
+6.3,3.3,4.7,1.6,versicolor
+4.9,2.4,3.3,1,versicolor
+6.6,2.9,4.6,1.3,versicolor
+5.2,2.7,3.9,1.4,versicolor
+5,2,3.5,1,versicolor
+5.9,3,4.2,1.5,versicolor
+6,2.2,4,1,versicolor
+6.1,2.9,4.7,1.4,versicolor
+5.6,2.9,3.6,1.3,versicolor
+6.7,3.1,4.4,1.4,versicolor
+5.6,3,4.5,1.5,versicolor
+5.8,2.7,4.1,1,versicolor
+6.2,2.2,4.5,1.5,versicolor
+5.6,2.5,3.9,1.1,versicolor
+5.9,3.2,4.8,1.8,versicolor
+6.1,2.8,4,1.3,versicolor
+6.3,2.5,4.9,1.5,versicolor
+6.1,2.8,4.7,1.2,versicolor
+6.4,2.9,4.3,1.3,versicolor
+6.6,3,4.4,1.4,versicolor
+6.8,2.8,4.8,1.4,versicolor
+6.7,3,5,1.7,versicolor
+6,2.9,4.5,1.5,versicolor
+5.7,2.6,3.5,1,versicolor
+5.5,2.4,3.8,1.1,versicolor
+5.5,2.4,3.7,1,versicolor
+5.8,2.7,3.9,1.2,versicolor
+6,2.7,5.1,1.6,versicolor
+5.4,3,4.5,1.5,versicolor
+6,3.4,4.5,1.6,versicolor
+6.7,3.1,4.7,1.5,versicolor
+6.3,2.3,4.4,1.3,versicolor
+5.6,3,4.1,1.3,versicolor
+5.5,2.5,4,1.3,versicolor
+5.5,2.6,4.4,1.2,versicolor
+6.1,3,4.6,1.4,versicolor
+5.8,2.6,4,1.2,versicolor
+5,2.3,3.3,1,versicolor
+5.6,2.7,4.2,1.3,versicolor
+5.7,3,4.2,1.2,versicolor
+5.7,2.9,4.2,1.3,versicolor
+6.2,2.9,4.3,1.3,versicolor
+5.1,2.5,3,1.1,versicolor
+5.7,2.8,4.1,1.3,versicolor
+6.3,3.3,6,2.5,virginica
+5.8,2.7,5.1,1.9,virginica
+7.1,3,5.9,2.1,virginica
+6.3,2.9,5.6,1.8,virginica
+6.5,3,5.8,2.2,virginica
+7.6,3,6.6,2.1,virginica
+4.9,2.5,4.5,1.7,virginica
+7.3,2.9,6.3,1.8,virginica
+6.7,2.5,5.8,1.8,virginica
+7.2,3.6,6.1,2.5,virginica
+6.5,3.2,5.1,2,virginica
+6.4,2.7,5.3,1.9,virginica
+6.8,3,5.5,2.1,virginica
+5.7,2.5,5,2,virginica
+5.8,2.8,5.1,2.4,virginica
+6.4,3.2,5.3,2.3,virginica
+6.5,3,5.5,1.8,virginica
+7.7,3.8,6.7,2.2,virginica
+7.7,2.6,6.9,2.3,virginica
+6,2.2,5,1.5,virginica
+6.9,3.2,5.7,2.3,virginica
+5.6,2.8,4.9,2,virginica
+7.7,2.8,6.7,2,virginica
+6.3,2.7,4.9,1.8,virginica
+6.7,3.3,5.7,2.1,virginica
+7.2,3.2,6,1.8,virginica
+6.2,2.8,4.8,1.8,virginica
+6.1,3,4.9,1.8,virginica
+6.4,2.8,5.6,2.1,virginica
+7.2,3,5.8,1.6,virginica
+7.4,2.8,6.1,1.9,virginica
+7.9,3.8,6.4,2,virginica
+6.4,2.8,5.6,2.2,virginica
+6.3,2.8,5.1,1.5,virginica
+6.1,2.6,5.6,1.4,virginica
+7.7,3,6.1,2.3,virginica
+6.3,3.4,5.6,2.4,virginica
+6.4,3.1,5.5,1.8,virginica
+6,3,4.8,1.8,virginica
+6.9,3.1,5.4,2.1,virginica
+6.7,3.1,5.6,2.4,virginica
+6.9,3.1,5.1,2.3,virginica
+5.8,2.7,5.1,1.9,virginica
+6.8,3.2,5.9,2.3,virginica
+6.7,3.3,5.7,2.5,virginica
+6.7,3,5.2,2.3,virginica
+6.3,2.5,5,1.9,virginica
+6.5,3,5.2,2,virginica
+6.2,3.4,5.4,2.3,virginica
+5.9,3,5.1,1.8,virginica`;
+            document.getElementById("submit_data").click();
+        };        
+        document.getElementById("submit_data").onclick = function clicks() {
+            string = document.getElementById("inputData").value;
+            var n = string.search(/\t/);
+            var struct;
+            if (n > 0) {
+                struct = d3.tsvParse(string, d3.autoType);
+            } else {
+                struct = d3.csvParse(string, d3.autoType);
+            }
+            var headers = struct.columns;
+            headers.push("None");
+            crossex("smartplot_id", struct, [
+            {
+                "name": "X_Axis",
+                "value": "None",
+                "bind": {
+                    "options": headers
+                }
+            }, {
+                "name": "Y_Axis",
+                "value": "None",
+                "bind": {
+                    "options": headers
+                }
+            }, {
+                "name": "Facet_Rows_By",
+                "value": "None",
+                "bind": {
+                    "options": headers
+                }
+            }, {
+                "name": "Facet_Cols_By",
+                "value": "None",
+                "bind": {
+                    "options": headers
+                }
+            }, {
+                "name": "Color_By",
+                "value":  "None",
+                "bind": {
+                    "options": headers
+                }
+            }, {
+                "name": "Size_By",
+                "value":  "None",
+                "bind": {
+                    "options": headers
+                }
+            }, {
+                "name": "Opacity_By",
+                "value": 'None',
+                "bind": {
+                    "options": headers
+                }
+            }, {
+                "name": "Filter_By_Value",
+                "value": "None",
+                "bind": {
+                    "options": headers
+                }
+            }, {
+                "name": "Filter_Additional",
+                "value": "None",
+                "bind": {
+                    "options": headers
+                }
+            }, {
+                "name": "Filter_Out_From",
+                "value": "None",
+                "bind": {
+                    "options": headers
+                }
+            }]);
+        };
+    </script>
+
+</body>
+</html>

@@ -1,20 +1,22 @@
-# Crossex
-Data Visualization of Dataframes and Tables
-**Version: 1.10210426**
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Authorship Viewport
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->  
+    <title>CrossCorrelate</title>
+    <meta content="Institute of Translational Genomics, USC 2020 David W. Craig" name="author">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+<div id="my_explorer_graph"></div>
+    
+   
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vega/5.20.2/vega.min.js"></script>
 
-## Installation
-
-This page provides for building and installation of crosscorrelate.  There are typically **2** to **3** lines of HTML required.
-
-* Add `<div>` element with the `id` that will hold the graph. Style parameters may be added here.
-* Source the `crosscorrelate.js` script either in header or in the `<body>`. 
-* Call the `crosscorrelate` function, adding in optional parameters.
-
-### Unit Test 1
-
-Paste `HTML` into an existing page.
-
-``` 
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vega-embed/6.17.0/vega-embed.min.js"></script>
+<script type="text/javascript" src="crosscorrelate.js"></script>
 <!-- element where graph is pasted-->
 <div id="crosscorrelate_el" style="max-width:1000px"></div>
 
@@ -38,9 +40,5 @@ var myjson=fetch('https://raw.githubusercontent.com/davcraig75/crosscorrelate/ma
 		{"name": "Filter_Additional","value": "None","bind": {"options": choices}
 	]);	
 </script>
-```
-
-
-## Browser Support
-
-Browser supported include all Browsers supporting ES6, or typically 2016 version or later for Chrome, Firefox, Opera, Safari, Edge.
+</body>
+</html>

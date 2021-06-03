@@ -1,0 +1,30 @@
+{
+  "name": "crossex",
+  "version": "1.10210601",
+  "description": "Data Exploration Tool",
+  "main": "app.js",
+  "scripts": {
+    "test": "nodemon ./app.js",
+    "build": "nodemon build ./app.js",
+    "start": "node ./app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/crossex/davcraig75"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "compression": "^1.7.4",
+    "cookie-parser": "^1.4.4",
+    "debug": "^4.1.1",
+    "dotenv": "^8.0.0",
+    "ejs": "^2.6.2",
+    "ejs-locals": "^1.0.2",
+    "express": "^4.17.1",
+    "flash": "^1.1.0",
+    "fs": "^0.0.1-security",
+    "http": "^0.0.0",
+    "http-errors": "~1.6.2",
+    "path": "^0.12.7"
+  }
+}
