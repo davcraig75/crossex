@@ -140,13 +140,13 @@ document.getElementById("graph_button").onclick = function clicks() {
 	crossex("smartplot_id", struct, [
 	{
 		"name": "X_Axis",
-		"value": init_val,
+		"value": axis[0],
 		"bind": {
 			"options": headers
 		}
 	}, {
 		"name": "Y_Axis",
-		"value": "None",
+		"value": axis[1],
 		"bind": {
 			"options": headers
 		}
@@ -164,7 +164,7 @@ document.getElementById("graph_button").onclick = function clicks() {
 		}
 	}, {
 		"name": "Color_By",
-		"value":  "None",
+		"value":  axis[4],
 		"bind": {
 			"options": headers
 		}
