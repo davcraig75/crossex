@@ -247,13 +247,10 @@
       },
       {
         "name": "Max_Color",
-        "value": -20,
+        "value": 20,
         "bind": {
           "element": "#Max_Color-ccnm",
-          "input": "range",
-          "min": 0,
-          "max": 10,
-          "step": 1
+          "input": "text"
         }
       },
       {
@@ -269,13 +266,10 @@
       },      
       {
         "name": "Min_Color",
-        "value": 20,
+        "value": -20,
         "bind": {
           "element": "#Min_Color-ccnm",
-          "input": "range",
-          "min": 0,
-          "max": 10,
-          "step": 1
+          "input": "text"
         }
       },
       {
@@ -1298,8 +1292,9 @@
                 "reverse": {"signal": "!Reverse_Y"},
                 "domain": {"signal": "ydom"},
                 "range": [
-                  {"signal": "Plot_Height"},
-                  {"signal": "hist_graph_height"}
+                  
+                  {"signal": "hist_graph_height"},
+                  {"signal": "Plot_Height"}
                 ]
               },
               {
@@ -1310,8 +1305,8 @@
                 "reverse": {"signal": "!Reverse_Y"},
                 "domain": {"signal": "[pow(10,ydom[0],10),pow(10,ydom[1])]"},
                 "range": [
-                  {"signal": "Plot_Height"},
-                  {"signal": "hist_graph_height"}
+                  {"signal": "hist_graph_height"},
+                  {"signal": "Plot_Height"}
                 ]
               },
               {
@@ -2946,7 +2941,7 @@
                               {"test": "Violin_", "signal": "Opacity_"},
                               {"value": 0}
                             ],
-                            "tooltip": {"signal": "datum"},
+                            "tooltip": {"signal": "parent"},
                             "orient": {"value": "horizontal"}
                           }
                         }
@@ -2975,7 +2970,7 @@
                             ],
                             "cornerRadius": {"value": 3},
                             "tooltip": {
-                              "signal": "{'Group':datum['Col_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'Stdev': format(datum['stdev'],'0.2f'),'Mean': format(datum['mean'],'.2f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
+                              "signal": "{'Group':datum['Col_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'σ': format(datum['stdev'],'0.2f'),'μ': format(datum['mean'],'.2f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
                             },
                             "y": {
                               "scale": "y_cont_scale",
@@ -3005,7 +3000,7 @@
                               {"test": "!Boxplot_", "value": "transparent"}
                             ],
                             "tooltip": {
-                              "signal": "{'Group':datum['X_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'Stdev': format(datum['stdev'],'0.2f'),'Mean': format(datum['mean'],'.2f'),'Count:':datum.Count}"
+                              "signal": "{'Group':datum['X_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'σ': format(datum['stdev'],'0.2f'),'μ': format(datum['mean'],'.2f'),'Count:':datum.Count}"
                             },
                             "cornerRadius": {"value": 3},
                             "opacity": [
@@ -3036,7 +3031,7 @@
                               {"test": "!Barplot_", "value": "transparent"}
                             ],
                             "tooltip": {
-                              "signal": "{'Group':datum['X_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'Stdev': format(datum['stdev'],'0.2f'),'Mean': format(datum['mean'],'.2f'),'Count:':datum.Count}"
+                              "signal": "{'Group':datum['X_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'Stdev': format(datum['stdev'],'0.2f'),'μ': format(datum['mean'],'.2f'),'Count:':datum.Count}"
                             },
                             "cornerRadius": {"value": 3},
                             "opacity": [
@@ -3119,25 +3114,29 @@
                         "type": "group",
                         "name": "jitter_dashes",
                         "interactive": true,
-                        "data": [
-                          {
-                            "name": "category_data_filtered",
-                            "source": "category_data",
-                            "transform": [{"type": "filter", "expr": "Jitter_"}]
+                        "encode": {
+                          "update": {
+                            "xc": {
+                              "scale": "bin_band_scale",
+                              "field": "X_Value",
+                              "band": 0.5
+                            },
+                            "width": {"signal": "viol_width"},
+                            "height": {"signal": "Plot_Height"}
                           }
-                        ],
+                        },                        
                         "from": {"data": "run_jitter"},
                         "marks": [
                           {
                             "type": "symbol",
                             "name": "mysymbols",
                             "interactive": true,
-                            "from": {"data": "category_data_filtered"},
+                            "from": {"data": "category_data"},
                             "transform": [
                               {
                                 "type": "force",
                                 "iterations": 70,
-                                "restart": false,
+                                "restart": true,
                                 "static": {"signal": "true"},
                                 "forces": [
                                   {
@@ -3181,13 +3180,12 @@
                                   "scale": "size_scale"
                                 },
                                 "stroke": {"value": "transparent"},
-                                "width": {"signal": "viol_width*0.3"},
                                 "shape": {"signal": "Shape"},
                                 "tooltip": {
                                   "signal": "{'Group':format(datum['X_Value'],'0.2f'),'Value':format(datum['Y_Value'],'0.2f')}"
                                 },
                                 "opacity": [
-                                  {"test": "Dashes_", "signal": "Opacity_"},
+                                  {"test": "Jitter_", "signal": "Opacity_"},
                                   {"value": 0}
                                 ]
                               }
@@ -3208,7 +3206,7 @@
                             ],
                             "fill": {"value": "aliceblue"},
                             "tooltip": {
-                              "signal": "{'Group':datum['X_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'Stdev': format(datum['stdev'],'0.2f'),'Mean': format(datum['mean'],'.2f'),'Count:':datum.Count}"
+                              "signal": "{'Group':datum['X_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'Stdev': format(datum['stdev'],'0.2f'),'μ': format(datum['mean'],'.2f'),'Count:':datum.Count}"
                             },
                             "xc": {"signal": "viol_width / 2"},
                             "width": {"signal": "viol_width / 2"},
@@ -3225,14 +3223,14 @@
                         "encode": {
                           "update": {
                             "text": {
-                              "signal": "if(Stats_,' n='+datum.Count+'  u='+format(datum['mean'],'.2f')+'  s='+format(datum['varp'],'.3f'),'')"
+                              "signal": "if(Stats_,' n='+datum.count+'  μ='+format(datum['mean'],'.2f')+'  σ='+format(datum['varp'],'.3f'),'')"
                             },
                             "fontSize": {"value": 10},
                             "angle": {"value": -90},
                             "xc": {"signal": "viol_width/4"},
                             "y": {"signal": "Plot_Height"},
                             "tooltip": {
-                              "signal": "{'Group':datum['X_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'Stdev': format(datum['varp'],'0.2f'),'Mean': format(datum['mean'],'.2f'),'Count:':datum.Count}"
+                              "signal": "{'Group':datum['X_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'σ': format(datum['varp'],'0.2f'),'μ': format(datum['mean'],'.2f'),'Count:':datum.Count}"
                             },
                             "opacity": {"value": 0.5}
                           }
@@ -3782,7 +3780,7 @@
                             ],
                             "cornerRadius": {"value": 3},
                             "tooltip": {
-                              "signal": "{'Group':datum['Col_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'Stdev': format(datum['stdev'],'0.2f'),'Mean': format(datum['mean'],'.2f'),'Count:':datum['count'],'varp':format(datum['varp'],'.2f')}"
+                              "signal": "{'Group':datum['Col_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'σ': format(datum['stdev'],'0.2f'),'Mean': format(datum['mean'],'.2f'),'Count:':datum['count'],'varp':format(datum['varp'],'.2f')}"
                             },
                             "x": {
                               "scale": "x_cont_scale",
@@ -3819,7 +3817,7 @@
                             ],
                             "cornerRadius": {"value": 3},
                             "tooltip": {
-                              "signal": "{'Group':parent['X_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'Stdev': format(datum['stdev'],'0.2f'),'Mean': format(datum['mean'],'.2f'),'Count:':datum['Count'],'varp':format(datum['varp'],'.2f')}"
+                              "signal": "{'Group':parent['X_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'σ': format(datum['stdev'],'0.2f'),'Mean': format(datum['mean'],'.2f'),'Count:':datum['Count'],'varp':format(datum['varp'],'.2f')}"
                             },
                             "x": {
                               "scale": "x_cont_scale",
@@ -3853,7 +3851,7 @@
                             ],
                             "cornerRadius": {"value": 3},
                             "tooltip": {
-                              "signal": "{'Group':parent['X_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'Stdev': format(datum['stdev'],'0.2f'),'Mean': format(datum['mean'],'.2f'),'Count:':datum['Count'],'varp':format(datum['varp'],'.2f')}"
+                              "signal": "{'Group':parent['X_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'σ': format(datum['stdev'],'0.2f'),'Mean': format(datum['mean'],'.2f'),'Count:':datum['Count'],'varp':format(datum['varp'],'.2f')}"
                             },
                             "x": {
                               "scale": "x_cont_scale",
@@ -3989,7 +3987,7 @@
                             ],
                             "fill": {"value": "aliceblue"},
                             "tooltip": {
-                              "signal": "{'Group':datum['X_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'Stdev': format(datum['stdev'],'0.2f'),'Mean': format(datum['mean'],'.2f'),'Count:':datum.Count}"
+                              "signal": "{'Group':datum['X_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'σ': format(datum['stdev'],'0.2f'),'Mean': format(datum['mean'],'.2f'),'Count:':datum.Count}"
                             },
                             "yc": {"signal": "viol_ht / 2"},
                             "height": {"signal": "viol_ht / 2"},
@@ -4006,14 +4004,14 @@
                         "encode": {
                           "update": {
                             "text": {
-                              "signal": "if(Stats_,' n='+datum.Count+'  u='+format(datum['mean'],'.2f')+'  s='+format(datum['varp'],'.3f'),'')"
+                              "signal": "if(Stats_,' n='+datum.count+'  u='+format(datum['mean'],'.2f')+'  s='+format(datum['varp'],'.3f'),'')"
                             },
                             "fontSize": {"value": 10},
                             "angle": {"value": -90},
                             "yc": {"signal": "viol_ht/4"},
                             "x": {"signal": "Plot_Width"},
                             "tooltip": {
-                              "signal": "{'Group':datum['Y_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'Stdev': format(datum['varp'],'0.2f'),'Mean': format(datum['mean'],'.2f'),'Count:':datum.Count}"
+                              "signal": "{'Group':datum['Y_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'σ': format(datum['varp'],'0.2f'),'Mean': format(datum['mean'],'.2f'),'Count:':datum.Count}"
                             },
                             "opacity": {"value": 0.5}
                           }

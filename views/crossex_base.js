@@ -198,7 +198,7 @@ function drawGraph(element,spec,widthNode) {
 		actions: {
 			export: true,
 			source: false,
-			editor: true,
+			editor: false,
 			editorURL: "https://itg.usc.edu/editor",
 			scaleFactor: 2
 		},
