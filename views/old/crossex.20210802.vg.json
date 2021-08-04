@@ -1163,6 +1163,7 @@
       {
         "name": "color_scale_cat",
         "type": "ordinal",
+        "reverse": {"signal": "Reverse_Color"},
         "domain": {"data": "colors_domain", "sort": true, "field": "Color_Value"},
         "range": {"scheme": {"signal": "Palette"}}
       },
@@ -1208,12 +1209,6 @@
           {"signal": "Min_Point_Size"},
           {"signal": "if(Size_By!='None',Max_Point_Size,Min_Point_Size)"}
         ]
-      },
-      {
-        "name": "cat_color_scale",
-        "type": "ordinal",
-        "domain": {"field": "data", "data": "cols_domain"},
-        "range": {"scheme": {"signal": "Palette"}}
       }
     ],
     "marks": [    
