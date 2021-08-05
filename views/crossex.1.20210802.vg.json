@@ -1,6 +1,5 @@
 {
     "autosize": "none",
-    "$schema": "https://vega.github.io/schema/vega/v5.json",
     "padding": 4,
     "resize": true,
     "width": 900,
@@ -1599,7 +1598,7 @@
                   {
                     "type": "group",
                     "name": "histogram_graph",
-                    "clip": true,
+                    "clip": false,
                     "from": {"data": "run_hist"},
                     "interactive": true,
                     "scales": [],
@@ -1650,7 +1649,7 @@
                             "encode": {
                               "grid": {
                                 "update": {
-                                  "fillOpacity": {
+                                  "opacity": {
                                     "signal": "if(!show_scatter_graph&&Grids_,Grid_Opacity,0)"
                                   }
                                 }
@@ -1665,13 +1664,13 @@
                             "grid": true,
                             "tickCount": {"signal": "Ticks-1"},
                             "orient": "left",
-                            "ticks": true,
+                            "ticks": false,
                             "title": "title",
                             "titleBaseline": "middle",
                             "titleAnchor": "middle",
                             "offset": 0,
                             "titleAlign": "center",
-                            "labelAlign": "center",
+                            "labelAlign": "right",
                             "gridScale": "x_cont_scale",
                             "encode": {
                               "labels": {
@@ -1679,12 +1678,14 @@
                                   "fillOpacity": {
                                     "signal": "if(!show_scatter_graph,1,0)"
                                   },
-                                  "dx": {"signal": "if(!show_scatter_graph,20,0)"}
+                                  "dx": {
+                                    "signal": "if(!show_scatter_graph,0,0)"
+                                  }
                                 }
                               },
                               "grid": {
                                 "update": {
-                                  "fillOpacity": {
+                                  "opacity": {
                                     "signal": "if(!show_scatter_graph&&Grids_,Grid_Opacity,0)"
                                   }
                                 }
@@ -1692,7 +1693,7 @@
                               "title": {
                                 "update": {
                                   "text": {
-                                    "signal": "if(show_hist_graph,Sum_By=='None'?'#':'Σ of'+Sum_By,'')"
+                                    "signal": "if(show_hist_graph&!show_scatter_graph,Sum_By=='None'?'#':'Σ of'+Sum_By,'')"
                                   }
                                 }
                               },

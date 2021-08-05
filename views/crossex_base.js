@@ -20,6 +20,7 @@ function getContentWidth (elementNode) {
 	var w=elementNode.clientWidth
 	- parseFloat(styles.paddingLeft)
 	- parseFloat(styles.paddingRight);
+	w=w-50;
 	if (w<0) {
 		w=0;
 	}
@@ -31,7 +32,7 @@ function setWidth_smart(element,widthNode) {
 	}
 	var width = getContentWidth(widthNode);
 	var buf=document.getElementById("cc_tabscontent" + element).offsetWidth+document.getElementById("defaultOpen"+element).offsetWidth;
-	width=width-buf-20;
+	width=width-buf-110;
 	if (width<40){width=40;}
 	return width;
 }
@@ -104,11 +105,22 @@ var crossex = function crossex(element, data, options,widthid) {
 	//legacy
 	var ElementWidth=0;
 	data=JSON.parse(JSON.stringify(data).replace(/\"null\"/gi,"\"\""));
-	var widthNode=document.getElementById(element);	
+
+	var cur_name=element;
+	var widthNode=document.getElementById(cur_name);	
+	ElementWidth=getContentWidth(widthNode);
+	var d=0;
+	while (ElementWidth==0 && d <8) {
+		d=d+1;
+		widthNode=widthNode.parentElement;
+		ElementWidth=getContentWidth(widthNode);
+	}
+
 	if(widthid) {
 		widthNode=document.getElementById(widthid);	
+		ElementWidth=getContentWidth(widthNode);
 	}
-	ElementWidth=getContentWidth(widthNode);
+
 	var loc_crossex_html =  crossex_html;
 	var local_vgspec = JSON.stringify(crossex_spec);
 	var element_node = document.getElementById(element);
@@ -198,7 +210,7 @@ function drawGraph(element,spec,widthNode) {
 		actions: {
 			export: true,
 			source: false,
-			editor: false,
+			editor: true,
 			editorURL: "https://itg.usc.edu/editor",
 			scaleFactor: 2
 		},
