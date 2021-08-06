@@ -383,7 +383,7 @@
       },
       {
         "name": "Dash_Height",
-        "value": 1,
+        "value": 3,
         "bind": {
           "element": "#Dash_Height-ccnm",
           "input": "range",
@@ -617,7 +617,7 @@
       },
       {
         "name": "Opacity_",
-        "value": 0.5,
+        "value": 0.25,
         "bind": {
           "element": "#Opacity_-ccnm",
           "input": "range",
