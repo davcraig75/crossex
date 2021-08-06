@@ -20,7 +20,7 @@ function getContentWidth (elementNode) {
 	var w=elementNode.clientWidth
 	- parseFloat(styles.paddingLeft)
 	- parseFloat(styles.paddingRight);
-	w=w-50;
+	w=w-0;
 	if (w<0) {
 		w=0;
 	}
@@ -32,7 +32,7 @@ function setWidth_smart(element,widthNode) {
 	}
 	var width = getContentWidth(widthNode);
 	var buf=document.getElementById("cc_tabscontent" + element).offsetWidth+document.getElementById("defaultOpen"+element).offsetWidth;
-	width=width-buf-110;
+	width=width-buf;
 	if (width<40){width=40;}
 	return width;
 }
@@ -63,13 +63,13 @@ function ccOpenCity(evt, cityName,element) {
 	}
 	document.getElementById(cityName).style.display = "block";
 	ccPanelProxy[element]=document.getElementById(cityName).offsetWidth;
-	console.log('defaultOpen'+element,cityName);
+	//console.log('defaultOpen'+element,cityName);
 	if(cityName=='None'+element) {
 		document.getElementById("cc_tab" + element).style.opacity="0.5"
 
 	} else {
 		document.getElementById("cc_tab" + element).style.opacity="1"
-		console.log('here');
+		//console.log('here');
 	}
 	//console.log('element',element,evt,cityName);
 	evt.currentTarget.className += " active";
@@ -105,10 +105,9 @@ var crossex = function crossex(element, data, options,widthid) {
 	//legacy
 	var ElementWidth=0;
 	data=JSON.parse(JSON.stringify(data).replace(/\"null\"/gi,"\"\""));
-
 	var cur_name=element;
 	var widthNode=document.getElementById(cur_name);	
-	ElementWidth=getContentWidth(widthNode);
+	ElementWidth=0;
 	var d=0;
 	while (ElementWidth==0 && d <8) {
 		d=d+1;
@@ -131,8 +130,7 @@ var crossex = function crossex(element, data, options,widthid) {
 	ccPanelProxy={};
 	var res = local_vgspec.replace(/\-ccnm/g, element);
 	var spec = JSON.parse(res);
-	var mycols=[];
-	
+	var mycols=[];	
 	var new_signalsString = JSON.stringify(options);
 	if (new_signalsString != null) {
 		repSignalsJson = JSON.parse(new_signalsString.replace(/\-ccnm/g, element));
@@ -149,8 +147,7 @@ var crossex = function crossex(element, data, options,widthid) {
 					headers.forEach(function(element) {
 						var distinct = [...new Set(data.map(x => x[element]))];
 						var ln = distinct.length;
-						if (ln > 1) {
-							
+						if (ln > 1) {							
 							if (repSignalsJson[i].name == "Facet_By" && ln < mymax) {
 								finalheaders.push(element);
 							} else if (repSignalsJson[i].name == "Filter_Out_From" && ln < mymax) {
@@ -203,7 +200,6 @@ var crossex = function crossex(element, data, options,widthid) {
 };
 function drawGraph(element,spec,widthNode) {
 	if (spec.signals[Index(spec.signals, 'Interactive_')]['value']==true) {
-
 		spec.signals[Index(spec.signals, 'xcur')]['on']=[{"events": "mousedown, touchstart, touchend","update": "slice(xdom)"}];
 		spec.signals[Index(spec.signals, 'ycur')]['on']=[{"events": "mousedown, touchstart, touchend","update": "slice(ydom)"}];
 		spec.signals[Index(spec.signals, 'delta')]['on']=[{"events": [{"source": "scope","type": "mousemove","consume": true,"between": [{"type": "mousedown"},{"source": "scope", "type": "mouseup"}]},{"type": "touchmove","consume": true,"filter": "event.touches.length === 1"}],"update":  "down ? [x()-down[0], y()-down[1]] : [0,0]"}];
@@ -246,6 +242,12 @@ function drawGraph(element,spec,widthNode) {
 		});	
 		var checkbox = document.querySelector('#Interactive_'+element + '> div > label > input[type=checkbox]');
 		checkbox.addEventListener('change', (event) => {
+			var new_signals_ar=["X_Axis","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","LogY_","Jitter_" ,"Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point_Size","Min_Point_Size","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Include_Only","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Manual_Color","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Plot_Padding","Title_Height","Xaxis_Height","RowHead_Width","Row_Height","Maximum_Facets","Legend_Height","Legend_Cols"];
+			
+			for (i = 0; i < new_signals_ar.length; i++) {
+				spec.signals[Index(spec.signals, new_signals_ar[i])]['value']=result.view.signal(new_signals_ar[i])
+			}
+
 			result.finalize();
 			delete result.view;
 			delete result.spec;

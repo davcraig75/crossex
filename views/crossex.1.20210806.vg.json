@@ -468,7 +468,7 @@
       {"name": "col_header_fontsize", "value": 14},
       {
         "name": "Max_Point_Size",
-        "value": 200,
+        "value": 20,
         "bind": {
           "element": "#Max_Point_Size-ccnm",
           "input": "range",
