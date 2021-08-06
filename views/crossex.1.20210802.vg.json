@@ -3249,7 +3249,7 @@
                               {
                                 "type": "lookup",
                                 "from": "category_summary_data",
-                                "key": "X_Value",
+                                "key": "Y_Value",
                                 "fields": ["value"],
                                 "as": ["value"],
                                 "default": true
@@ -4943,23 +4943,26 @@
           }
         ]
       },
-    {
-      "type": "image",
-      "clip": true,
-      "encode": {
-        "update": {
-          "url": {
-            "value": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAUCAYAAADoZO9yAAAACXBIWXMAAAsSAAALEgHS3X78AAADhklEQVRIx52WPagcVRTHf3fZ0sdbwYggTEam8CHCW0jQSt7Y+3iLIFgIGRuLabKlnZvWJpMUg91bQYKFxaYVkzcvlYZdGBtjijGTqWyCEwzaKMfC/yz3DfvWjwuXmXvuOfd8/c+51wEZMDazmC3DOZcAScfnnAuB0GN5DrgMFBvEY2BhZqUvZ2Zr3iEwBg42HNwfIXDQWy+AXeAU+Al4V0pHwL7oSK51zk2ATzq6c24MFGY2QYcZkMibTTPT18yMbgIzycban/Tp3vpL0bKefKF/pmKY+Er6E2g7oXMMCTfRPdq3oo082kgpY+DldOKcWzjnrDdb59xHSkF5Xt7MrGb7eBN4bGatJ9N2aRkKQKfAFeU16x3QerSM/z+eAhc98MeKJEAx0M9M35vy2meKBbbP/4XX20YpA0Za18JlAtQDr4xuS2GmKIyBP4FkL+TQlhSs3IyVi/+Dcr8K5/pOe6mszaymB5xSgFpIoPgm5y1b0toS82a5F/KOvDLhLNQ5sXdO0QNxIpnCA3RhZriudLywFcIKeyGHD77iCwH1mhQkwNGDR3z32nt87IfezNoN/aj0AerhI9Te3ynrGRIqLVMgsSUZcB24xiWbrRlXrvjx7s7B/VvP33j2ZNgCpE01y4Mo8YyYAxNFGqBMm2qRB1GoaIRyuk6baj7wjBjL49LMZsJId0i/bRc7L/7BsyfDq+qUtQfAqeQeeamYAuM8iEZeC5gqjcd5EIWDHph2gU+dc6UEupCOe4aMX3799/Uibaq5voXkOgcS7U396kybKkmbqkybKgYeA+HQu9D2gRvALeAHz8PrwIyVa7WOgSPg+w5LW0aWB9GsMzQPonpDU5wCrTMznHO1vPhAN+i6mdmSFjje0JzuPTzZObxz8wJpU7luIw+iAvhMc1fk20rTL8CpInFmDIWNi4rGC739kbtMYUte0UFdp10B9159+9fzIvGz0pkpekde0zzIg2iUNtWZShoK2QBfA795wPONwXtDJKqcD4HjDcaEwEuqhkkeRGOBPfHSGatXrcfAA+IbwMk5cyEFV9aSl2xe5BfuPzzZIQ+iWGkZK2Lvew7WHug75VNVEHkQzfMgSpysPTAz9w8vtAy46vOpJ5Sekljgm3b3kxzdV0PMvIb5tHtapE2VOIUsVO/YZkis98UZPhnTNa552lS1aKF3cdZd5Uima3xl2lQLgL8AuhbrS5ztOeEAAAAASUVORK5CYII="
-          },
-          "href": {"value": "https://itg.usc.edu"},
-          "x": {"signal": "width-40"},
-          "y": {"signal": "height-40"},
-          "height": {"value": 20},
-          "width": {"value": 30},
-          "cursor": {"value": "pointer"},
-          "opacity": {"value": 0.7}
+      {
+        "type": "image",
+        "clip": true,
+        "encode": {
+          "update": {
+            "url": {
+              "value": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAUCAYAAADoZO9yAAAACXBIWXMAAAsSAAALEgHS3X78AAADhklEQVRIx52WPagcVRTHf3fZ0sdbwYggTEam8CHCW0jQSt7Y+3iLIFgIGRuLabKlnZvWJpMUg91bQYKFxaYVkzcvlYZdGBtjijGTqWyCEwzaKMfC/yz3DfvWjwuXmXvuOfd8/c+51wEZMDazmC3DOZcAScfnnAuB0GN5DrgMFBvEY2BhZqUvZ2Zr3iEwBg42HNwfIXDQWy+AXeAU+Al4V0pHwL7oSK51zk2ATzq6c24MFGY2QYcZkMibTTPT18yMbgIzycban/Tp3vpL0bKefKF/pmKY+Er6E2g7oXMMCTfRPdq3oo082kgpY+DldOKcWzjnrDdb59xHSkF5Xt7MrGb7eBN4bGatJ9N2aRkKQKfAFeU16x3QerSM/z+eAhc98MeKJEAx0M9M35vy2meKBbbP/4XX20YpA0Za18JlAtQDr4xuS2GmKIyBP4FkL+TQlhSs3IyVi/+Dcr8K5/pOe6mszaymB5xSgFpIoPgm5y1b0toS82a5F/KOvDLhLNQ5sXdO0QNxIpnCA3RhZriudLywFcIKeyGHD77iCwH1mhQkwNGDR3z32nt87IfezNoN/aj0AerhI9Te3ynrGRIqLVMgsSUZcB24xiWbrRlXrvjx7s7B/VvP33j2ZNgCpE01y4Mo8YyYAxNFGqBMm2qRB1GoaIRyuk6baj7wjBjL49LMZsJId0i/bRc7L/7BsyfDq+qUtQfAqeQeeamYAuM8iEZeC5gqjcd5EIWDHph2gU+dc6UEupCOe4aMX3799/Uibaq5voXkOgcS7U396kybKkmbqkybKgYeA+HQu9D2gRvALeAHz8PrwIyVa7WOgSPg+w5LW0aWB9GsMzQPonpDU5wCrTMznHO1vPhAN+i6mdmSFjje0JzuPTzZObxz8wJpU7luIw+iAvhMc1fk20rTL8CpInFmDIWNi4rGC739kbtMYUte0UFdp10B9159+9fzIvGz0pkpekde0zzIg2iUNtWZShoK2QBfA795wPONwXtDJKqcD4HjDcaEwEuqhkkeRGOBPfHSGatXrcfAA+IbwMk5cyEFV9aSl2xe5BfuPzzZIQ+iWGkZK2Lvew7WHug75VNVEHkQzfMgSpysPTAz9w8vtAy46vOpJ5Sekljgm3b3kxzdV0PMvIb5tHtapE2VOIUsVO/YZkis98UZPhnTNa552lS1aKF3cdZd5Uima3xl2lQLgL8AuhbrS5ztOeEAAAAASUVORK5CYII="
+            },
+            "href": {"value": "https://itg.usc.edu"},
+            "x": {"signal": "width-30"},
+            "y": {"signal": "height-30"},
+            "height": {"value": 20},
+            "width": {"value": 30},
+                                          "tooltip": {
+                                  "signal": "'crossex library itg.usc.edu'"
+                                },
+            "cursor": {"value": "pointer"},
+            "opacity": {"value": 0.2}
+          },"hover":{"opacity":{"value":1}}
         }
       }
-    } 
     ]
   }
