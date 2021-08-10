@@ -1248,7 +1248,6 @@
                 "y": {"signal": "Title_Height"}
               }
             },
-            "signals": [],
             "data": [
               {"name": "filtered_instance", "source": "tdata"},
               {
@@ -2535,7 +2534,6 @@
               }
             ],
             "signals": [
-              {"name": "steps", "value": 30},
               {
                 "name": "cols_count",
                 "push": "outer",
@@ -2545,8 +2543,7 @@
                     "update": "length(data('cols_domain'))"
                   }
                 ]
-              },
-              {"name": "yrange", "update": "[Plot_Height, 0]"}
+              }
             ],
             "scales": [
               {
@@ -3431,19 +3428,6 @@
                 "transform": [{"type": "filter", "expr": "Jitter_"}]
               }
             ],
-            "signals": [
-              {"name": "steps", "value": 30},
-              {
-                "name": "cols_count",
-                "push": "outer",
-                "on": [
-                  {
-                    "events": {"signal": "length(data('cols_domain'))"},
-                    "update": "length(data('cols_domain'))"
-                  }
-                ]
-              }
-            ],
             "scales": [
               {
                 "name": "bin_band_scale",
@@ -3471,7 +3455,7 @@
                 "encode": {
                   "update": {
                     "height": {"signal": "Plot_Height"},
-                    "width": {"value": 0},
+                    "width": {"signal": "0"},
                     "y": {"field": "data", "scale": "row_scale"},
                     "x": {"signal": "RowHead_Width"}
                   }
@@ -3487,12 +3471,10 @@
                     "scale": "bin_band_scale",
                     "gridScale": "x_cont_scale",
                     "domain": true,
-                    "zindex": 0,
                     "title": "title",
                     "titleLimit": {"signal": "Row_Height"},
                     "titleBaseline": "top",
                     "titleAnchor": "middle",
-                    "offset": {"signal": "-Xaxis_Height"},
                     "titleAlign": "center",
                     "labelLimit": {"signal": "RowHead_Width"},
                     "labelAngle": 0,
@@ -3848,7 +3830,11 @@
                             },
                             "interpolate": {"value": "natural"},
                             "x": [
-                              {"test":"LogX_","scale": "x_cont_log_scale", "field": "value"},
+                              {
+                                "test": "LogX_",
+                                "scale": "x_cont_log_scale",
+                                "field": "value"
+                              },
                               {"scale": "x_cont_scale", "field": "value"}
                             ],
                             "opacity": [
@@ -3884,13 +3870,27 @@
                             "tooltip": {
                               "signal": "{'Group':datum['Col_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'σ': format(datum['stdev'],'0.2f'),'Mean': format(datum['mean'],'.2f'),'Count:':datum['count'],'varp':format(datum['varp'],'.2f')}"
                             },
-  "x":[
-                              {"test":"LogX_","scale": "x_cont_log_scale", "signal": "min(datum.max,datum['q3']+1.5*(datum['q3']-datum['q1']))"},
-                              {"scale": "x_cont_scale", "signal": "min(datum.max,datum['q3']+1.5*(datum['q3']-datum['q1']))"}
+                            "x": [
+                              {
+                                "test": "LogX_",
+                                "scale": "x_cont_log_scale",
+                                "signal": "min(datum.max,datum['q3']+1.5*(datum['q3']-datum['q1']))"
+                              },
+                              {
+                                "scale": "x_cont_scale",
+                                "signal": "min(datum.max,datum['q3']+1.5*(datum['q3']-datum['q1']))"
+                              }
                             ],
-  "x2":[
-                              {"test":"LogX_","scale": "x_cont_log_scale", "signal": "max(datum.min,datum['q1']-1.5*(datum['q3']-datum['q1']))"},
-                              {"scale": "x_cont_scale", "signal": "max(datum.min,datum['q1']-1.5*(datum['q3']-datum['q1']))"}
+                            "x2": [
+                              {
+                                "test": "LogX_",
+                                "scale": "x_cont_log_scale",
+                                "signal": "max(datum.min,datum['q1']-1.5*(datum['q3']-datum['q1']))"
+                              },
+                              {
+                                "scale": "x_cont_scale",
+                                "signal": "max(datum.min,datum['q1']-1.5*(datum['q3']-datum['q1']))"
+                              }
                             ]
                           }
                         }
@@ -3922,11 +3922,19 @@
                               "signal": "{'Group':parent['X_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'σ': format(datum['stdev'],'0.2f'),'Mean': format(datum['mean'],'.2f'),'Count:':datum['Count'],'varp':format(datum['varp'],'.2f')}"
                             },
                             "x": [
-                              {"test":"LogX_","scale": "x_cont_log_scale", "field": "median"},
+                              {
+                                "test": "LogX_",
+                                "scale": "x_cont_log_scale",
+                                "field": "median"
+                              },
                               {"scale": "x_cont_scale", "field": "median"}
                             ],
                             "x2": [
-                              {"test":"LogX_","scale": "x_cont_log_scale","signal": "xdom[0]"},
+                              {
+                                "test": "LogX_",
+                                "scale": "x_cont_log_scale",
+                                "signal": "xdom[0]"
+                              },
                               {"scale": "x_cont_scale", "signal": "xdom[0]"}
                             ]
                           }
@@ -3959,11 +3967,19 @@
                               "signal": "{'Group':parent['X_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'σ': format(datum['stdev'],'0.2f'),'Mean': format(datum['mean'],'.2f'),'Count:':datum['Count'],'varp':format(datum['varp'],'.2f')}"
                             },
                             "x": [
-                              {"test":"LogX_","scale": "x_cont_log_scale", "field": "q3"},
+                              {
+                                "test": "LogX_",
+                                "scale": "x_cont_log_scale",
+                                "field": "q3"
+                              },
                               {"scale": "x_cont_scale", "field": "q3"}
                             ],
                             "x2": [
-                              {"test":"LogX_","scale": "x_cont_log_scale", "field": "q1"},
+                              {
+                                "test": "LogX_",
+                                "scale": "x_cont_log_scale",
+                                "field": "q1"
+                              },
                               {"scale": "x_cont_scale", "field": "q1"}
                             ]
                           }
@@ -3978,7 +3994,11 @@
                           "update": {
                             "y": {"signal": "viol_ht*(0.5-Dash_Width/2)"},
                             "x": [
-                              {"test":"LogX_","scale": "x_cont_log_scale", "field": "X_Value"},
+                              {
+                                "test": "LogX_",
+                                "scale": "x_cont_log_scale",
+                                "field": "X_Value"
+                              },
                               {"scale": "x_cont_scale", "field": "X_Value"}
                             ],
                             "fill": [
@@ -4051,10 +4071,14 @@
                             "encode": {
                               "update": {
                                 "yfocus": {"signal": "viol_ht*0.5"},
-                            "xfocus": [
-                              {"test":"LogX_","scale": "x_cont_log_scale", "field": "X_Value"},
-                              {"scale": "x_cont_scale", "field": "X_Value"}
-                            ],                              
+                                "xfocus": [
+                                  {
+                                    "test": "LogX_",
+                                    "scale": "x_cont_log_scale",
+                                    "field": "X_Value"
+                                  },
+                                  {"scale": "x_cont_scale", "field": "X_Value"}
+                                ],
                                 "fill": [
                                   {
                                     "test": "Dashes_ & Cord",
@@ -4101,7 +4125,11 @@
                             "height": {"signal": "viol_ht / 2"},
                             "width": {"value": 2},
                             "x": [
-                              {"test":"LogX_","scale": "x_cont_log_scale", "field": "median"},
+                              {
+                                "test": "LogX_",
+                                "scale": "x_cont_log_scale",
+                                "field": "median"
+                              },
                               {"scale": "x_cont_scale", "field": "median"}
                             ]
                           }
@@ -4139,7 +4167,11 @@
                           "update": {
                             "y": {"signal": "viol_ht*(0.5)"},
                             "x": [
-                              {"test":"LogX_","scale": "x_cont_log_scale", "field": "median"},
+                              {
+                                "test": "LogX_",
+                                "scale": "x_cont_log_scale",
+                                "field": "median"
+                              },
                               {"scale": "x_cont_scale", "field": "median"}
                             ],
                             "shape": {"signal": "Shape"},
@@ -4199,10 +4231,14 @@
                               "update": {
                                 "size": {"signal": "Max_Point_Size"},
                                 "yc": {"signal": "viol_ht / 2"},
-                            "x": [
-                              {"test":"LogX_","scale": "x_cont_log_scale", "field": "median"},
-                              {"scale": "x_cont_scale", "field": "median"}
-                            ],
+                                "x": [
+                                  {
+                                    "test": "LogX_",
+                                    "scale": "x_cont_log_scale",
+                                    "field": "median"
+                                  },
+                                  {"scale": "x_cont_scale", "field": "median"}
+                                ],
                                 "fill": {"value": "firebrick"},
                                 "tooltip": {
                                   "signal": "{'Group':format(datum['Y_Value'],'0.2f'),'Value':format(datum['Y_Value'],'0.2f')}"
