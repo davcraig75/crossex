@@ -24,7 +24,7 @@ function getContentWidth (elementNode) {
 	var w=elementNode.clientWidth
 	- parseFloat(styles.paddingLeft)
 	- parseFloat(styles.paddingRight);
-	w=w-0;
+	w=w-25;
 	if (w<0) {
 		w=0;
 	}
