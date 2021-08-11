@@ -30,7 +30,7 @@
 	width: 100%;
     height: 100%;
 	background: white;
-	padding:8px;
+	padding:2px;
     border-bottom-right-radius: 4px;
     border-top-right-radius: 4px;
     border-bottom: 2px solid #888;
@@ -172,45 +172,45 @@ button.active.cc_tablinks>img {
 	background: transparent;
 }
 div.vega-bind {
-	margin: 1px;
-	padding: 0px 1px;
-	width: 100%;
-	display: block;
-	text-align: left;
-	font-size: 10px;
+	margin: 1px !important;
+	padding: 0px 1px !important;
+	width: 100% !important;
+	display: block !important;
+	text-align: left !important;
+	font-size: 10px !important;
 }
 div.vega-bind select {
-    font-size: 10px;
+    font-size: 10px !important;
 }
 .vega-bind-radio input {
-	font-size: 10px;
+	font-size: 10px !important;
 }
 #vg-tooltip-element {
 	visibility: hidden;
-	padding: 0.7em;
-	line-height: 0.9em;
-	position: fixed;
+	padding: 0.7em !important;
+	line-height: 0.9em !important;
+	position: fixed !important;
 	z-index: 1000;
 	font-family: sans-serif;
-	font-size: 10px;
-	border-radius: 3px;
-	box-shadow: 2px 2px 0.5em rgba(0, 0, 0, 0.1);
-	background-color: rgba(255, 255, 255, 0.95);
-	border: 1px solid #dcdcdc;
+	font-size: 10px !important;
+	border-radius: 3px !important;
+	box-shadow: 2px 2px 0.5em rgba(0, 0, 0, 0.1) !important;
+	background-color: rgba(255, 255, 255, 0.95) !important;
+	border: 1px solid #dcdcdc !important;
 	color: black;
 }
 
 div.vega-bind > label > input[type="text"] {
-    width: 60px;
-    font-size: 10px;
+    width: 60px !important;
+    font-size: 10px !important;
 }
 #vg-tooltip-element {
 	visibility: hidden;
-	padding: 8px;
+	padding: 8px !important;
 	position: fixed;
 	z-index: 1000;
 	font-family: sans-serif;
-	font-size: 10px;
+	font-size: 10px !important;
 	border-radius: 3px;
 	box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 	background-color: rgba(255, 255, 255, 0.95);
@@ -218,214 +218,215 @@ div.vega-bind > label > input[type="text"] {
 	color: black;
 }
 #vg-tooltip-element table tr td {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	padding-top: 0.5px;
-	padding-bottom: 0.5px;
+	overflow: hidden !important;
+	text-overflow: ellipsis !important;
+	padding-top: 0.5px !important;
+	padding-bottom: 0.5px !important;
 }
 
 .vega-embed summary svg {
-    width: 10px;
-    height: 10px;
+    width: 10px !important;
+    height: 10px !important;
 }
 .vega-embed.has-actions {
-	padding: 0px;
+	padding: 0px !important;
 }
 .vega-embed summary {
-	list-style: none;
-    position: absolute;
-    top: 0;
-    right: 0;
-    padding: 2px;
-    z-index: 1000;
-    background: white;
-    box-shadow: 1px 1px 1px rgb(0 0 0 / 10%);
-    color: #aaa;
-    border: 0.5px solid #aaa;
-    border-radius: 999px;
-    opacity: 0.2;
+	list-style: none !important;
+    position: absolute !important;
+    top: 16px !important;
+    right: 16px!important;
+    padding: 2px !important;
+    z-index: 1000 !important;
+    background: white !important;
+    box-shadow: 1px 1px 1px rgb(0 0 0 / 10%) !important;
+    color: #aaa !important;
+    border: 0.5px solid #aaa !important;
+    border-radius: 999px !important;
+    opacity: 0.2 !important;
     /* transition: opacity 0.4s ease-in; */
     /* outline: none; */
     cursor: pointer;
     line-height: 0px;
 }
 .vega-embed .vega-actions {
-    position: absolute;
-    z-index: 1001;
-    top: 20px;
-    right: 3px;
-    display: flex;
-    flex-direction: column;
-    padding-bottom: 3px;
-    padding-top: 3px;
-    border-radius: 4px;
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 20%);
-    border: 1px solid #d9d9d9;
-    background: white;
-    animation-duration: 0.15s;
-    animation-name: scale-in;
-    animation-timing-function: cubic-bezier(0.2, 0, 0.13, 1.5);
-    text-align: left;
+    position: absolute !important;
+    z-index: 1001 !important;
+    top: 20px !important;
+    right: 3px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding-bottom: 3px !important;
+    padding-top: 3px !important;
+    border-radius: 4px !important;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 20%) !important;
+    border: 1px solid #d9d9d9 !important;
+    background: white !important;
+    animation-duration: 0.15s !important;
+    animation-name: scale-in !important;
+    animation-timing-function: cubic-bezier(0.2, 0, 0.13, 1.5) !important;
+    text-align: left !important;
 }
 .vega-embed .vega-actions a {
-    padding: 2px 4px;
-    font-family: sans-serif;
-    font-size: 12px;
-    font-weight: normal;
-    white-space: nowrap;
-    color: #434a56;
-    text-decoration: none;
+    padding: 2px 4px !important;
+    font-family: sans-serif !important;
+    font-size: 12px !important;
+    font-weight: normal !important;
+    white-space: nowrap !important;
+    color: #434a56 !important;
+    text-decoration: none !important;
 }
 div.vega-bind > label > input[type="range"] {
-	height: 0px;
-	-webkit-appearance: none;
-	margin: 0px 0;
-	width: 60px;
+	height: 0px !important;
+	-webkit-appearance: none !important;
+	margin: 0px 0 !important;
+	width: 60px !important;
 }
 div.vega-bind > label > div.vega-bind > label > input[type=range]:focus {
-	outline: none;
+	outline: none !important;
 }
 input[type=range]::-webkit-slider-runnable-track {
-	width: 60px;
-	height: 4px;
-	cursor: pointer;
-	box-shadow: 1px 1px 1px #50555C;
-	background: #50585C;
-	border-radius: 6px;
-	border: 0px solid #000000;
+	width: 60px !important;
+	height: 4px !important;
+	cursor: pointer !important;
+	box-shadow: 1px 1px 1px #50555C !important;
+	background: #50585C !important;
+	border-radius: 6px !important;
+	border: 0px solid #000000 !important;
 }
 input[type=range]::-webkit-slider-thumb {
-	box-shadow: 0px 0px 0px #000000;
-	border: 0px solid #000000;
-	height: 10px;
-	width: 6px;
-	border-radius: 5px;
-	background: #529DE1;
-	cursor: pointer;
-	-webkit-appearance: none;
-	margin-top: -3px;
+	box-shadow: 0px 0px 0px #000000 !important;
+	border: 0px solid #000000 !important;
+	height: 10px !important;
+	width: 6px !important;
+	border-radius: 5px !important;
+	background: #529DE1 !important;
+	cursor: pointer !important;
+	-webkit-appearance: none !important;
+	margin-top: -3px !important;
 }
 div.vega-bind > label > input[type=range]:focus::-webkit-slider-runnable-track {
-	background: #50585C;
+	background: #50585C !important;
 }
 div.vega-bind > label > input[type=range]::-moz-range-track {
-	width: 60px;
-	height: 4px;
-	cursor: pointer;
-	background: #50585C;
-	border-radius: 6px;
-	border: 0px solid #000000;
+	width: 60px !important;
+	height: 4px !important;
+	cursor: pointer !important;
+	background: #50585C !important;
+	border-radius: 6px !important;
+	border: 0px solid #000000 !important;
 }
 div.vega-bind > label > input[type=range]::-moz-range-thumb {
-	box-shadow: 0px 0px 0px #000000;
-	border: 0px solid #000000;
-	height: 10px;
-	width: 6px;
-	border-radius: 5px;
-	background: #529DE1;
-	cursor: pointer;
+	box-shadow: 0px 0px 0px #000000 !important;
+	border: 0px solid #000000 !important;
+	height: 10px !important;
+	width: 6px !important;
+	border-radius: 5px !important;
+	background: #529DE1 !important;
+	cursor: pointer !important;
 }
 div.vega-bind > label > input[type=range]::-ms-track {
-	width: 60px;
-	height: 4px;
-	cursor: pointer;
-	background: transparent;
-	border-color: transparent;
-	color: transparent;
+	width: 60px !important;
+	height: 4px !important;
+	cursor: pointer !important;
+	background: transparent !important;
+	border-color: transparent !important;
+	color: transparent !important;
 }
 div.vega-bind>label>span {
-    font-size: 10px;
-    font-family: sans-serif;
-    vertical-align: top;
-    position: relative;
-    margin: 0px 0px 0px 0px;
-    color: #555;
+    font-size: 10px !important;
+    font-family: sans-serif !important;
+    vertical-align: top !important;
+    position: relative !important;
+    margin: 0px 0px 0px 0px !important;
+    color: #555 !important;
 }
 div.vega-bind>label>span:nth-child(3) {
-	font-size: 10px;
-    font-family: sans-serif;
-	vertical-align: top;
+	font-size: 10px !important;
+    font-family: sans-serif !important;
+	vertical-align: top !important;
 	position: relative;
-	margin: 15px 0px 0px 2px;
-	color: #607d8b;
+	margin: 15px 0px 0px 2px !important;
+	color: #607d8b !important;
 }
 div.vega-bind > label > input[type=range]::-ms-fill-lower {
-	background: #50585C;
-	border: 0px solid #000000;
-	border-radius: 12px;
-	box-shadow: 1px 1px 1px #50555C;
+	background: #50585C !important;
+	border: 0px solid #000000 !important;
+	border-radius: 12px !important;
+	box-shadow: 1px 1px 1px #50555C !important;
 }
 div.vega-bind > label > input[type=range]::-ms-fill-upper {
-	background: #50585C;
-	border: 0px solid #000000;
-	border-radius: 12px;
-	box-shadow: 1px 1px 1px #50555C;
+	background: #50585C !important;
+	border: 0px solid #000000 !important;
+	border-radius: 12px !important;
+	box-shadow: 1px 1px 1px #50555C !important;
 }
 div.vega-bind > label > input[type=range]::-ms-thumb {
-	margin-top: 1px;
-	box-shadow: 0px 0px 0px #000000;
-	border: 0px solid #000000;
-	height: 10px;
-	width: 6px;
-	border-radius: 5px;
-	background: #529DE1;
-	cursor: pointer;
+	margin-top: 1px !important;
+	box-shadow: 0px 0px 0px #000000 !important;
+	border: 0px solid #000000 !important;
+	height: 10px !important;
+	width: 6px !important;
+	border-radius: 5px !important;
+	background: #529DE1 !important;
+	cursor: pointer !important;
 }
 div.vega-bind > label > input[type=range]:focus::-ms-fill-lower {
-	background: #50585C;
+	background: #50585C !important;
 }
 div.vega-bind > label > input[type=range]:focus::-ms-fill-upper {
-	background: #50585C;
+	background: #50585C !important;
 }
 
 div.vega-bind > label > input[type="color"] {
-	height: auto;
-	border-width: 0px;
+	height: auto !important;
+	border-width: 0px !important;
 }
 .vega-bindings {
-	display: inline-block;
+	display: inline-block !important;
 }
 .vega-bind-name {
-	text-align: left;
-	font-weight: normal;
-	display: block;
-	color: #555;
-	padding: 0px;
-	display: inline;
+	text-align: left !important;
+	font-weight: normal !important;
+	display: block !important;
+	color: #555 !important;
+	padding: 0px !important;
+	display: inline !important;
 }
+
 div.vega-bind select {
-	-webkit-appearance: menulist;
-	-moz-appearance: menulist;
-	align-items: center;
-	-webkit-rtl-ordering: logical;
-	text-align: center;
-	background-color: black;
-	opacity: 0.8;
-	color: #ddd;
-	margin: 0px;
-	font-size: 10px;
-	width: 60px;
-	display: block;
-	position: relative;
-	transparent-space: nowrap;
-	text-overflow: ellipsis;
-	border-width: 1px;
-	width: 85px;
-	border-style: solid;
-	border-color: rgb(194, 194, 194);
-	overflow: hidden;
+	-webkit-appearance: menulist !important;
+	-moz-appearance: menulist !important;
+	align-items: center !important;
+	-webkit-rtl-ordering: logical !important;
+	text-align: center !important;
+	background-color: black !important;
+	opacity: 0.8 !important;
+	color: #ddd !important;
+	margin: 0px !important;
+	font-size: 10px !important;
+	width: 60px !important;
+	display: block !important;
+	position: relative !important;
+	transparent-space: nowrap !important;
+	text-overflow: ellipsis !important;
+	border-width: 1px !important;
+	width: 85px !important;
+	border-style: solid !important;
+	border-color: rgb(194, 194, 194) !important;
+	overflow: hidden !important;
 }
 .vega-bind-radio input {
-	font-size: 10px;
+	font-size: 10px !important;
 }
 div.vega-bind > label > input[type="checkbox"] {
-	background-color: initial;
-	height: 10px;
-	cursor: default;
-	appearance: checkbox;
-	float: right;
-	box-sizing: border-box;
-	margin: 1px;
-	padding: initial;
-	border: initial;
+	background-color: initial !important;
+	height: 10px !important;
+	cursor: default !important;
+	appearance: checkbox !important;
+	float: right !important;
+	box-sizing: border-box !important;
+	margin: 1px !important;
+	padding: initial !important;
+	border: initial !important;
 }

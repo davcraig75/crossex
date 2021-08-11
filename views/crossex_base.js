@@ -5,6 +5,8 @@ var crossex_spec = JSON.parse(itg_decomp("<%-crossex_spec%>"));
 var crossex_html=itg_decomp("<%=crossex_html%>");
 crossex_html.replace("itgversion","<%-itgversion%>");
 var ccPanel,ccPanelProxy;
+ccPanelProxy={};
+ccPanel={};
 var Index = function Index(items, name) {
 	var index = -1;
 	for (var i = 0; i < items.length; ++i) {
@@ -20,7 +22,7 @@ function getContentWidth (elementNode) {
 	var w=elementNode.clientWidth
 	- parseFloat(styles.paddingLeft)
 	- parseFloat(styles.paddingRight);
-	w=w-26;
+	w=w-54;
 	if (w<0) {
 		w=0;
 	}
@@ -33,6 +35,7 @@ function setWidth_smart(element,widthNode) {
 	var width = getContentWidth(widthNode);
 	var buf=document.getElementById("cc_tabscontent" + element).offsetWidth+document.getElementById("defaultOpen"+element).offsetWidth;
 	width=width-buf;
+	
 	if (width<40){width=40;}
 	return width;
 }
@@ -62,7 +65,7 @@ function ccOpenCity(evt, cityName,element) {
 		tablinks[i].className = tablinks[i].className.replace(" active", "");
 	}
 	document.getElementById(cityName).style.display = "block";
-	ccPanelProxy[element]=document.getElementById(cityName).offsetWidth;
+	ccPanelProxy[element][element]=document.getElementById(cityName).offsetWidth;
 	//console.log('defaultOpen'+element,cityName);
 	if(cityName=='None'+element) {
 		document.getElementById("cc_tab" + element).style.opacity="0.5"
@@ -127,7 +130,7 @@ var crossex = function crossex(element, data, options,widthid) {
 	var loc_crossex_htmlRes = loc_crossex_html.replace(/\-ccnm/g, element);
 	element_node.innerHTML = loc_crossex_htmlRes;
 	ccPanel={};
-	ccPanelProxy={};
+	ccPanelProxy[element]={};
 	var res = local_vgspec.replace(/\-ccnm/g, element);
 	var spec = JSON.parse(res);
 	var mycols=[];	
@@ -225,7 +228,7 @@ function drawGraph(element,spec,widthNode) {
 		},
 		defaultStyle: true
 	}).then(function(result) {
-		ccPanelProxy = new Proxy(ccPanel, {
+		ccPanelProxy[element] = new Proxy(ccPanel, {
 			set: function (target, key, value) {
 				target[key] = value;
 				result.view.width(setWidth_smart(element,widthNode)).run();
