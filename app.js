@@ -38,7 +38,7 @@ var itg_engz = function(data) {
 
 var data = {
   min_smartplot: [],
-  demo: itg_comp("src/SOD1.csv"),
+  demo: itg_comp("src/penguins.csv"),
   cc_css: itg_comp("src/cc_styles.css"),
   ext_styles:itg_comp("src/ext_styles.css"),
   body: itg_comp("views/body.ejs"),

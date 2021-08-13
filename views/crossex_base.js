@@ -22,20 +22,16 @@ function getContentWidth (elementNode) {
 	var w=elementNode.clientWidth
 	- parseFloat(styles.paddingLeft)
 	- parseFloat(styles.paddingRight);
-	w=w-54;
-	if (w<0) {
-		w=0;
-	}
+	w=w-8;
+	if (w<0) {w=0;}
 	return w
 }
 function setWidth_smart(element,widthNode) {
 	if (!widthNode) {
 		widthNode=document.getElementById(element);
 	}
-	var width = getContentWidth(widthNode);
 	var buf=document.getElementById("cc_tabscontent" + element).offsetWidth+document.getElementById("defaultOpen"+element).offsetWidth;
-	width=width-buf;
-	
+	width=getContentWidth(widthNode)-buf;	
 	if (width<40){width=40;}
 	return width;
 }
@@ -66,15 +62,11 @@ function ccOpenCity(evt, cityName,element) {
 	}
 	document.getElementById(cityName).style.display = "block";
 	ccPanelProxy[element][element]=document.getElementById(cityName).offsetWidth;
-	//console.log('defaultOpen'+element,cityName);
 	if(cityName=='None'+element) {
 		document.getElementById("cc_tab" + element).style.opacity="0.5"
-
 	} else {
 		document.getElementById("cc_tab" + element).style.opacity="1"
-		//console.log('here');
 	}
-	//console.log('element',element,evt,cityName);
 	evt.currentTarget.className += " active";
 }
 
@@ -213,7 +205,8 @@ function drawGraph(element,spec,widthNode) {
 		spec.signals[Index(spec.signals, 'xdom')]['on']=[{"events": {"signal": "delta"},"update": "[xcur[0] + span(xcur) * delta[0] / Plot_Width, xcur[1] + span(xcur) * delta[0] / Plot_Width]"},{"events": {"signal": "zoom"},"update": "[anchor[0] + (xdom[0] - anchor[0]) * zoom, anchor[0] + (xdom[1] - anchor[0]) * zoom]"}];
 		spec.signals[Index(spec.signals, 'ydom')]['on']=[{"events": {"signal": "delta"},"update": "[ycur[0] + span(ycur) * delta[1] / Plot_Height, ycur[1] + span(ycur) * delta[1] / Plot_Height]"},{"events": {"signal": "zoom"},"update": "[anchor[1] + (ydom[0] - anchor[1]) * zoom, anchor[1] + (ydom[1] - anchor[1]) * zoom]"}];
 		spec.signals[Index(spec.signals, 'down')]['on']=[{"events": "touchend", "update": "down"},{"events": "mousedown, touchstart","update": "xy()"}];
-	}		
+	}
+	console.log('setw',setWidth_smart(element,widthNode));		
 	vegaEmbed('#view_crossex' + element, spec, {
 		renderer: 'canvas',
 		width: setWidth_smart(element,widthNode),

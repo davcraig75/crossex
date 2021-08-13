@@ -383,7 +383,7 @@
       },
       {
         "name": "Dash_Height",
-        "value": 3,
+        "value": 1,
         "bind": {
           "element": "#Dash_Height-ccnm",
           "input": "range",
@@ -684,7 +684,7 @@
       },
       {
         "name": "Plot_Padding",
-        "value": 10,
+        "value": 8,
         "bind": {
           "element": "#Plot_Padding-ccnm",
           "input": "range",
@@ -4941,6 +4941,7 @@
             "title": {
               "signal": "if((Show_Titles&!Cord),'Color By '+Color_By,'')"
             },
+            "tickCount":2,
             "labelOpacity": {"signal": "if(!Cord,1,0)"},
             "titleOrient": "top"
           },
