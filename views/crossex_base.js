@@ -22,7 +22,7 @@ function getContentWidth (elementNode) {
 	var w=elementNode.clientWidth
 	- parseFloat(styles.paddingLeft)
 	- parseFloat(styles.paddingRight);
-	w=w-8;
+	w=w-28;
 	if (w<0) {w=0;}
 	return w
 }
@@ -38,26 +38,28 @@ function setWidth_smart(element,widthNode) {
 
 function ccOpenCity(evt, cityName,element) {
 	var max_width=0;
-	var cc_tabcontent=new Array(5);
-	var tablinks=new Array(5);
+	var cc_tabcontent=new Array(6);
+	var tablinks=new Array(6);
 	tablinks[0]=document.getElementById('defaultOpen'+element);
-	tablinks[1]=document.getElementById('Axis_tablinks'+element);
-	tablinks[2]=document.getElementById('Marks_tablinks'+element);
-	tablinks[3]=document.getElementById('Fonts_tablinks'+element);
-	tablinks[4]=document.getElementById('Filtering_tablinks'+element);
-	tablinks[5]=document.getElementById('Coloring_tablinks'+element);
-	tablinks[6]=document.getElementById('Margins_tablinks'+element);	
+	tablinks[1]=document.getElementById('Charts_tablinks'+element);
+	tablinks[2]=document.getElementById('Axis_tablinks'+element);
+	tablinks[3]=document.getElementById('Marks_tablinks'+element);
+	tablinks[4]=document.getElementById('Fonts_tablinks'+element);
+	tablinks[5]=document.getElementById('Filtering_tablinks'+element);
+	tablinks[6]=document.getElementById('Coloring_tablinks'+element);
+	tablinks[7]=document.getElementById('Margins_tablinks'+element);	
 	cc_tabcontent[0]=document.getElementById('None'+element);
-	cc_tabcontent[1]=document.getElementById('Axis'+element);
-	cc_tabcontent[2]=document.getElementById('Marks'+element);
-	cc_tabcontent[3]=document.getElementById('Fonts'+element);
-	cc_tabcontent[4]=document.getElementById('Filtering'+element);
-	cc_tabcontent[5]=document.getElementById('Coloring'+element);
-	cc_tabcontent[6]=document.getElementById('Margins'+element);
-	for (i = 0; i < cc_tabcontent.length; i++) {
+	cc_tabcontent[1]=document.getElementById('Charts'+element);
+	cc_tabcontent[2]=document.getElementById('Axis'+element);
+	cc_tabcontent[3]=document.getElementById('Marks'+element);
+	cc_tabcontent[4]=document.getElementById('Fonts'+element);
+	cc_tabcontent[5]=document.getElementById('Filtering'+element);
+	cc_tabcontent[6]=document.getElementById('Coloring'+element);
+	cc_tabcontent[7]=document.getElementById('Margins'+element);
+	for (var i = 0; i < cc_tabcontent.length; i++) {
 		cc_tabcontent[i].style.display = "none";
 	}
-	for (i = 0; i < tablinks.length; i++) {
+	for (var i = 0; i < tablinks.length; i++) {
 		tablinks[i].className = tablinks[i].className.replace(" active", "");
 	}
 	document.getElementById(cityName).style.display = "block";
@@ -206,7 +208,6 @@ function drawGraph(element,spec,widthNode) {
 		spec.signals[Index(spec.signals, 'ydom')]['on']=[{"events": {"signal": "delta"},"update": "[ycur[0] + span(ycur) * delta[1] / Plot_Height, ycur[1] + span(ycur) * delta[1] / Plot_Height]"},{"events": {"signal": "zoom"},"update": "[anchor[1] + (ydom[0] - anchor[1]) * zoom, anchor[1] + (ydom[1] - anchor[1]) * zoom]"}];
 		spec.signals[Index(spec.signals, 'down')]['on']=[{"events": "touchend", "update": "down"},{"events": "mousedown, touchstart","update": "xy()"}];
 	}
-	console.log('setw',setWidth_smart(element,widthNode));		
 	vegaEmbed('#view_crossex' + element, spec, {
 		renderer: 'canvas',
 		width: setWidth_smart(element,widthNode),
@@ -230,6 +231,7 @@ function drawGraph(element,spec,widthNode) {
 		});	
 		initAndListen('show_scatter_graph', 'Scatter_Options' + element, result,element);
 		initAndListen('show_hist_graph', 'Hist_Options' + element, result,element);
+		initAndListen('show_hzbox_graphs', 'Violin_Options' + element, result,element);
 		initAndListen('show_grid_graphs', 'Grid_Options' + element, result,element);
 		initAndListen('show_stacked_graphs', 'Stacked_Options' + element, result,element);
 		initAndListen('show_box_graphs', 'Violin_Options' + element, result,element);
@@ -238,12 +240,10 @@ function drawGraph(element,spec,widthNode) {
 		});	
 		var checkbox = document.querySelector('#Interactive_'+element + '> div > label > input[type=checkbox]');
 		checkbox.addEventListener('change', (event) => {
-			var new_signals_ar=["X_Axis","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","LogY_","Jitter_" ,"Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point_Size","Min_Point_Size","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Include_Only","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Manual_Color","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Plot_Padding","Title_Height","Xaxis_Height","RowHead_Width","Row_Height","Maximum_Facets","Legend_Height","Legend_Cols"];
-			
+			var new_signals_ar=["X_Axis","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","LogY_","Jitter_" ,"Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point_Size","Min_Point_Size","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Include_Only","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Manual_Color","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Plot_Padding","Title_Height","Xaxis_Height","RowHead_Width","Row_Height","Maximum_Facets","Legend_Height","Legend_Cols"];			
 			for (i = 0; i < new_signals_ar.length; i++) {
 				spec.signals[Index(spec.signals, new_signals_ar[i])]['value']=result.view.signal(new_signals_ar[i])
 			}
-
 			result.finalize();
 			delete result.view;
 			delete result.spec;
