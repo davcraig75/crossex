@@ -45,7 +45,7 @@
     "signals": [
       {
         "name": "X_Axis",
-        "value": "island",
+        "value": "sex",
         "bind": {
           "input": "select",
           "element": "#X_Axis-ccnm",
@@ -72,7 +72,7 @@
       },
       {
         "name": "Facet_Cols_By",
-        "value": "None",
+        "value": "sex",
         "bind": {
           "input": "select",
           "element": "#Facet_Cols_By-ccnm",
@@ -81,7 +81,7 @@
       },
       {
         "name": "Facet_Rows_By",
-        "value": "None",
+        "value": "island",
         "bind": {
           "input": "select",
           "element": "#Facet_Rows_By-ccnm",
@@ -925,7 +925,7 @@
           {"type": "filter", "expr": "Size_By == 'None' || (Size_By != 'None' && !(!isValid(datum[Size_By]) || datum[Size_By]==Filter_If || datum[Size_By] =='NA' || datum[Size_By] =='null'))"},
           {"type": "formula", "as": "Col_Value", "expr": "datum[Facet_Cols_By]"},
           {"type": "formula", "as": "Color_Value", "expr": "datum[Color_By]"},
-          {"type": "formula", "as": "My_O_Value", "expr": "datum[Opacity_By]"},
+          {"type": "formula", "as": "O_Value_", "expr": "datum[Opacity_By]"},
           {"type": "formula", "as": "Row_Value", "expr": "datum[Facet_Rows_By]"},
           {
             "type": "formula",
@@ -4990,7 +4990,7 @@
                         "strokeOpacity": {"value": 0},
                         "width": {"signal": "Plot_Width"},
                         "y": {"signal": "0"},
-                        "x": {"signal": "xdom[0]"},
+                        "x": {"signal": "0"},
                         "height": {"signal": "hist_graph_height"}
                       }
                     },

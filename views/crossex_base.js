@@ -17,6 +17,30 @@ var Index = function Index(items, name) {
 	}
 	return index;
 };
+var json2csv = function json2csv(filename,json) {
+    var field1 = Object.keys(json[0]);
+	var fields=[];
+	var filtered = ["Y_Value", "Col_Value", "X_Value", "Row_Value", "Count","None","O_Value","Color_Value","Cstr","Xstr","Ystr","Size_Value"];
+	for (var i=0;i<field1.length;++i) {
+		if (!filtered.includes(field1[i])) {
+			fields.push(field1[i]);
+		}
+	}
+    var replacer = function(key, value) { return value === null ? '' : value } 
+    var csv = json.map(function(row){
+        return fields.map(function(fieldName){
+            return JSON.stringify(row[fieldName], replacer)
+        }).join(',')
+    })
+    csv.unshift(fields.join(',')) // add header column
+    csv = csv.join('\r\n');
+    console.log(csv);
+    //console.log(encodeURIComponent(csv));
+    var csvContent='data:text/csv;charset=UTF-8,' + encodeURIComponent(csv);
+    encodeURIComponent(csvContent)
+    window.open(csvContent);
+}
+
 function getContentWidth (elementNode) {
 	var styles = window.getComputedStyle(elementNode, null);
 	var w=elementNode.clientWidth
@@ -239,6 +263,12 @@ function drawGraph(element,spec,widthNode) {
 			result.view.width(setWidth_smart(element,widthNode)).run();
 		});	
 		var checkbox = document.querySelector('#Interactive_'+element + '> div > label > input[type=checkbox]');
+		var DownloadCSVNode=document.querySelector('#DownloadCSV'+element);
+		DownloadCSVNode.addEventListener('click', function(e) {  
+			var ds=result.view.data('mydata');
+			console.log(ds)
+			json2csv('file.csv',ds)
+		}, false);
 		checkbox.addEventListener('change', (event) => {
 			var new_signals_ar=["X_Axis","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","LogY_","Jitter_" ,"Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point_Size","Min_Point_Size","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Include_Only","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Manual_Color","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Plot_Padding","Title_Height","Xaxis_Height","RowHead_Width","Row_Height","Maximum_Facets","Legend_Height","Legend_Cols"];			
 			for (i = 0; i < new_signals_ar.length; i++) {
