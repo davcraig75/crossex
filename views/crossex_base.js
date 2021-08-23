@@ -18,14 +18,17 @@ var Index = function Index(items, name) {
 	return index;
 };
 var json2csv = function json2csv(filename,json) {
-    var field1 = Object.keys(json[0]);
-	var fields=[];
+    var fields = [];
 	var filtered = ["Y_Value", "Col_Value", "X_Value", "Row_Value", "Count","None","O_Value","Color_Value","Cstr","Xstr","Ystr","Size_Value"];
-	for (var i=0;i<field1.length;++i) {
-		if (!filtered.includes(field1[i])) {
-			fields.push(field1[i]);
-		}
-	}
+    for (var j=0;j<json.length;j++) {
+        Object.keys(json[j]).forEach(function(key){
+            if(fields.indexOf(key) == -1 && !(filtered.includes(key))) 
+            {
+                fields.push(key);
+            }
+        });
+    }	
+	console.log(fields);
     var replacer = function(key, value) { return value === null ? '' : value } 
     var csv = json.map(function(row){
         return fields.map(function(fieldName){
@@ -34,11 +37,16 @@ var json2csv = function json2csv(filename,json) {
     })
     csv.unshift(fields.join(',')) // add header column
     csv = csv.join('\r\n');
-    console.log(csv);
-    //console.log(encodeURIComponent(csv));
-    var csvContent='data:text/csv;charset=UTF-8,' + encodeURIComponent(csv);
-    encodeURIComponent(csvContent)
-    window.open(csvContent);
+	var csvData = new Blob([csv], { type: 'text/csv' }); 
+
+	var a = document.createElement('a')
+	var csvUrl = URL.createObjectURL(csvData);
+	a.href =  csvUrl;
+    
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();  // IE: "Access is denied"; see: https://connect.microsoft.com/IE/feedback/details/797361/ie-10-treats-blob-url-as-cross-origin-and-denies-access
+    document.body.removeChild(a);	
 }
 
 function getContentWidth (elementNode) {
@@ -232,6 +240,9 @@ function drawGraph(element,spec,widthNode) {
 		spec.signals[Index(spec.signals, 'ydom')]['on']=[{"events": {"signal": "delta"},"update": "[ycur[0] + span(ycur) * delta[1] / Plot_Height, ycur[1] + span(ycur) * delta[1] / Plot_Height]"},{"events": {"signal": "zoom"},"update": "[anchor[1] + (ydom[0] - anchor[1]) * zoom, anchor[1] + (ydom[1] - anchor[1]) * zoom]"}];
 		spec.signals[Index(spec.signals, 'down')]['on']=[{"events": "touchend", "update": "down"},{"events": "mousedown, touchstart","update": "xy()"}];
 	}
+	if (spec.signals[Index(spec.signals, 'Export_CSV')]['value']==true) {
+		document.querySelector('#Export_CSV'+element).style.display = "block";		
+	}
 	vegaEmbed('#view_crossex' + element, spec, {
 		renderer: 'canvas',
 		width: setWidth_smart(element,widthNode),
@@ -240,7 +251,7 @@ function drawGraph(element,spec,widthNode) {
 		actions: {
 			export: true,
 			source: false,
-			editor: true,
+			editor: false,
 			editorURL: "https://itg.usc.edu/editor",
 			scaleFactor: 2
 		},
@@ -263,11 +274,11 @@ function drawGraph(element,spec,widthNode) {
 			result.view.width(setWidth_smart(element,widthNode)).run();
 		});	
 		var checkbox = document.querySelector('#Interactive_'+element + '> div > label > input[type=checkbox]');
-		var DownloadCSVNode=document.querySelector('#DownloadCSV'+element);
+		var DownloadCSVNode=document.querySelector('#Export_CSV'+element);
+
 		DownloadCSVNode.addEventListener('click', function(e) {  
 			var ds=result.view.data('mydata');
-			console.log(ds)
-			json2csv('file.csv',ds)
+			json2csv('crossex.'+element+'.csv',ds)
 		}, false);
 		checkbox.addEventListener('change', (event) => {
 			var new_signals_ar=["X_Axis","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","LogY_","Jitter_" ,"Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point_Size","Min_Point_Size","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Include_Only","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Manual_Color","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Plot_Padding","Title_Height","Xaxis_Height","RowHead_Width","Row_Height","Maximum_Facets","Legend_Height","Legend_Cols"];			

@@ -388,10 +388,10 @@ div.vega-bind > label > input[type="color"] {
 .vega-bind-name {
 	text-align: left !important;
 	font-weight: normal !important;
-	display: block !important;
+	
 	color: #555 !important;
 	padding: 0px !important;
-	display: inline !important;
+	display: inline-block !important;
 }
 
 div.vega-bind select {
