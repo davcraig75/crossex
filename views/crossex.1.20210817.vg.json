@@ -6498,11 +6498,11 @@
                                 {
                                   "test": "LogY_",
                                   "scale": "y_cont_log_scale",
-                                  "signal": "min(datum.min,datum['q1']-1.5*(datum['q3']-datum['q1']))"
+                                  "signal": "max(datum.min,datum['q1']-1.5*(datum['q3']-datum['q1']))"
                                 },
                                 {
                                   "scale": "y_cont_scale",
-                                  "signal": "min(datum.min,datum['q1']-1.5*(datum['q3']-datum['q1']))"
+                                  "signal": "max(datum.min,datum['q1']-1.5*(datum['q3']-datum['q1']))"
                                 }
                               ]
                             }
@@ -6551,11 +6551,11 @@
                                 {
                                   "test": "LogY_",
                                   "scale": "y_cont_log_scale",
-                                  "signal": "min(datum.min,datum['q1']-1.5*(datum['q3']-datum['q1']))"
+                                  "signal": "max(datum.min,datum['q1']-1.5*(datum['q3']-datum['q1']))"
                                 },
                                 {
                                   "scale": "y_cont_scale",
-                                  "signal": "min(datum.min,datum['q1']-1.5*(datum['q3']-datum['q1']))"
+                                  "signal": "max(datum.min,datum['q1']-1.5*(datum['q3']-datum['q1']))"
                                 }
                               ]
                             }
