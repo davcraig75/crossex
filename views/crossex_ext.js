@@ -138,6 +138,9 @@ document.getElementById("graph_button").onclick = function clicks() {
 	var init_val=headers[1];
 	if (headers.length<4) {init_val="None"} 
 	crossex("smartplot_id", struct, [
+		{"editable":true},
+		{"exportable":true},		
+
 	{
 		"name": "X_Axis",
 		"value": axis[0],

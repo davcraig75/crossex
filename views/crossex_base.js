@@ -160,10 +160,38 @@ var crossex = function crossex(element, data, options,widthid) {
 	var res = local_vgspec.replace(/\-ccnm/g, element);
 	var spec = JSON.parse(res);
 	var mycols=[];	
+	var hide_panel=false;
+	var editable=true;
+	var exportable=true;
 	var new_signalsString = JSON.stringify(options);
 	if (new_signalsString != null) {
 		repSignalsJson = JSON.parse(new_signalsString.replace(/\-ccnm/g, element));
 		for (i=0;i<repSignalsJson.length;++i) {
+			if (typeof repSignalsJson[i]['hide_panel'] !== 'undefined') {
+				hide_panel=true;
+				document.querySelector('#cc_panel'+element).style.display = "none";	
+				document.querySelector('#cc_tab'+element).style.display = "none";
+				document.querySelector('#cc_tabscontent'+element).style.display = "none";
+				//document.querySelector('#cc_graph_container'+element).style.border = "none";	
+				continue; 
+			}
+			if (typeof repSignalsJson[i]['editable'] !== 'undefined') {
+				if (repSignalsJson[i]['editable']==1) {
+					editable=true;
+				
+				} else {
+					editable=false;
+				}
+				continue; 
+			}
+			if (typeof repSignalsJson[i]['exportable'] !== 'undefined') {
+				if (repSignalsJson[i]['exportable']==1) {
+					exportable=true;
+				} else {
+					exportable=false;
+				}
+				continue; 
+			}
 			var index = Index(spec.signals, repSignalsJson[i].name);
 			spec.signals[index].value = repSignalsJson[i].value;
 			if (repSignalsJson[i].bind != null) {
@@ -176,7 +204,7 @@ var crossex = function crossex(element, data, options,widthid) {
 					headers.forEach(function(element) {
 						var distinct = [...new Set(data.map(x => x[element]))];
 						var ln = distinct.length;
-						if (ln > 1) {							
+						if (ln > 0) {							
 							if (repSignalsJson[i].name == "Facet_By" && ln < mymax) {
 								finalheaders.push(element);
 							} else if (repSignalsJson[i].name == "Filter_Out_From" && ln < mymax) {
@@ -225,9 +253,9 @@ var crossex = function crossex(element, data, options,widthid) {
 		style.appendChild(document.createTextNode(css));
 		add_css=false;
 	}
-	drawGraph(element,spec,widthNode);
+	drawGraph(element,spec,widthNode,hide_panel,editable,exportable);
 };
-function drawGraph(element,spec,widthNode) {
+function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 	if (spec.signals[Index(spec.signals, 'Interactive_')]['value']==true) {
 		spec.signals[Index(spec.signals, 'xcur')]['on']=[{"events": "mousedown, touchstart, touchend","update": "slice(xdom)"}];
 		spec.signals[Index(spec.signals, 'ycur')]['on']=[{"events": "mousedown, touchstart, touchend","update": "slice(ydom)"}];
@@ -240,7 +268,7 @@ function drawGraph(element,spec,widthNode) {
 		spec.signals[Index(spec.signals, 'ydom')]['on']=[{"events": {"signal": "delta"},"update": "[ycur[0] + span(ycur) * delta[1] / Plot_Height, ycur[1] + span(ycur) * delta[1] / Plot_Height]"},{"events": {"signal": "zoom"},"update": "[anchor[1] + (ydom[0] - anchor[1]) * zoom, anchor[1] + (ydom[1] - anchor[1]) * zoom]"}];
 		spec.signals[Index(spec.signals, 'down')]['on']=[{"events": "touchend", "update": "down"},{"events": "mousedown, touchstart","update": "xy()"}];
 	}
-	if (spec.signals[Index(spec.signals, 'Export_CSV')]['value']==true) {
+	if (spec.signals[Index(spec.signals, 'Export_CSV')]['value']==true && exportable) {
 		document.querySelector('#Export_CSV'+element).style.display = "block";		
 	}
 	vegaEmbed('#view_crossex' + element, spec, {
@@ -251,73 +279,75 @@ function drawGraph(element,spec,widthNode) {
 		actions: {
 			export: true,
 			source: false,
-			editor: false,
+			editor: editable,
 			editorURL: "https://itg.usc.edu/editor",
 			scaleFactor: 2
 		},
 		defaultStyle: true
 	}).then(function(result) {
-		ccPanelProxy[element] = new Proxy(ccPanel, {
-			set: function (target, key, value) {
-				target[key] = value;
-				result.view.width(setWidth_smart(element,widthNode)).run();
-				return true;
-			}
-		});	
-		initAndListen('show_scatter_graph', 'Scatter_Options' + element, result,element);
-		initAndListen('show_hist_graph', 'Hist_Options' + element, result,element);
-		initAndListen('show_hzbox_graphs', 'Violin_Options' + element, result,element);
-		initAndListen('show_grid_graphs', 'Grid_Options' + element, result,element);
-		initAndListen('show_stacked_graphs', 'Stacked_Options' + element, result,element);
-		initAndListen('show_box_graphs', 'Violin_Options' + element, result,element);
 		window.addEventListener('resize', function(event) {
 			result.view.width(setWidth_smart(element,widthNode)).run();
-		});	
-		var checkbox = document.querySelector('#Interactive_'+element + '> div > label > input[type=checkbox]');
-		var DownloadCSVNode=document.querySelector('#Export_CSV'+element);
-
-		DownloadCSVNode.addEventListener('click', function(e) {  
-			var ds=result.view.data('mydata');
-			json2csv('crossex.'+element+'.csv',ds)
-		}, false);
-		checkbox.addEventListener('change', (event) => {
-			var new_signals_ar=["X_Axis","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","LogY_","Jitter_" ,"Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point_Size","Min_Point_Size","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Include_Only","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Manual_Color","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Plot_Padding","Title_Height","Xaxis_Height","RowHead_Width","Row_Height","Maximum_Facets","Legend_Height","Legend_Cols"];			
-			for (i = 0; i < new_signals_ar.length; i++) {
-				spec.signals[Index(spec.signals, new_signals_ar[i])]['value']=result.view.signal(new_signals_ar[i])
-			}
-			result.finalize();
-			delete result.view;
-			delete result.spec;
-			delete result.vgSpec;
-			delete result.finalize;
-			if (event.currentTarget.checked) {
-				spec.signals[Index(spec.signals, 'xcur')]['on']=[{"events": "mousedown, touchstart, touchend","update": "slice(xdom)"}];
-				spec.signals[Index(spec.signals, 'ycur')]['on']=[{"events": "mousedown, touchstart, touchend","update": "slice(ydom)"}];
-				spec.signals[Index(spec.signals, 'Interactive_')]['value']=true;
-				spec.signals[Index(spec.signals, 'delta')]['on']=[{"events": [{"source": "scope","type": "mousemove","consume": true,"between": [{"type": "mousedown"},{"source": "scope", "type": "mouseup"}]},{"type": "touchmove","consume": true,"filter": "event.touches.length === 1"}],"update":  "down ? [x()-down[0], y()-down[1]] : [0,0]"}];
-				spec.signals[Index(spec.signals, 'anchor')]['on']=[{"events": "wheel","update": "[invert('x_cont_scale', x()), invert('y_cont_scale', y())]"},{"events": {"type": "touchstart","filter": "event.touches.length===2"},"update": "[(xdom[0] + xdom[1]) / 2, (ydom[0] + ydom[1]) / 2]"}];
-				spec.signals[Index(spec.signals, 'zoom')]['on']=[{"events": "wheel!","force": true,"update": "pow(1.001, event.deltaY * pow(16, event.deltaMode))"},{"events": {"signal": "dist2"},"force": true,"update": "dist1 / dist2"}];
-				spec.signals[Index(spec.signals, 'dist1')]['on']=[{"events": {"type": "touchstart","filter": "event.touches.length===2"},"update": "pinchDistance(event)"},{"events": {"signal": "dist2"}, "update": "dist2"}];
-				spec.signals[Index(spec.signals, 'dist2')]['on']=[{"events": {"type": "touchmove","consume": true,"filter": "event.touches.length===2"},"update": "pinchDistance(event)"}];
-				spec.signals[Index(spec.signals, 'xdom')]['on']=[{"events": {"signal": "delta"},"update": "[xcur[0] + span(xcur) * delta[0] / Plot_Width, xcur[1] + span(xcur) * delta[0] / Plot_Width]"},{"events": {"signal": "zoom"},"update": "[anchor[0] + (xdom[0] - anchor[0]) * zoom, anchor[0] + (xdom[1] - anchor[0]) * zoom]"}];
-				spec.signals[Index(spec.signals, 'ydom')]['on']=[{"events": {"signal": "delta"},"update": "[ycur[0] + span(ycur) * delta[1] / Plot_Height, ycur[1] + span(ycur) * delta[1] / Plot_Height]"},{"events": {"signal": "zoom"},"update": "[anchor[1] + (ydom[0] - anchor[1]) * zoom, anchor[1] + (ydom[1] - anchor[1]) * zoom]"}];
-				spec.signals[Index(spec.signals, 'down')]['on']=[{"events": "touchend", "update": "down"},{"events": "mousedown, touchstart","update": "xy()"}];
-				drawGraph(element,spec,widthNode);
-			} else {
-				delete spec.signals[Index(spec.signals, 'xcur')]['on'];
-				spec.signals[Index(spec.signals, 'Interactive_')]['value']=false;
-				delete spec.signals[Index(spec.signals, 'ycur')]['on'];
-				delete spec.signals[Index(spec.signals, 'delta')]['on'];
-				delete spec.signals[Index(spec.signals, 'anchor')]['on'];
-				delete spec.signals[Index(spec.signals, 'zoom')]['on'];
-				delete spec.signals[Index(spec.signals, 'dist1')]['on'];
-				delete spec.signals[Index(spec.signals, 'dist2')]['on'];
-				delete spec.signals[Index(spec.signals, 'xdom')]['on'];
-				delete spec.signals[Index(spec.signals, 'ydom')]['on'];
-				delete spec.signals[Index(spec.signals, 'down')]['on'];
-				drawGraph(element,spec,widthNode);
-			}
-			return;
 		});			
+		if (!hide_panel) {
+			ccPanelProxy[element] = new Proxy(ccPanel, {
+				set: function (target, key, value) {
+					target[key] = value;
+					result.view.width(setWidth_smart(element,widthNode)).run();
+					return true;
+				}
+			});	
+			initAndListen('show_scatter_graph', 'Scatter_Options' + element, result,element);
+			initAndListen('show_hist_graph', 'Hist_Options' + element, result,element);
+			initAndListen('show_hzbox_graphs', 'Violin_Options' + element, result,element);
+			initAndListen('show_grid_graphs', 'Grid_Options' + element, result,element);
+			initAndListen('show_stacked_graphs', 'Stacked_Options' + element, result,element);
+			initAndListen('show_box_graphs', 'Violin_Options' + element, result,element);
+			var checkbox = document.querySelector('#Interactive_'+element + '> div > label > input[type=checkbox]');
+			var DownloadCSVNode=document.querySelector('#Export_CSV'+element);
+
+			DownloadCSVNode.addEventListener('click', function(e) {  
+				var ds=result.view.data('mydata');
+				json2csv('crossex.'+element+'.csv',ds)
+			}, false);
+			checkbox.addEventListener('change', (event) => {
+				var new_signals_ar=["X_Axis","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","LogY_","Jitter_" ,"Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point_Size","Min_Point_Size","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Include_Only","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Manual_Color","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Plot_Padding","Title_Height","Xaxis_Height","RowHead_Width","Row_Height","Maximum_Facets","Legend_Height","Legend_Cols"];			
+				for (i = 0; i < new_signals_ar.length; i++) {
+					spec.signals[Index(spec.signals, new_signals_ar[i])]['value']=result.view.signal(new_signals_ar[i])
+				}
+				result.finalize();
+				delete result.view;
+				delete result.spec;
+				delete result.vgSpec;
+				delete result.finalize;
+				if (event.currentTarget.checked) {
+					spec.signals[Index(spec.signals, 'xcur')]['on']=[{"events": "mousedown, touchstart, touchend","update": "slice(xdom)"}];
+					spec.signals[Index(spec.signals, 'ycur')]['on']=[{"events": "mousedown, touchstart, touchend","update": "slice(ydom)"}];
+					spec.signals[Index(spec.signals, 'Interactive_')]['value']=true;
+					spec.signals[Index(spec.signals, 'delta')]['on']=[{"events": [{"source": "scope","type": "mousemove","consume": true,"between": [{"type": "mousedown"},{"source": "scope", "type": "mouseup"}]},{"type": "touchmove","consume": true,"filter": "event.touches.length === 1"}],"update":  "down ? [x()-down[0], y()-down[1]] : [0,0]"}];
+					spec.signals[Index(spec.signals, 'anchor')]['on']=[{"events": "wheel","update": "[invert('x_cont_scale', x()), invert('y_cont_scale', y())]"},{"events": {"type": "touchstart","filter": "event.touches.length===2"},"update": "[(xdom[0] + xdom[1]) / 2, (ydom[0] + ydom[1]) / 2]"}];
+					spec.signals[Index(spec.signals, 'zoom')]['on']=[{"events": "wheel!","force": true,"update": "pow(1.001, event.deltaY * pow(16, event.deltaMode))"},{"events": {"signal": "dist2"},"force": true,"update": "dist1 / dist2"}];
+					spec.signals[Index(spec.signals, 'dist1')]['on']=[{"events": {"type": "touchstart","filter": "event.touches.length===2"},"update": "pinchDistance(event)"},{"events": {"signal": "dist2"}, "update": "dist2"}];
+					spec.signals[Index(spec.signals, 'dist2')]['on']=[{"events": {"type": "touchmove","consume": true,"filter": "event.touches.length===2"},"update": "pinchDistance(event)"}];
+					spec.signals[Index(spec.signals, 'xdom')]['on']=[{"events": {"signal": "delta"},"update": "[xcur[0] + span(xcur) * delta[0] / Plot_Width, xcur[1] + span(xcur) * delta[0] / Plot_Width]"},{"events": {"signal": "zoom"},"update": "[anchor[0] + (xdom[0] - anchor[0]) * zoom, anchor[0] + (xdom[1] - anchor[0]) * zoom]"}];
+					spec.signals[Index(spec.signals, 'ydom')]['on']=[{"events": {"signal": "delta"},"update": "[ycur[0] + span(ycur) * delta[1] / Plot_Height, ycur[1] + span(ycur) * delta[1] / Plot_Height]"},{"events": {"signal": "zoom"},"update": "[anchor[1] + (ydom[0] - anchor[1]) * zoom, anchor[1] + (ydom[1] - anchor[1]) * zoom]"}];
+					spec.signals[Index(spec.signals, 'down')]['on']=[{"events": "touchend", "update": "down"},{"events": "mousedown, touchstart","update": "xy()"}];
+					drawGraph(element,spec,widthNode,hide_panel,editable,exportable);
+				} else {
+					delete spec.signals[Index(spec.signals, 'xcur')]['on'];
+					spec.signals[Index(spec.signals, 'Interactive_')]['value']=false;
+					delete spec.signals[Index(spec.signals, 'ycur')]['on'];
+					delete spec.signals[Index(spec.signals, 'delta')]['on'];
+					delete spec.signals[Index(spec.signals, 'anchor')]['on'];
+					delete spec.signals[Index(spec.signals, 'zoom')]['on'];
+					delete spec.signals[Index(spec.signals, 'dist1')]['on'];
+					delete spec.signals[Index(spec.signals, 'dist2')]['on'];
+					delete spec.signals[Index(spec.signals, 'xdom')]['on'];
+					delete spec.signals[Index(spec.signals, 'ydom')]['on'];
+					delete spec.signals[Index(spec.signals, 'down')]['on'];
+					drawGraph(element,spec,widthNode,hide_panel,editable,exportable);
+				}
+				return;
+			});	
+		}		
 	}).catch(console.error);
 }
