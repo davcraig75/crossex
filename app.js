@@ -41,6 +41,7 @@ var data = {
   demo: itg_comp("src/penguins.csv"),
   cc_css: itg_comp("src/cc_styles.css"),
   ext_styles:itg_comp("src/ext_styles.css"),
+  save_icon: itg_comp("src/saveicon.svg"),
   body: itg_comp("views/body.ejs"),
   crossex_html: itg_comp("views/crossex_html.ejs"),
   crossex_spec: itg_comp("views/crossex."+pjson.version+".vg.json"),

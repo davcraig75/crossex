@@ -38,11 +38,9 @@ var json2csv = function json2csv(filename,json) {
     csv.unshift(fields.join(',')) // add header column
     csv = csv.join('\r\n');
 	var csvData = new Blob([csv], { type: 'text/csv' }); 
-
 	var a = document.createElement('a')
 	var csvUrl = URL.createObjectURL(csvData);
-	a.href =  csvUrl;
-    
+	a.href =  csvUrl;    
     a.download = filename;
     document.body.appendChild(a);
     a.click();  // IE: "Access is denied"; see: https://connect.microsoft.com/IE/feedback/details/797361/ie-10-treats-blob-url-as-cross-origin-and-denies-access
@@ -287,7 +285,9 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 	}).then(function(result) {
 		window.addEventListener('resize', function(event) {
 			result.view.width(setWidth_smart(element,widthNode)).run();
-		});			
+		});	
+		var save_icon=document.querySelector("#view_crossex"+ element+" > details > summary")	
+		save_icon.innerHTML=itg_decomp("<%=save_icon%>");
 		if (!hide_panel) {
 			ccPanelProxy[element] = new Proxy(ccPanel, {
 				set: function (target, key, value) {

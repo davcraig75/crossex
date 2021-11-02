@@ -225,8 +225,10 @@ div.vega-bind > label > input[type="text"] {
 }
 
 .vega-embed summary svg {
-    width: 10px !important;
-    height: 10px !important;
+    width: 16px !important;
+    height: 16px !important;
+    opacity: 0.3 !important;
+    transition: opacity 0.4s ease-in !important;
 }
 .vega-embed.has-actions {
 	padding: 0px !important;
@@ -234,17 +236,17 @@ div.vega-bind > label > input[type="text"] {
 .vega-embed summary {
 	list-style: none !important;
     position: absolute !important;
-    top: 16px !important;
-    right: 16px!important;
-    padding: 2px !important;
+    top: 24px !important;
+    right: 24px!important;
+    padding: 3px !important;
     z-index: 1000 !important;
     background: white !important;
     box-shadow: 1px 1px 1px rgb(0 0 0 / 10%) !important;
     color: #aaa !important;
-    border: 0.5px solid #aaa !important;
-    border-radius: 999px !important;
-    opacity: 0.2 !important;
-    /* transition: opacity 0.4s ease-in; */
+    border: 0.2pxpx solid #aaa !important;
+    border-radius: 3px !important;
+    opacity: 0.3 !important;
+    transition: opacity 0.4s ease-in !important;
     /* outline: none; */
     cursor: pointer;
     line-height: 0px;
