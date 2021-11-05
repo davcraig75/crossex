@@ -1,5 +1,8 @@
 <%-  include ../src/lz-string.js  %>
 document.getElementById("crossex_app").innerHTML= "<style type='text/css'>"+itg_decomp("<%=ext_styles%>")+"</style>"+"<div class='cc cc-page' id='crossex'>"+itg_decomp("<%=body%>")+"</div>";
 var crossex_editor=false;
+<%-  include ../src/vega.min.js  %>
+<%-  include ../src/vega-embed-cc.js  %>
 <%-  include crossex_base.js  %>
 <%-  include crossex_ext.js  %>
+

@@ -12,7 +12,7 @@ var debug = require("debug")("ripple:server");
 const fs = require("fs");
 const app = express();
 require("dotenv").config();
-var port = normalizePort(process.env.API_PORT || "3001");
+var port = normalizePort(process.env.API_PORT || "8080");
 var version = process.env.VERSION;
 app.set("port", port);
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -38,6 +38,7 @@ var itg_engz = function(data) {
 
 var data = {
   min_smartplot: [],
+  orien:itg_comp("src/Orien.master.2021.txt"),
   demo: itg_comp("src/penguins.csv"),
   cc_css: itg_comp("src/cc_styles.css"),
   ext_styles:itg_comp("src/ext_styles.css"),

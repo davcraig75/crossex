@@ -266,9 +266,6 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 		spec.signals[Index(spec.signals, 'ydom')]['on']=[{"events": {"signal": "delta"},"update": "[ycur[0] + span(ycur) * delta[1] / Plot_Height, ycur[1] + span(ycur) * delta[1] / Plot_Height]"},{"events": {"signal": "zoom"},"update": "[anchor[1] + (ydom[0] - anchor[1]) * zoom, anchor[1] + (ydom[1] - anchor[1]) * zoom]"}];
 		spec.signals[Index(spec.signals, 'down')]['on']=[{"events": "touchend", "update": "down"},{"events": "mousedown, touchstart","update": "xy()"}];
 	}
-	if (spec.signals[Index(spec.signals, 'Export_CSV')]['value']==true && exportable) {
-		document.querySelector('#Export_CSV'+element).style.display = "block";		
-	}
 	vegaEmbed('#view_crossex' + element, spec, {
 		renderer: 'canvas',
 		width: setWidth_smart(element,widthNode),
@@ -276,6 +273,7 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 		warn: false,
 		actions: {
 			export: true,
+			csv:true,
 			source: false,
 			editor: editable,
 			editorURL: "https://itg.usc.edu/editor",
@@ -285,9 +283,11 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 	}).then(function(result) {
 		window.addEventListener('resize', function(event) {
 			result.view.width(setWidth_smart(element,widthNode)).run();
-		});	
+		});
+		//initialize instance
+
 		var save_icon=document.querySelector("#view_crossex"+ element+" > details > summary")	
-		save_icon.innerHTML=itg_decomp("<%=save_icon%>");
+		save_icon.innerHTML="<div id='testing'>"+itg_decomp("<%=save_icon%>")+"</div>";
 		if (!hide_panel) {
 			ccPanelProxy[element] = new Proxy(ccPanel, {
 				set: function (target, key, value) {
@@ -303,9 +303,9 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 			initAndListen('show_stacked_graphs', 'Stacked_Options' + element, result,element);
 			initAndListen('show_box_graphs', 'Violin_Options' + element, result,element);
 			var checkbox = document.querySelector('#Interactive_'+element + '> div > label > input[type=checkbox]');
-			var DownloadCSVNode=document.querySelector('#Export_CSV'+element);
-
+			var DownloadCSVNode=document.querySelector("#view_crossex"+element+" > details > div > a:nth-child(1)");
 			DownloadCSVNode.addEventListener('click', function(e) {  
+				console.log('clicked');
 				var ds=result.view.data('mydata');
 				json2csv('crossex.'+element+'.csv',ds)
 			}, false);
@@ -348,6 +348,22 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 				}
 				return;
 			});	
-		}		
+			introJs().setOptions({
+				steps: [{
+				  title: 'Welcome',
+				  intro: 'Hello World! 👋'
+				},
+				{
+				  element: document.querySelector("#Layer1"),
+				  intro: 'This step focuses on an image'
+				},
+				{
+				  title: 'Farewell!',
+				  element: document.querySelector("#Charts_tablinkssmartplot_id"),
+				  intro: 'And this is our final step!'
+				}]
+			  }).start();
+		}	
+			
 	}).catch(console.error);
 }

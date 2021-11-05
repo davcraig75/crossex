@@ -4475,7 +4475,7 @@
     {
       "name": "show_variant_legends",
       "values": [1],
-      "transform": [{"type": "filter", "expr": "show_explorer"}]
+      "transform": [{"type": "filter", "expr": "show_explorer && false"}]
     },
     {
       "name": "graph_boxplots",
