@@ -36,12 +36,35 @@ var itg_engz = function(data) {
   return itgz.compressToEncodedURIComponent(JSON.stringify(data)).toString();
 };
 
+d3 = require("./src/d3-dsv.v1.min.js");
+
+/////////////////////////////////////////////////////////////////////////////////
+// Convert csv to json
+//////////////////////////////////////////////////////////////////////////////////
+
+
+
 var data = {
   min_smartplot: [],
   orien:itg_comp("src/Orien.master.2021.txt"),
   demo: itg_comp("src/penguins.csv"),
   cc_css: itg_comp("src/cc_styles.css"),
   ext_styles:itg_comp("src/ext_styles.css"),
+  save_icon: itg_comp("src/saveicon.svg"),
+  body: itg_comp("views/body.ejs"),
+  crossex_html: itg_comp("views/crossex_html.ejs"),
+  crossex_spec: itg_comp("views/crossex."+pjson.version+".vg.json"),
+  itgversion: pjson.version
+};
+
+var file_str=fs.readFileSync("src/penguins.csv", "utf8");
+dat_json = d3.csvParse(file_str, d3.autoType);
+var template_data = {
+  min_smartplot: [],
+  orien:itg_engz(dat_json),
+  cc_css: itg_comp("src/cc_styles.css"),
+  bootstrap_css:itg_comp("src/bootstrap.min.css"),
+  jqueryui_css:itg_comp("src/jquery-ui.css"),
   save_icon: itg_comp("src/saveicon.svg"),
   body: itg_comp("views/body.ejs"),
   crossex_html: itg_comp("views/crossex_html.ejs"),
@@ -62,6 +85,9 @@ app.get("/", function(req, res) {
   res.render("stand_alone.ejs", data);
 });
 
+app.get("/template", function(req, res) {
+  res.render("template.ejs", template_data);
+});
 //////////////////////////////////////////////////////////////////////////////////
 // Compile Javascript
 //////////////////////////////////////////////////////////////////////////////////

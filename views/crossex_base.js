@@ -28,7 +28,6 @@ var json2csv = function json2csv(filename,json) {
             }
         });
     }	
-	console.log(fields);
     var replacer = function(key, value) { return value === null ? '' : value } 
     var csv = json.map(function(row){
         return fields.map(function(fieldName){
@@ -94,11 +93,11 @@ function ccOpenCity(evt, cityName,element) {
 	}
 	document.getElementById(cityName).style.display = "block";
 	ccPanelProxy[element][element]=document.getElementById(cityName).offsetWidth;
-	if(cityName=='None'+element) {
-		document.getElementById("cc_tab" + element).style.opacity="0.5"
-	} else {
-		document.getElementById("cc_tab" + element).style.opacity="1"
-	}
+	//if(cityName=='None'+element) {
+	//	document.getElementById("cc_tab" + element).style.opacity="0.5"
+	//} else {
+	//	document.getElementById("cc_tab" + element).style.opacity="1"
+	//}
 	evt.currentTarget.className += " active";
 }
 
@@ -191,6 +190,8 @@ var crossex = function crossex(element, data, options,widthid) {
 				continue; 
 			}
 			var index = Index(spec.signals, repSignalsJson[i].name);
+
+			if (!repSignalsJson[i].hasOwnProperty(name)){console.log(repSignalsJson[i].name)}
 			spec.signals[index].value = repSignalsJson[i].value;
 			if (repSignalsJson[i].bind != null) {
 				if (repSignalsJson[i].bind.element != null) {
@@ -286,8 +287,8 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 		});
 		//initialize instance
 
-		var save_icon=document.querySelector("#view_crossex"+ element+" > details > summary")	
-		save_icon.innerHTML="<div id='testing'>"+itg_decomp("<%=save_icon%>")+"</div>";
+		var save_icon=document.querySelector("#view_crossex"+ element+" > details > summary");
+		save_icon.innerHTML="<div id='Exporting'>"+itg_decomp("<%=save_icon%>")+"</div>";
 		if (!hide_panel) {
 			ccPanelProxy[element] = new Proxy(ccPanel, {
 				set: function (target, key, value) {
@@ -305,7 +306,6 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 			var checkbox = document.querySelector('#Interactive_'+element + '> div > label > input[type=checkbox]');
 			var DownloadCSVNode=document.querySelector("#view_crossex"+element+" > details > div > a:nth-child(1)");
 			DownloadCSVNode.addEventListener('click', function(e) {  
-				console.log('clicked');
 				var ds=result.view.data('mydata');
 				json2csv('crossex.'+element+'.csv',ds)
 			}, false);
@@ -348,21 +348,21 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 				}
 				return;
 			});	
-			introJs().setOptions({
-				steps: [{
-				  title: 'Welcome',
-				  intro: 'Hello World! 👋'
-				},
-				{
-				  element: document.querySelector("#Layer1"),
-				  intro: 'This step focuses on an image'
-				},
-				{
-				  title: 'Farewell!',
-				  element: document.querySelector("#Charts_tablinkssmartplot_id"),
-				  intro: 'And this is our final step!'
-				}]
-			  }).start();
+			//introJs().setOptions({
+			//	steps: [{
+			//	  title: 'Welcome',
+			//	  intro: 'Hello World! 👋'
+			//	},
+			//	{
+			//	  element: document.querySelector("#Layer1"),
+			//	  intro: 'This step focuses on an image'
+//				},
+//				{
+//				  title: 'Farewell!',
+//				  element: document.querySelector("#Charts_tablinkssmartplot_id"),
+//				  intro: 'And this is our final step!'
+////				}]
+	//		  }).start();
 		}	
 			
 	}).catch(console.error);

@@ -4991,7 +4991,7 @@
       if (isArray(value)) {
         return `[${value.map(v => valueToHtml(isString(v) ? v : stringify(v, maxDepth))).join(', ')}]`;
       }
-      const exclude_con = ["O_Value","Row_Value","None","Xstr","Count", "Ystr", "Cstr", "X_Value","Y_Value","Color_Value","Opacity_Value","Size_Value","Row_Valueu","Col_Value"];
+      const exclude_con = ["value","O_Value","Row_Value","None","Xstr","Count", "Ystr", "Cstr", "X_Value","Y_Value","Color_Value","Opacity_Value","Size_Value","Row_Valueu","Col_Value"];
 
 
       if (isObject(value)) {
@@ -5336,30 +5336,34 @@
   position: relative;
   display: inline-block;
   box-sizing: border-box;
+  
 }
 .vega-embed.has-actions {
-  padding-right: 38px;
+  padding: 0px;
 }
 .vega-embed details:not([open]) > :not(summary) {
   display: none !important;
 }
 .vega-embed summary {
   list-style: none;
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 6px;
+  position: absolute !important;
+  top: 24px;
+  right: 24px;
+  padding: 3px;
   z-index: 1000;
   background: white;
-  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-  color: #1b1e23;
-  border: 1px solid #aaa;
-  border-radius: 999px;
-  opacity: 0.2;
+  box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
+  color: #ddd;
+  border: 0.2px solid #DDD;
+  border-radius: 3px;
+  opacity: 0.4;
   transition: opacity 0.4s ease-in;
   outline: none;
   cursor: pointer;
   line-height: 0px;
+}
+.vega-embed summary:hover {
+  opacity:0.7;
 }
 .vega-embed summary::-webkit-details-marker {
   display: none;
@@ -5368,27 +5372,28 @@
   box-shadow: #aaa 0px 0px 0px 1px inset;
 }
 .vega-embed summary svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
 }
 .vega-embed details[open] summary {
   opacity: 0.7;
 }
-.vega-embed:hover summary, .vega-embed:focus summary {
+.vega-embed:focus summary {
   opacity: 1 !important;
   transition: opacity 0.2s ease;
 }
+
 .vega-embed .vega-actions {
   position: absolute;
   z-index: 1001;
-  top: 35px;
-  right: -9px;
+  top: 20px;
+  right: 3px;
   display: flex;
   flex-direction: column;
-  padding-bottom: 8px;
-  padding-top: 8px;
+  padding-bottom: 3px;
+  padding-top: 3px;
   border-radius: 4px;
-  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.2);
+  box-shadow:box-shadow: 0 1px 2px 0 rgb(0 0 0 / 20%);
   border: 1px solid #d9d9d9;
   background: white;
   animation-duration: 0.15s;
@@ -5397,9 +5402,9 @@
   text-align: left;
 }
 .vega-embed .vega-actions a {
-  padding: 8px 16px;
+  padding: 2px 4px;
   font-family: sans-serif;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
   color: #434a56;
@@ -5607,7 +5612,7 @@
       editor: true
     };
     const I18N = {
-      CLICK_TO_VIEW_ACTIONS: 'Click to view actions',
+      CLICK_TO_VIEW_ACTIONS: 'Click To Export Pics/Data',
       COMPILED_ACTION: 'View Compiled Vega',
       EDITOR_ACTION: 'Open in Vega Editor',
       PNG_ACTION: 'Save as PNG',
@@ -5930,8 +5935,9 @@
           details.title = i18n.CLICK_TO_VIEW_ACTIONS;
           element.append(details);
           wrapper = details;
-          const summary = document.createElement('summary');
-          summary.innerHTML = SVG_CIRCLES;
+          const summary = document.createElement('summary');     
+          //summary.innerHTML = SVG_CIRCLES;
+
           details.append(summary);
 
           documentClickHandler = ev => {

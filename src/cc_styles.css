@@ -77,7 +77,7 @@ p.itg-emph {
     border-top: 0.5px solid #AAA;
     width: 18px;
     height: inherit;
-	opacity:0.5;
+	opacity:1;
     border-top-left-radius: 4px;
     border-bottom-left-radius: 4px;
     margin: 0;
@@ -95,14 +95,14 @@ p.itg-emph {
 button.cc_tablinks>img {
 	width: 14px;
 	padding-right: 4px;
+	transition: 0.05s;
 	opacity:0.75;
 }	
 button.cc_tablinks:hover>img {
 	width: 20px;
+	transition: 0.05s;
 	opacity:1;
 }
-
-
 
 .cc_tab button {
     display: block;
@@ -124,8 +124,8 @@ button.active.cc_tablinks>img {
 	opacity:1;
 }
 .cc_tab button:hover {
+	opacity:1;
     background-color: #eee;
-    box-shadow: -1px 1px 4px 0px #843939;
 }
 .cc_tab button.active {
     background-color: #eee;
@@ -160,15 +160,275 @@ button.active.cc_tablinks>img {
     display: inline-block;
     vertical-align: top;
 }
-.cc_panel-top {
-	opacity: 0.5;
-}
-.cc_panel-top:hover {
+
+/* -------------------------------------------------------------------
+  crossextip
+  Modern, lightweight css-only tooltips
+  Just 1kb minified and gzipped
+  @author Ghosh
+  @package crossextip
+----------------------------------------------------------------------
+  1. Base Styles
+  2. Direction Modifiers
+  3. Position Modifiers
+--------------------------------------------------------------------*/
+
+
+/* ------------------------------------------------
+  [1] Base Styles
+-------------------------------------------------*/
+
+[aria-label][role~="tooltip"] {
+	position: relative;
+  }
+  
+  [aria-label][role~="tooltip"]::before,
+  [aria-label][role~="tooltip"]::after {
+	transform: translate3d(0, 0, 0);
+	-webkit-backface-visibility: hidden;
+	backface-visibility: hidden;
+	will-change: transform;
+	opacity: 0;
+	pointer-events: none;
+	transition: all var(--crossextip-transition-duration, .18s) var(--crossextip-transition-easing, ease-in-out) var(--crossextip-transition-delay, 0s);
+	position: absolute;
+	box-sizing: border-box;
+	z-index: 10;
+	transform-origin: top;
+  }
+  
+  [aria-label][role~="tooltip"]::before {
+	background-size: 100% auto !important;
+	content: "";
+  }
+  
+  [aria-label][role~="tooltip"]::after {
+	background: rgba(17, 17, 17, .9);
+	border-radius: 4px;
+	color: #ffffff;
+	content: attr(aria-label);
+	font-size: var(--crossextip-font-size, 13px);
+	font-weight: var(--crossextip-font-weight, normal);
+	text-transform: var(--crossextip-text-transform, none);
+	padding: .5em 1em;
+	white-space: nowrap;
+	box-sizing: content-box;
+  }
+  
+  [aria-label][role~="tooltip"]:hover::before,
+  [aria-label][role~="tooltip"]:hover::after {
 	opacity: 1;
-}
-.cc_export-csv {
-	display:none;opacity:0.7;width:90px;font-weight:bolder; font-size: 10px;position: absolute;bottom: 10px;background: #DDD;border-radius: 5px;border: solid #AAA 1px;border-right: 2px solid #777;border-bottom: 2px solid #777;
-}
+	pointer-events: auto;
+  }
+  
+  
+  
+  /* ------------------------------------------------
+	[2] Position Modifiers
+  -------------------------------------------------*/
+  
+  [role~="tooltip"][data-crossextip-position|="top"]::before {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2236px%22%20height%3D%2212px%22%3E%3Cpath%20fill%3D%22rgba%2817,%2017,%2017,%200.9%29%22%20transform%3D%22rotate%280%29%22%20d%3D%22M2.658,0.000%20C-13.615,0.000%2050.938,0.000%2034.662,0.000%20C28.662,0.000%2023.035,12.002%2018.660,12.002%20C14.285,12.002%208.594,0.000%202.658,0.000%20Z%22/%3E%3C/svg%3E") no-repeat;
+	height: 6px;
+	width: 18px;
+	margin-bottom: 5px;
+  }
+  
+  [role~="tooltip"][data-crossextip-position|="top"]::after {
+	margin-bottom: 11px;
+  }
+  
+  [role~="tooltip"][data-crossextip-position|="top"]::before {
+	transform: translate3d(-50%, 0, 0);
+	bottom: 100%;
+	left: 50%;
+  }
+  
+  [role~="tooltip"][data-crossextip-position|="top"]:hover::before {
+	transform: translate3d(-50%, -5px, 0);
+  }
+  
+  [role~="tooltip"][data-crossextip-position|="top"]::after {
+	transform: translate3d(-50%, 0, 0);
+	bottom: 100%;
+	left: 50%;
+  }
+  
+  [role~="tooltip"][data-crossextip-position="top"]:hover::after {
+	transform: translate3d(-50%, -5px, 0);
+  }
+  
+  /* ------------------------------------------------
+	[2.1] Top Left
+  -------------------------------------------------*/
+  [role~="tooltip"][data-crossextip-position="top-left"]::after {
+	transform: translate3d(calc(-100% + 16px), 0, 0);
+	bottom: 100%;
+  }
+  
+  [role~="tooltip"][data-crossextip-position="top-left"]:hover::after {
+	transform: translate3d(calc(-100% + 16px), -5px, 0);
+  }
+  
+  
+  /* ------------------------------------------------
+	[2.2] Top Right
+  -------------------------------------------------*/
+  [role~="tooltip"][data-crossextip-position="top-right"]::after {
+	transform: translate3d(calc(0% + -16px), 0, 0);
+	bottom: 100%;
+  }
+  
+  [role~="tooltip"][data-crossextip-position="top-right"]:hover::after {
+	transform: translate3d(calc(0% + -16px), -5px, 0);
+  }
+  
+  
+  /* ------------------------------------------------
+	[2.3] Bottom
+  -------------------------------------------------*/
+  [role~="tooltip"][data-crossextip-position|="bottom"]::before {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2236px%22%20height%3D%2212px%22%3E%3Cpath%20fill%3D%22rgba%2817,%2017,%2017,%200.9%29%22%20transform%3D%22rotate%28180%2018%206%29%22%20d%3D%22M2.658,0.000%20C-13.615,0.000%2050.938,0.000%2034.662,0.000%20C28.662,0.000%2023.035,12.002%2018.660,12.002%20C14.285,12.002%208.594,0.000%202.658,0.000%20Z%22/%3E%3C/svg%3E") no-repeat;
+	height: 6px;
+	width: 18px;
+	margin-top: 5px;
+	margin-bottom: 0;
+  }
+  
+  [role~="tooltip"][data-crossextip-position|="bottom"]::after {
+	margin-top: 11px;
+  }
+  
+  [role~="tooltip"][data-crossextip-position|="bottom"]::before {
+	transform: translate3d(-50%, -10px, 0);
+	bottom: auto;
+	left: 50%;
+	top: 100%;
+  }
+  
+  [role~="tooltip"][data-crossextip-position|="bottom"]:hover::before {
+	transform: translate3d(-50%, 0, 0);
+  }
+  
+  [role~="tooltip"][data-crossextip-position|="bottom"]::after {
+	transform: translate3d(-50%, -10px, 0);
+	top: 100%;
+	left: 50%;
+  }
+  
+  [role~="tooltip"][data-crossextip-position="bottom"]:hover::after {
+	transform: translate3d(-50%, 0, 0);
+  }
+  
+  
+  /* ------------------------------------------------
+	[2.4] Bottom Left
+  -------------------------------------------------*/
+  [role~="tooltip"][data-crossextip-position="bottom-left"]::after {
+	transform: translate3d(calc(-100% + 16px), -10px, 0);
+	top: 100%;
+  }
+  
+  [role~="tooltip"][data-crossextip-position="bottom-left"]:hover::after {
+	transform: translate3d(calc(-100% + 16px), 0, 0);
+  }
+  
+  
+  /* ------------------------------------------------
+	[2.5] Bottom Right
+  -------------------------------------------------*/
+  [role~="tooltip"][data-crossextip-position="bottom-right"]::after {
+	transform: translate3d(calc(0% + -16px), -10px, 0);
+	top: 100%;
+  }
+  
+  [role~="tooltip"][data-crossextip-position="bottom-right"]:hover::after {
+	transform: translate3d(calc(0% + -16px), 0, 0);
+  }
+  
+  
+  /* ------------------------------------------------
+	[2.6] Left
+  -------------------------------------------------*/
+  [role~="tooltip"][data-crossextip-position="left"]::before,
+  [role~="tooltip"][data-crossextip-position="left"]::after {
+	bottom: auto;
+	left: auto;
+	right: 100%;
+	top: 50%;
+	transform: translate3d(10px, -50%, 0);
+  }
+  
+  [role~="tooltip"][data-crossextip-position="left"]::before {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2212px%22%20height%3D%2236px%22%3E%3Cpath%20fill%3D%22rgba%2817,%2017,%2017,%200.9%29%22%20transform%3D%22rotate%28-90%2018%2018%29%22%20d%3D%22M2.658,0.000%20C-13.615,0.000%2050.938,0.000%2034.662,0.000%20C28.662,0.000%2023.035,12.002%2018.660,12.002%20C14.285,12.002%208.594,0.000%202.658,0.000%20Z%22/%3E%3C/svg%3E") no-repeat;
+	height: 18px;
+	width: 6px;
+	margin-right: 5px;
+	margin-bottom: 0;
+  }
+  
+  [role~="tooltip"][data-crossextip-position="left"]::after {
+	margin-right: 11px;
+  }
+  
+  [role~="tooltip"][data-crossextip-position="left"]:hover::before,
+  [role~="tooltip"][data-crossextip-position="left"]:hover::after {
+	transform: translate3d(0, -50%, 0);
+  }
+  
+  
+  /* ------------------------------------------------
+	[2.7] Right
+  -------------------------------------------------*/
+  [role~="tooltip"][data-crossextip-position="right"]::before,
+  [role~="tooltip"][data-crossextip-position="right"]::after {
+	bottom: auto;
+	left: 100%;
+	top: 50%;
+	transform: translate3d(-10px, -50%, 0);
+  }
+  
+  [role~="tooltip"][data-crossextip-position="right"]::before {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2212px%22%20height%3D%2236px%22%3E%3Cpath%20fill%3D%22rgba%2817,%2017,%2017,%200.9%29%22%20transform%3D%22rotate%2890%206%206%29%22%20d%3D%22M2.658,0.000%20C-13.615,0.000%2050.938,0.000%2034.662,0.000%20C28.662,0.000%2023.035,12.002%2018.660,12.002%20C14.285,12.002%208.594,0.000%202.658,0.000%20Z%22/%3E%3C/svg%3E") no-repeat;
+	height: 18px;
+	width: 6px;
+	margin-bottom: 0;
+	margin-left: 5px;
+  }
+  
+  [role~="tooltip"][data-crossextip-position="right"]::after {
+	margin-left: 11px;
+  }
+  
+  [role~="tooltip"][data-crossextip-position="right"]:hover::before,
+  [role~="tooltip"][data-crossextip-position="right"]:hover::after {
+	transform: translate3d(80px, -50%, 0);
+  }
+  
+  /* ------------------------------------------------
+	[3] Size
+  -------------------------------------------------*/
+  [role~="tooltip"][data-crossextip-size="small"]::after {
+	white-space: initial;
+	width: 80px;
+  }
+  
+  [role~="tooltip"][data-crossextip-size="medium"]::after {
+	white-space: initial;
+	width: 150px;
+  }
+  
+  [role~="tooltip"][data-crossextip-size="large"]::after {
+	white-space: initial;
+	width: 260px;
+  }
+
+  :root {
+	--crossextip-transition-duration: 0.5s;
+	--crossextip-transition-easing: ease-in-out;
+	--crossextip-font-size: 10px;
+	--crossextip-font-weight: bold;
+   }
 
 /* crossex –––––––––––––––––––––––––––––––––––––––––––––––––– */
 .vega-embed {
@@ -195,30 +455,17 @@ div.vega-bind select {
 	position: fixed !important;
 	z-index: 1000;
 	font-family: sans-serif;
-	font-size: 10px !important;
-	border-radius: 3px !important;
-	box-shadow: 2px 2px 0.5em rgba(0, 0, 0, 0.1) !important;
-	background-color: rgba(255, 255, 255, 0.95) !important;
-	border: 1px solid #dcdcdc !important;
+	font-size: xx-small !important;
+	border-radius: 3px;
+	box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+	background-color: rgba(255, 255, 255, 0.95);
+	border: 1px solid #dcdcdc;
 	color: black;
 }
 
 div.vega-bind > label > input[type="text"] {
     width: 60px !important;
     font-size: 10px !important;
-}
-#vg-tooltip-element {
-	visibility: hidden;
-	padding: 8px !important;
-	position: fixed;
-	z-index: 1000;
-	font-family: sans-serif;
-	font-size: 10px !important;
-	border-radius: 3px;
-	box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-	background-color: rgba(255, 255, 255, 0.95);
-	border: 1px solid #dcdcdc;
-	color: black;
 }
 #vg-tooltip-element table tr td {
 	overflow: hidden !important;
@@ -227,60 +474,6 @@ div.vega-bind > label > input[type="text"] {
 	padding-bottom: 0.5px !important;
 }
 
-.vega-embed summary svg {
-    width: 16px !important;
-    height: 16px !important;
-    opacity: 0.3 !important;
-    transition: opacity 0.4s ease-in !important;
-}
-.vega-embed.has-actions {
-	padding: 0px !important;
-}
-.vega-embed summary {
-	list-style: none !important;
-    position: absolute !important;
-    top: 24px !important;
-    right: 24px!important;
-    padding: 3px !important;
-    z-index: 1000 !important;
-    background: white !important;
-    box-shadow: 1px 1px 1px rgb(0 0 0 / 10%) !important;
-    color: #ddd !important;
-    border: 0.2px solid #DDD !important;
-    border-radius: 3px !important;
-    opacity: 0.2 !important;
-    transition: opacity 0.4s ease-in !important;
-    /* outline: none; */
-    cursor: pointer;
-    line-height: 0px;
-}
-.vega-embed .vega-actions {
-    position: absolute !important;
-    z-index: 1001 !important;
-    top: 20px !important;
-    right: 3px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    padding-bottom: 3px !important;
-    padding-top: 3px !important;
-    border-radius: 4px !important;
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 20%) !important;
-    border: 1px solid #d9d9d9 !important;
-    background: white !important;
-    animation-duration: 0.15s !important;
-    animation-name: scale-in !important;
-    animation-timing-function: cubic-bezier(0.2, 0, 0.13, 1.5) !important;
-    text-align: left !important;
-}
-.vega-embed .vega-actions a {
-    padding: 2px 4px !important;
-    font-family: sans-serif !important;
-    font-size: 12px !important;
-    font-weight: normal !important;
-    white-space: nowrap !important;
-    color: #434a56 !important;
-    text-decoration: none !important;
-}
 div.vega-bind > label > input[type="range"] {
 	height: 0px !important;
 	-webkit-appearance: none !important;
@@ -435,3 +628,125 @@ div.vega-bind > label > input[type="checkbox"] {
 	padding: initial !important;
 	border: initial !important;
 }
+/* Tables  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+
+/* Pivot –––––––––––––––––––––––––––––––––––––––––––––––––– */
+.pvtUi table {
+	font-size: x-small;
+	color: #000000;
+	border-collapse: collapse;
+	    border: 1px solid #dee2e6;
+		overflow: hidden;
+		text-overflow: ellipsis;
+
+}
+
+.pvtUi { 
+	width: 100%;     font-size: x-small;
+	border: 1px solid #dee2e6;
+}
+.pvtUi table > thead > tr > th {
+    color: #495057;
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+	box-sizing: border-box;
+	padding: 0.3rem;
+	text-align: center;
+	border-bottom: 2px solid #dee2e6;
+    margin: 0;
+}
+.pvtVertList { width: 15%; }
+.pvtAxisContainer, .pvtVals {
+    border: 1px solid #a2b1c6;
+    background: #f2f5fa;
+    padding: 5px;min-width: 20px;
+    min-height: 20px;
+}
+.pvtRenderers {
+    padding-left: 5px;
+    user-select: none;
+}
+.pvtUi table > tbody > tr> td {
+	border: 1px solid #dee2e6;
+	padding: 0.3rem;
+	text-align: center !important;
+}
+.pvtDropdown {
+    display: inline-block;
+    position: relative;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -ms-user-select: none;
+    margin: 3px;
+}
+.pvtDropdownCurrent {
+    text-align: left;
+    border: 1px solid #a2b1c6;
+    border-radius: 4px;
+    display: inline-block;
+    position: relative;
+    width: 210px;
+    box-sizing: border-box;
+    background: #fff;
+}
+.pvtDropdownValue {
+    padding: 2px 5px;
+    font-size: 12px;
+    text-align: left;
+}
+.pvtDropdownIcon {
+    float: right;
+    color: #a2b1c6;
+}
+.pvtHorizList li {
+    display: inline-block;
+}
+.pvtAxisContainer li {
+    padding: 8 px 6px;
+    list-style-type: none;
+    cursor: move;
+}
+.pvtAxisContainer li span.pvtAttr {
+    -webkit-text-size-adjust: 100%;
+    background: #f3f6fa;
+    border: 1px solid #c8d4e3;
+    padding: 2px 5px;
+    white-space: nowrap;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -ms-user-select: none;
+}
+
+
+/* CSS */
+.itg-button-pivot {
+  display: flex;
+  flex-direction: column;
+  font-size: smaller;
+  align-items: center;
+  padding:  4px 7px;
+  border-radius: 6px;
+  color: #3D3D3D;
+  background: #fff;
+  border: none;
+  box-shadow: 0.4px 0.75px 1px 0.5px rgb(0 0 0 / 30%);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.itg-button-pivot:focus {
+  box-shadow: 0px 0.5px 1px rgba(0, 0, 0, 0.1), 0px 0px 0px 3.5px rgba(58, 108, 217, 0.5);
+  outline: 0;
+}
+
+.itg-button-pivot:hover {
+    box-shadow: inset 0.4px 0.75px 1px 0.5px rgb(0 0 0 / 30%);
+    outline: 0;
+  }
