@@ -191,7 +191,7 @@ var crossex = function crossex(element, data, options,widthid) {
 			}
 			var index = Index(spec.signals, repSignalsJson[i].name);
 
-			if (!repSignalsJson[i].hasOwnProperty(name)){console.log(repSignalsJson[i].name)}
+			//if (!repSignalsJson[i].hasOwnProperty(name)){console.log(repSignalsJson[i].name)}
 			spec.signals[index].value = repSignalsJson[i].value;
 			if (repSignalsJson[i].bind != null) {
 				if (repSignalsJson[i].bind.element != null) {

@@ -5405,6 +5405,7 @@
   padding: 2px 4px;
   font-family: sans-serif;
   font-size: 12px;
+  line-height: 1;
   font-weight: 600;
   white-space: nowrap;
   color: #434a56;
