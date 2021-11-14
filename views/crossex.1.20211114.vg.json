@@ -453,6 +453,22 @@
       "bind": {"input": "checkbox", "element": "#Regression_-ccnm"}
     },
     {
+      "name": "Link",
+      "value": false,
+      "bind": {"input": "checkbox", "element": "#Link-ccnm"}
+    },  
+    {
+      "name": "LinkField",
+      "value": "",
+      "bind": {"input": "text", "element": "#LinkField-ccnm"}
+    },   
+    {
+      "name": "LinkURL",
+      "value": "",
+      "bind": {"input": "text", "element": "#LinkURL-ccnm"}
+    },     
+        
+    {
       "name": "Outliers_",
       "value": true,
       "bind": {"input": "checkbox", "element": "#Outliers_-ccnm"}
@@ -571,7 +587,7 @@
     {
       "name": "LogY_",
       "value": false,
-      "bind": {"input": "checkbox", "element": "#LogX_-ccnm"}
+      "bind": {"input": "checkbox", "element": "#LogY_-ccnm"}
     },
     {
       "name": "Palette",
@@ -603,6 +619,13 @@
           "RedGrey",
           "RedYellowBlue",
           "RedYellowGreen",
+          "darkblue",
+          "darkgold",
+          "darkred",
+          "lightgreyred",
+          "lightmulti",
+          "spectral",
+          "sinebow",
           "---Categorical---",
           "category20",
           "category10",
@@ -1843,7 +1866,7 @@
                           ],
                           "y": [
                             {
-                              "test": "LogX_",
+                              "test": "LogY_",
                               "scale": "y_cont_log_scale2",
                               "field": "Y_Value"
                             },
@@ -1853,6 +1876,9 @@
                           "size": {
                             "field": "Size_Value",
                             "scale": "size_scale"
+                          },
+                          "href": {
+                            "signal": "Link ? LinkURL+datum[LinkField] : false"
                           },
                           "opacity": {"signal": "Opacity_"},
                           "tooltip": {"signal": "datum"},

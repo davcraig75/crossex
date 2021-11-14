@@ -5347,7 +5347,7 @@
 .vega-embed summary {
   list-style: none;
   position: absolute !important;
-  top: 24px;
+  top: 16px;
   right: 24px;
   padding: 3px;
   z-index: 1000;
@@ -5936,7 +5936,10 @@
           details.title = i18n.CLICK_TO_VIEW_ACTIONS;
           element.append(details);
           wrapper = details;
-          const summary = document.createElement('summary');     
+          const summary = document.createElement('summary'); 
+          summary.setAttribute("aria-label", "Export Picture/Data");    
+          summary.setAttribute("data-crossextip-position", "left");
+          summary.setAttribute("role", "tooltip");    
           //summary.innerHTML = SVG_CIRCLES;
 
           details.append(summary);

@@ -77,11 +77,15 @@ p.itg-emph {
     border-top: 0.5px solid #AAA;
     width: 18px;
     height: inherit;
-	opacity:1;
+	opacity:0.5;
     border-top-left-radius: 4px;
     border-bottom-left-radius: 4px;
     margin: 0;
     z-index: 1;
+}
+.cc_tab:hover {
+	opacity:1;
+
 }
 .cc_tabscontent {
     width: min-content;
@@ -355,6 +359,7 @@ button.active.cc_tablinks>img {
 	bottom: auto;
 	left: auto;
 	right: 100%;
+	line-height: 1em;
 	top: 50%;
 	transform: translate3d(10px, -50%, 0);
   }
@@ -363,6 +368,7 @@ button.active.cc_tablinks>img {
 	background: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2212px%22%20height%3D%2236px%22%3E%3Cpath%20fill%3D%22rgba%2817,%2017,%2017,%200.9%29%22%20transform%3D%22rotate%28-90%2018%2018%29%22%20d%3D%22M2.658,0.000%20C-13.615,0.000%2050.938,0.000%2034.662,0.000%20C28.662,0.000%2023.035,12.002%2018.660,12.002%20C14.285,12.002%208.594,0.000%202.658,0.000%20Z%22/%3E%3C/svg%3E") no-repeat;
 	height: 18px;
 	width: 6px;
+	line-height:1em;
 	margin-right: 5px;
 	margin-bottom: 0;
   }
@@ -632,121 +638,63 @@ div.vega-bind > label > input[type="checkbox"] {
 
 /* Pivot –––––––––––––––––––––––––––––––––––––––––––––––––– */
 .pvtUi table {
-	font-size: x-small;
-	color: #000000;
 	border-collapse: collapse;
-	    border: 1px solid #dee2e6;
 		overflow: hidden;
 		text-overflow: ellipsis;
 
 }
 
 .pvtUi { 
-	width: 100%;     font-size: x-small;
-	border: 1px solid #dee2e6;
+	width: 100%;
 }
 .pvtUi table > thead > tr > th {
-    color: #495057;
-    background-color: #e9ecef;
-    border-color: #dee2e6;
 	box-sizing: border-box;
 	padding: 0.3rem;
 	text-align: center;
-	border-bottom: 2px solid #dee2e6;
     margin: 0;
 }
 .pvtVertList { width: 15%; }
 .pvtAxisContainer, .pvtVals {
-    border: 1px solid #a2b1c6;
-    background: #f2f5fa;
     padding: 5px;min-width: 20px;
     min-height: 20px;
 }
 .pvtRenderers {
-    padding-left: 5px;
     user-select: none;
 }
 .pvtUi table > tbody > tr> td {
-	border: 1px solid #dee2e6;
-	padding: 0.3rem;
 	text-align: center !important;
 }
 .pvtDropdown {
     display: inline-block;
     position: relative;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -khtml-user-select: none;
-    -ms-user-select: none;
     margin: 3px;
 }
 .pvtDropdownCurrent {
     text-align: left;
-    border: 1px solid #a2b1c6;
-    border-radius: 4px;
+
     display: inline-block;
     position: relative;
-    width: 210px;
     box-sizing: border-box;
-    background: #fff;
 }
 .pvtDropdownValue {
-    padding: 2px 5px;
-    font-size: 12px;
     text-align: left;
 }
 .pvtDropdownIcon {
     float: right;
-    color: #a2b1c6;
 }
 .pvtHorizList li {
     display: inline-block;
 }
 .pvtAxisContainer li {
-    padding: 8 px 6px;
     list-style-type: none;
     cursor: move;
 }
 .pvtAxisContainer li span.pvtAttr {
     -webkit-text-size-adjust: 100%;
-    background: #f3f6fa;
-    border: 1px solid #c8d4e3;
-    padding: 2px 5px;
     white-space: nowrap;
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    border-radius: 5px;
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -khtml-user-select: none;
     -ms-user-select: none;
 }
-
-
-/* CSS */
-.itg-button-pivot {
-  display: flex;
-  flex-direction: column;
-  font-size: smaller;
-  align-items: center;
-  padding:  4px 7px;
-  border-radius: 6px;
-  color: #3D3D3D;
-  background: #fff;
-  border: none;
-  box-shadow: 0.4px 0.75px 1px 0.5px rgb(0 0 0 / 30%);
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
-}
-
-.itg-button-pivot:focus {
-  box-shadow: 0px 0.5px 1px rgba(0, 0, 0, 0.1), 0px 0px 0px 3.5px rgba(58, 108, 217, 0.5);
-  outline: 0;
-}
-
-.itg-button-pivot:hover {
-    box-shadow: inset 0.4px 0.75px 1px 0.5px rgb(0 0 0 / 30%);
-    outline: 0;
-  }
