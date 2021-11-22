@@ -5356,6 +5356,7 @@
   color: #ddd;
   border: 0.2px solid #DDD;
   border-radius: 3px;
+  font-size:small;
   opacity: 0.4;
   transition: opacity 0.4s ease-in;
   outline: none;
