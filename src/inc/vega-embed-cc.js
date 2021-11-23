@@ -5347,13 +5347,13 @@
 .vega-embed summary {
   list-style: none;
   position: absolute !important;
-  top: 16px;
+  top: 20px;
   right: 24px;
   padding: 3px;
   z-index: 1000;
   background: white;
   box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
-  color: #ddd;
+  color: #000;
   border: 0.2px solid #DDD;
   border-radius: 3px;
   font-size:small;
@@ -5364,7 +5364,7 @@
   line-height: 0px;
 }
 .vega-embed summary:hover {
-  opacity:0.7;
+  opacity:1;
 }
 .vega-embed summary::-webkit-details-marker {
   display: none;
@@ -5373,14 +5373,14 @@
   box-shadow: #aaa 0px 0px 0px 1px inset;
 }
 .vega-embed summary svg {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
 }
 .vega-embed details[open] summary {
-  opacity: 0.7;
+  opacity: 0.8;
 }
 .vega-embed:focus summary {
-  opacity: 1 !important;
+  opacity: 0.8 !important;
   transition: opacity 0.2s ease;
 }
 
