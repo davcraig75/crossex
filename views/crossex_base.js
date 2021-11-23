@@ -250,7 +250,7 @@ var crossex = function crossex(element, data, options,widthid) {
 		spec.data[Index(spec.data, "mydata")].values = JSON.parse(JSON.stringify(data));
 	}
 	if (add_css) {
-		var css = itg_decomp("<%=cc_css%>"),
+		var css = itgz.decompressFromEncodedURIComponent("<%=cc_css%>"),
 		head = document.head || document.getElementsByTagName('head')[0],
 		style = document.createElement('style');
 		head.appendChild(style);
