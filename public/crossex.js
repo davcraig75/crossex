@@ -6314,7 +6314,7 @@ var crossex = function crossex(element, data, options,widthid) {
 			var index = Index(spec.signals, repSignalsJson[i].name);
 			
 
-			if (index>0){
+			if (index>=0){
 				spec.signals[index].value = repSignalsJson[i].value;
 				if (repSignalsJson[i].bind != null) {
 					if (repSignalsJson[i].bind.element != null) {
