@@ -1,8 +1,8 @@
 <%-  include ../src/lz-string.js  %>
 
 var add_css=true;
-var crossex_spec = JSON.parse(itg_decomp("<%-crossex_spec%>"));
-var crossex_html=itg_decomp("<%=crossex_html%>");
+var crossex_spec = JSON.parse(itgz.decompressFromEncodedURIComponent("<%-crossex_spec%>"));
+var crossex_html=itgz.decompressFromEncodedURIComponent("<%=crossex_html%>");
 crossex_html.replace("itgversion","<%-itgversion%>");
 var ccPanel,ccPanelProxy;
 ccPanelProxy={};
@@ -294,7 +294,7 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 		//initialize instance
 
 		var save_icon=document.querySelector("#view_crossex"+ element+" > details > summary");
-		save_icon.innerHTML="<div id='Exporting'>"+itg_decomp("<%=save_icon%>")+"</div>";
+		save_icon.innerHTML="<div id='Exporting'>"+itgz.decompressFromEncodedURIComponent("<%=save_icon%>")+"</div>";
 		if (!hide_panel) {
 			ccPanelProxy[element] = new Proxy(ccPanel, {
 				set: function (target, key, value) {
