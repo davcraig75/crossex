@@ -190,54 +190,58 @@ var crossex = function crossex(element, data, options,widthid) {
 				continue; 
 			}
 			var index = Index(spec.signals, repSignalsJson[i].name);
+			
 
-			//if (!repSignalsJson[i].hasOwnProperty(name)){console.log(repSignalsJson[i].name)}
-			spec.signals[index].value = repSignalsJson[i].value;
-			if (repSignalsJson[i].bind != null) {
-				if (repSignalsJson[i].bind.element != null) {
-					spec.signals[index].bind.element = repSignalsJson[i].bind.element;
-				}
-				if (repSignalsJson[i].bind.options != null) {
-					var headers = repSignalsJson[i].bind.options;
-					var finalheaders = [];
-					headers.forEach(function(element) {
-						var distinct = [...new Set(data.map(x => x[element]))];
-						var ln = distinct.length;
-						if (ln > 0) {							
-							if (repSignalsJson[i].name == "Facet_By" && ln < mymax) {
-								finalheaders.push(element);
-							} else if (repSignalsJson[i].name == "Filter_Out_From" && ln < mymax) {
-								finalheaders.push(element);
-							} else if (repSignalsJson[i].name == "Facet_Rows_By" && ln < mymax) {
-								finalheaders.push(element);
-							} else if (repSignalsJson[i].name == "Facet_Cols_By" && ln < mymax) {
-								finalheaders.push(element);
-							} else if (repSignalsJson[i].name == "Filter_Additional" && ln < mymax) {
-								finalheaders.push(element);
-							} else if (repSignalsJson[i].name == "Filter_By_Value" && ln < mymax) {
-								finalheaders.push(element);								
-							} else if (repSignalsJson[i].name == "Sum_By" ) {
-								finalheaders.push(element);								
-							} else if (repSignalsJson[i].name == "Size_By" ) {
-								finalheaders.push(element);
-							} else if (repSignalsJson[i].name == "X_Axis") {
-								finalheaders.push(element);
-							} else if (repSignalsJson[i].name == "Y_Axis") {
-								finalheaders.push(element);
-								if(ln<10000){mycols.push(element)};
-							} else if (repSignalsJson[i].name == "Color_By") {
-								finalheaders.push(element);
-							}
-						}
-					});
-					if (!finalheaders.includes.None) {
-						finalheaders.push("None");
-					}
-					spec.signals[index].bind.options = JSON.parse(JSON.stringify(finalheaders));
-				}
-			}
-			if (repSignalsJson[i].value != null) {
+			if (index>0){
 				spec.signals[index].value = repSignalsJson[i].value;
+				if (repSignalsJson[i].bind != null) {
+					if (repSignalsJson[i].bind.element != null) {
+						spec.signals[index].bind.element = repSignalsJson[i].bind.element;
+					}
+					if (repSignalsJson[i].bind.options != null) {
+						var headers = repSignalsJson[i].bind.options;
+						var finalheaders = [];
+						headers.forEach(function(element) {
+							var distinct = [...new Set(data.map(x => x[element]))];
+							var ln = distinct.length;
+							if (ln > 0) {							
+								if (repSignalsJson[i].name == "Facet_By" && ln < mymax) {
+									finalheaders.push(element);
+								} else if (repSignalsJson[i].name == "Filter_Out_From" && ln < mymax) {
+									finalheaders.push(element);
+								} else if (repSignalsJson[i].name == "Facet_Rows_By" && ln < mymax) {
+									finalheaders.push(element);
+								} else if (repSignalsJson[i].name == "Facet_Cols_By" && ln < mymax) {
+									finalheaders.push(element);
+								} else if (repSignalsJson[i].name == "Filter_Additional" && ln < mymax) {
+									finalheaders.push(element);
+								} else if (repSignalsJson[i].name == "Filter_By_Value" && ln < mymax) {
+									finalheaders.push(element);								
+								} else if (repSignalsJson[i].name == "Sum_By" ) {
+									finalheaders.push(element);								
+								} else if (repSignalsJson[i].name == "Size_By" ) {
+									finalheaders.push(element);
+								} else if (repSignalsJson[i].name == "X_Axis") {
+									finalheaders.push(element);
+								} else if (repSignalsJson[i].name == "Y_Axis") {
+									finalheaders.push(element);
+									if(ln<10000){mycols.push(element)};
+								} else if (repSignalsJson[i].name == "Color_By") {
+									finalheaders.push(element);
+								}
+							}
+						});
+						if (!finalheaders.includes.None) {
+							finalheaders.push("None");
+						}
+						spec.signals[index].bind.options = JSON.parse(JSON.stringify(finalheaders));
+					}
+				}
+				if (repSignalsJson[i].value != null) {
+					spec.signals[index].value = repSignalsJson[i].value;
+				}
+			} else {
+				console.log('name',repSignalsJson[i].name,'index',index);
 			}
 		}
 	}
