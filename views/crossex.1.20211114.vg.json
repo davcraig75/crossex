@@ -467,7 +467,11 @@
       "value": "",
       "bind": {"input": "text", "element": "#LinkURL-ccnm"}
     },     
-        
+    {
+      "name": "LinkTail",
+      "value": "",
+      "bind": {"input": "text", "element": "#LinkTail-ccnm"}
+    },         
     {
       "name": "Outliers_",
       "value": true,
@@ -1878,7 +1882,7 @@
                             "scale": "size_scale"
                           },
                           "href": {
-                            "signal": "Link ? LinkURL+datum[LinkField] : false"
+                            "signal": "Link ? LinkURL+datum[LinkField] + LinkTail: false"
                           },
                           "opacity": {"signal": "Opacity_"},
                           "tooltip": {"signal": "datum"},
