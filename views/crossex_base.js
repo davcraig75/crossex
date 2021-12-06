@@ -214,9 +214,7 @@ var crossex = function crossex(element, data, options,widthid) {
 								} else if (repSignalsJson[i].name == "Facet_Cols_By" && ln < mymax) {
 									finalheaders.push(element);
 								} else if (repSignalsJson[i].name == "Filter_Additional" && ln < mymax) {
-									finalheaders.push(element);
-								} else if (repSignalsJson[i].name == "Filter_By_Value" && ln < mymax) {
-									finalheaders.push(element);								
+									finalheaders.push(element);						
 								} else if (repSignalsJson[i].name == "Sum_By" ) {
 									finalheaders.push(element);								
 								} else if (repSignalsJson[i].name == "Size_By" ) {
