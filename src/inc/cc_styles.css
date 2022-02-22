@@ -446,7 +446,7 @@ div.vega-bind {
 	padding: 0px 1px !important;
 	width: 100% !important;
 	line-height:1.2em !important;
-	display: block !important;
+	display: inline-flex !important;
 	text-align: left !important;
 	font-size: x-small !important;
 }
@@ -470,14 +470,21 @@ div.vega-bind select {
 	border: 1px solid #dcdcdc;
 	color: black;
 }
+#Background_Colorsmartplot_id > div > label > input[type=text] {
+	width:60px;
+}
+div.vega-bind  > label {
+	width:100%;
+}
 
 div.vega-bind > label > input[type="text"] {
-    width: 60px !important;
+    width: 18px !important;
     font-size: x-small !important;
 	line-height: 0.8em;
     height: 0.8em;
-	padding: 0px 2px;
-    margin: 0px;	
+	padding: 0px 1px;
+    float: right;
+    margin: 0px 1px 0px 0px;	
 }
 #vg-tooltip-element table tr td {
 	overflow: hidden !important;

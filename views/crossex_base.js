@@ -277,7 +277,7 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 		tooltip: true,
 		warn: false,
 		actions: {
-			export: true,
+			export: false,
 			csv:true,
 			source: false,
 			editor: editable,
