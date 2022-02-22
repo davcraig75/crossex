@@ -445,6 +445,7 @@ div.vega-bind {
 	margin: 1px !important;
 	padding: 0px 1px !important;
 	width: 100% !important;
+	line-height:1.2em !important;
 	display: block !important;
 	text-align: left !important;
 	font-size: x-small !important;
@@ -472,7 +473,11 @@ div.vega-bind select {
 
 div.vega-bind > label > input[type="text"] {
     width: 60px !important;
-    font-size: small !important;
+    font-size: x-small !important;
+	line-height: 0.8em;
+    height: 0.8em;
+	padding: 0px 2px;
+    margin: 0px;	
 }
 #vg-tooltip-element table tr td {
 	overflow: hidden !important;
@@ -622,7 +627,7 @@ div.vega-bind select {
 	overflow: hidden !important;
 }
 .vega-bind-radio input {
-	font-size: 10px !important;
+	font-size: x-small !important;
 }
 div.vega-bind > label > input[type="checkbox"] {
 	background-color: initial !important;

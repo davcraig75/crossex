@@ -239,7 +239,7 @@ var crossex = function crossex(element, data, options,widthid) {
 					spec.signals[index].value = repSignalsJson[i].value;
 				}
 			} else {
-				console.log('name',repSignalsJson[i].name,'index',index);
+				//console.log('name',repSignalsJson[i].name,'index',index);
 			}
 		}
 	}
