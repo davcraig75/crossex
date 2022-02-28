@@ -156,10 +156,7 @@
       "value": 12,
       "bind": {
         "element": "#AxisTitle_Font-ccnm",
-        "input": "range",
-        "min": 0,
-        "max": 24,
-        "step": 1
+        "input": "text"
       }
     },
     {
@@ -167,10 +164,7 @@
       "value": 1,
       "bind": {
         "element": "#Grid_Radius-ccnm",
-        "input": "range",
-        "min": 0,
-        "max": 100,
-        "step": 1
+        "input": "text"
       }
     },
     {
@@ -205,6 +199,7 @@
       "value": false,
       "bind": {"input": "checkbox", "element": "#Barplot-ccnm"}
     },
+   
     {
       "name": "Uniform_YLim",
       "value": false,
@@ -277,10 +272,7 @@
       "value": 5,
       "bind": {
         "element": "#Jitter_Radius-ccnm",
-        "input": "range",
-        "min": 0,
-        "max": 20,
-        "step": 0.2
+        "input": "text"
       }
     },
     {
@@ -354,10 +346,7 @@
       "value": 5,
       "bind": {
         "element": "#TickCount-ccnm",
-        "input": "range",
-        "min": 0,
-        "max": 50,
-        "step": 1
+        "input": "text"
       }
     },
     {
@@ -365,10 +354,7 @@
       "value": 14,
       "bind": {
         "element": "#Title_Font-ccnm",
-        "input": "range",
-        "min": 0,
-        "max": 24,
-        "step": 1
+        "input": "text"
       }
     },
     {
@@ -376,10 +362,7 @@
       "value": 10,
       "bind": {
         "element": "#Legend_Font-ccnm",
-        "input": "range",
-        "min": 0,
-        "max": 24,
-        "step": 1
+        "input": "text"
       }
     },
     {
@@ -387,10 +370,7 @@
       "value": 6,
       "bind": {
         "element": "#Legend_Cols-ccnm",
-        "input": "range",
-        "min": 1,
-        "max": 20,
-        "step": 1
+        "input": "text"
       }
     },
     {
@@ -398,10 +378,7 @@
       "value": 10,
       "bind": {
         "element": "#AxisFontSize-ccnm",
-        "input": "range",
-        "min": 0,
-        "max": 24,
-        "step": 1
+        "input": "text"
       }
     },
     {
@@ -409,10 +386,7 @@
       "value": 1,
       "bind": {
         "element": "#Dash_Height-ccnm",
-        "input": "range",
-        "min": 0,
-        "max": 10,
-        "step": 0.1
+        "input": "text"
       }
     },
     {
@@ -510,27 +484,35 @@
     },
     {"name": "col_header_fontsize", "value": 14},
     {
-      "name": "Max_Point_Size",
+      "name": "Max_Point",
       "value": 20,
       "bind": {
-        "element": "#Max_Point_Size-ccnm",
+        "element": "#Max_Point-ccnm",
         "input": "range",
         "min": 0,
         "max": 200,
-        "step": 1
+        "step": 1      
       }
     },
     {
-      "name": "Min_Point_Size",
+      "name": "Min_Point",
       "value": 10,
       "bind": {
-        "element": "#Min_Point_Size-ccnm",
+        "element": "#Min_Point-ccnm",
         "input": "range",
         "min": 0,
         "max": 100,
-        "step": 0.2
+        "step": 0.1        
       }
     },
+    {
+        "name": "Background_Color",
+        "value": "#f9f9f9",
+        "bind": {
+          "element": "#Background_Color-ccnm",
+          "input": "text"
+        }
+    },    
     {
       "name": "Include_Only",
       "value": " ",
@@ -714,10 +696,7 @@
       "value": 400,
       "bind": {
         "element": "#Max_Plot_Height-ccnm",
-        "input": "range",
-        "min": 20,
-        "max": 1800,
-        "step": 25
+        "input": "text"
       }
     },
     {"name": "PlotTitle_Height", "value": 0},
@@ -748,10 +727,7 @@
       "value": 800,
       "bind": {
         "element": "#Max_Plot_Width-ccnm",
-        "input": "range",
-        "min": 50,
-        "max": 1800,
-        "step": 25
+        "input": "text"
       }
     },
     {
@@ -759,21 +735,15 @@
       "value": 100,
       "bind": {
         "element": "#Row_Height-ccnm",
-        "input": "range",
-        "min": 10,
-        "max": 1200,
-        "step": 10
+        "input": "text"
       }
     },
     {
-      "name": "Maximum_Facets",
+      "name": "Max_Facets",
       "value": 200,
       "bind": {
-        "element": "#Maximum_Facets-ccnm",
-        "input": "range",
-        "min": 1,
-        "max": 50,
-        "step": 5
+        "element": "#Max_Facets-ccnm",
+        "input": "text"
       }
     },
     {
@@ -786,10 +756,7 @@
       "value": 20,
       "bind": {
         "element": "#Histogram_Bins_Size-ccnm",
-        "input": "range",
-        "min": 0,
-        "max": 200,
-        "step": 1
+        "input": "text"
       }
     },
     {
@@ -808,10 +775,7 @@
       "value": 0.25,
       "bind": {
         "element": "#Histogram_Ratio-ccnm",
-        "input": "range",
-        "min": 0,
-        "max": 1,
-        "step": 0.1
+        "input": "text"
       }
     },
     {
@@ -850,7 +814,7 @@
       "name": "Cord",
       "update": "if(Color_By=='None',true,if(indata('mydata', 'Cstr', true),true,false))"
     },
-    {"name": "fail", "update": "length(data('cols_domain'))>Maximum_Facets"},
+    {"name": "fail", "update": "length(data('cols_domain'))>Max_Facets"},
     {"name": "colors_count", "update": "length(data('colors_domain'))"},
     {"name": "cols_count", "update": "length(data('cols_domain'))"},
     {"name": "rows_count", "update": "length(data('rows_domain'))"},
@@ -940,7 +904,7 @@
         {
           "type": "formula",
           "as": "Count",
-          "expr": "Sum_By=='None'?1:datum.Sum_By==0||datum.Sum_By=='0'?0:toNumber(datum[Sum_By])>0?toNumber(datum[Sum_By]):1"
+          "expr": "Sum_By=='None'?1:datum.Sum_By==0||datum.Sum_By=='0'?0:toNumber(datum[Sum_By])>0?toNumber(datum[Sum_By]):0"
         },
         {
           "type": "formula",
@@ -951,14 +915,31 @@
           "type": "formula",
           "as": "Y_Value",
           "expr": "Datatype_Y=='Unknown'?datum[Y_Axis]:Datatype_Y=='Numerical'?toNumber(datum[Y_Axis]):Datatype_Y=='Categorical'?toString(datum[Y_Axis]):Datatype_Y=='Date'?toDate(datum[Y_Axis]):datum[Y_Axis]"
-        },   
-               
-        {"type": "filter", "expr": "X_Axis=='None'|| (X_Axis != 'None' && !(!isValid(datum[X_Axis]) || datum[X_Axis]==Filter_If || datum[X_Axis] =='NA' || datum[X_Axis] =='null' || datum[X_Axis] =='NaN' || datum[X_Axis] =='N/A'))"},
-        {"type": "filter", "expr": "Y_Axis == 'None' || (Y_Axis != 'None' && !(!isValid(datum[Y_Axis]) || datum[Y_Axis]==Filter_If || datum[Y_Axis] =='NA' || datum[Y_Axis] =='null' || datum[Y_Axis] =='NaN' || datum[Y_Axis] =='N/A'))"},
-        {"type": "filter", "expr": "Facet_Rows_By == 'None' || (Facet_Rows_By != 'None' && !(!isValid(datum[Facet_Rows_By]) || datum[Facet_Rows_By]==Filter_If || datum[Facet_Rows_By] =='NA' || datum[Facet_Rows_By] =='null' || datum[Facet_Rows_By] =='NaN' || datum[Facet_Rows_By] =='N/A'))"},
-        {"type": "filter", "expr": "Facet_Cols_By == 'None' || (Facet_Cols_By != 'None' && !(!isValid(datum[Facet_Cols_By]) || datum[Facet_Cols_By]==Filter_If || datum[Facet_Cols_By] =='NA' || datum[Facet_Cols_By] =='null' || datum[Facet_Cols_By] =='NaN' || datum[Facet_Cols_By] =='N/A'))"},
-        {"type": "filter", "expr": "Color_By == 'None' || (Color_By != 'None' && !(!isValid(datum[Color_By]) || datum[Color_By]==Filter_If || datum[Color_By] =='NA' || datum[Color_By] =='null' || datum[Color_By] =='NaN' || datum[Color_By] =='N/A'))"},
-        {"type": "filter", "expr": "Size_By == 'None' || (Size_By != 'None' && !(!isValid(datum[Size_By]) || datum[Size_By]==Filter_If || datum[Size_By] =='NA' || datum[Size_By] =='null' || datum[Size_By] =='NaN' || datum[Size_By] =='N/A'))"},
+        },
+        {
+          "type": "filter",
+          "expr": "X_Axis=='None'|| (X_Axis != 'None' && !(!isValid(datum[X_Axis]) || datum[X_Axis]==Filter_If || datum[X_Axis] =='NA' || datum[X_Axis] =='null' || datum[X_Axis] =='NaN' || datum[X_Axis] =='N/A'))"
+        },
+        {
+          "type": "filter",
+          "expr": "Y_Axis == 'None' || (Y_Axis != 'None' && !(!isValid(datum[Y_Axis]) || datum[Y_Axis]==Filter_If || datum[Y_Axis] =='NA' || datum[Y_Axis] =='null' || datum[Y_Axis] =='NaN' || datum[Y_Axis] =='N/A'))"
+        },
+        {
+          "type": "filter",
+          "expr": "Facet_Rows_By == 'None' || (Facet_Rows_By != 'None' && !(!isValid(datum[Facet_Rows_By]) || datum[Facet_Rows_By]==Filter_If || datum[Facet_Rows_By] =='NA' || datum[Facet_Rows_By] =='null' || datum[Facet_Rows_By] =='NaN' || datum[Facet_Rows_By] =='N/A'))"
+        },
+        {
+          "type": "filter",
+          "expr": "Facet_Cols_By == 'None' || (Facet_Cols_By != 'None' && !(!isValid(datum[Facet_Cols_By]) || datum[Facet_Cols_By]==Filter_If || datum[Facet_Cols_By] =='NA' || datum[Facet_Cols_By] =='null' || datum[Facet_Cols_By] =='NaN' || datum[Facet_Cols_By] =='N/A'))"
+        },
+        {
+          "type": "filter",
+          "expr": "Color_By == 'None' || (Color_By != 'None' && !(!isValid(datum[Color_By]) || datum[Color_By]==Filter_If || datum[Color_By] =='NA' || datum[Color_By] =='null' || datum[Color_By] =='NaN' || datum[Color_By] =='N/A'))"
+        },
+        {
+          "type": "filter",
+          "expr": "Size_By == 'None' || (Size_By != 'None' && !(!isValid(datum[Size_By]) || datum[Size_By]==Filter_If || datum[Size_By] =='NA' || datum[Size_By] =='null' || datum[Size_By] =='NaN' || datum[Size_By] =='N/A'))"
+        },
         {"type": "formula", "as": "Col_Value", "expr": "datum[Facet_Cols_By]"},
         {"type": "formula", "as": "Color_Value", "expr": "datum[Color_By]"},
         {"type": "formula", "as": "O_Value", "expr": "datum[Opacity_By]"},
@@ -966,7 +947,7 @@
         {
           "type": "formula",
           "as": "Size_Value",
-          "expr": "if(isFinite(toNumber(datum[Size_By])),toNumber(datum[Size_By]),Max_Point_Size)"
+          "expr": "if(isFinite(toNumber(datum[Size_By])),toNumber(datum[Size_By]),Max_Point)"
         },
         {
           "type": "formula",
@@ -984,7 +965,768 @@
           "expr": "Datatype_Color=='Categorical'||!isFinite(toNumber(datum['Color_Value']))"
         }
       ],
-      "values": []
+      "values": [
+        {
+          "name": "HG00096",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q1",
+          "val": 0.216,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q1",
+          "Y_Value": 0.216,
+          "Col_Value": "None",
+          "Color_Value": "Q1",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00096",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q2",
+          "val": 0,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q2",
+          "Y_Value": 0,
+          "Col_Value": "None",
+          "Color_Value": "Q2",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00096",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q3",
+          "val": 0,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q3",
+          "Y_Value": 0,
+          "Col_Value": "None",
+          "Color_Value": "Q3",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00096",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q4",
+          "val": 0,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q4",
+          "Y_Value": 0,
+          "Col_Value": "None",
+          "Color_Value": "Q4",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00096",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q5",
+          "val": 0.007,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q5",
+          "Y_Value": 0.007,
+          "Col_Value": "None",
+          "Color_Value": "Q5",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00096",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q6",
+          "val": 0,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q6",
+          "Y_Value": 0,
+          "Col_Value": "None",
+          "Color_Value": "Q6",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00096",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q7",
+          "val": 0.774,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q7",
+          "Y_Value": 0.774,
+          "Col_Value": "None",
+          "Color_Value": "Q7",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00096",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q8",
+          "val": 0.003,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q8",
+          "Y_Value": 0.003,
+          "Col_Value": "None",
+          "Color_Value": "Q8",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00097",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q1",
+          "val": 0.675,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q1",
+          "Y_Value": 0.675,
+          "Col_Value": "None",
+          "Color_Value": "Q1",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00097",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q2",
+          "val": 0.004,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q2",
+          "Y_Value": 0.004,
+          "Col_Value": "None",
+          "Color_Value": "Q2",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00097",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q3",
+          "val": 0,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q3",
+          "Y_Value": 0,
+          "Col_Value": "None",
+          "Color_Value": "Q3",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00097",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q4",
+          "val": 0.019,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q4",
+          "Y_Value": 0.019,
+          "Col_Value": "None",
+          "Color_Value": "Q4",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00097",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q5",
+          "val": 0.021,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q5",
+          "Y_Value": 0.021,
+          "Col_Value": "None",
+          "Color_Value": "Q5",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00097",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q6",
+          "val": 0,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q6",
+          "Y_Value": 0,
+          "Col_Value": "None",
+          "Color_Value": "Q6",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00097",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q7",
+          "val": 0.281,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q7",
+          "Y_Value": 0.281,
+          "Col_Value": "None",
+          "Color_Value": "Q7",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00097",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q8",
+          "val": 0,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q8",
+          "Y_Value": 0,
+          "Col_Value": "None",
+          "Color_Value": "Q8",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00099",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q1",
+          "val": 0.196,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q1",
+          "Y_Value": 0.196,
+          "Col_Value": "None",
+          "Color_Value": "Q1",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00099",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q2",
+          "val": 0,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q2",
+          "Y_Value": 0,
+          "Col_Value": "None",
+          "Color_Value": "Q2",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00099",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q3",
+          "val": 0,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q3",
+          "Y_Value": 0,
+          "Col_Value": "None",
+          "Color_Value": "Q3",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00099",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q4",
+          "val": 0.04,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q4",
+          "Y_Value": 0.04,
+          "Col_Value": "None",
+          "Color_Value": "Q4",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00099",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q5",
+          "val": 0,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q5",
+          "Y_Value": 0,
+          "Col_Value": "None",
+          "Color_Value": "Q5",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00099",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q6",
+          "val": 0.013,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q6",
+          "Y_Value": 0.013,
+          "Col_Value": "None",
+          "Color_Value": "Q6",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00099",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q7",
+          "val": 0.751,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q7",
+          "Y_Value": 0.751,
+          "Col_Value": "None",
+          "Color_Value": "Q7",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00099",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q8",
+          "val": 0,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q8",
+          "Y_Value": 0,
+          "Col_Value": "None",
+          "Color_Value": "Q8",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00100",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q1",
+          "val": 0.058,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q1",
+          "Y_Value": 0.058,
+          "Col_Value": "None",
+          "Color_Value": "Q1",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00100",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q2",
+          "val": 0.013,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q2",
+          "Y_Value": 0.013,
+          "Col_Value": "None",
+          "Color_Value": "Q2",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00100",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q3",
+          "val": 0,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q3",
+          "Y_Value": 0,
+          "Col_Value": "None",
+          "Color_Value": "Q3",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00100",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q4",
+          "val": 0.009,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q4",
+          "Y_Value": 0.009,
+          "Col_Value": "None",
+          "Color_Value": "Q4",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00100",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q5",
+          "val": 0.017,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q5",
+          "Y_Value": 0.017,
+          "Col_Value": "None",
+          "Color_Value": "Q5",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00100",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q6",
+          "val": 0,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q6",
+          "Y_Value": 0,
+          "Col_Value": "None",
+          "Color_Value": "Q6",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00100",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q7",
+          "val": 0.901,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q7",
+          "Y_Value": 0.901,
+          "Col_Value": "None",
+          "Color_Value": "Q7",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00100",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q8",
+          "val": 0,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q8",
+          "Y_Value": 0,
+          "Col_Value": "None",
+          "Color_Value": "Q8",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00101",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q1",
+          "val": 0.912,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q1",
+          "Y_Value": 0.912,
+          "Col_Value": "None",
+          "Color_Value": "Q1",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00101",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q2",
+          "val": 0.002,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q2",
+          "Y_Value": 0.002,
+          "Col_Value": "None",
+          "Color_Value": "Q2",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00101",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q3",
+          "val": 0,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q3",
+          "Y_Value": 0,
+          "Col_Value": "None",
+          "Color_Value": "Q3",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00101",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q4",
+          "val": 0.009,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q4",
+          "Y_Value": 0.009,
+          "Col_Value": "None",
+          "Color_Value": "Q4",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00101",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q5",
+          "val": 0.022,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q5",
+          "Y_Value": 0.022,
+          "Col_Value": "None",
+          "Color_Value": "Q5",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        },
+        {
+          "name": "HG00101",
+          "cohort": "1000G",
+          "cont": "EUR",
+          "pop": "GBR",
+          "axis": "Q6",
+          "val": 0,
+          "None": "None",
+          "Count": 1,
+          "X_Value": "Q6",
+          "Y_Value": 0,
+          "Col_Value": "None",
+          "Color_Value": "Q6",
+          "O_Value": "None",
+          "Row_Value": "None",
+          "Size_Value": 20,
+          "Ystr": false,
+          "Xstr": true,
+          "Cstr": true
+        }
+      ]
     },
     {
       "name": "selectedFilter",
@@ -1042,15 +1784,7 @@
     },
     {
       "name": "columns",
-      "values": [
-        "species",
-        "island",
-        "bill_length_mm",
-        "bill_depth_mm",
-        "flipper_length_mm",
-        "body_mass_g",
-        "sex"
-      ],
+      "values": ["name", "cohort", "cont", "pop", "axis", "val"],
       "transform": [{"type": "filter", "expr": "show_explorer"}]
     },
     {
@@ -1094,7 +1828,14 @@
       "name": "ycat_domain",
       "source": "tdata",
       "transform": [{"type": "aggregate", "groupby": ["Y_Value"]}]
-    }
+    },
+    {
+        "name": "run_correl",
+        "values": [1],
+        "transform": [
+          {"type": "filter", "expr": "Regression_&show_scatter_graph"}
+        ]
+      }
   ],
   "scales": [
 
@@ -1174,8 +1915,8 @@
         {"signal": "S_maxmin_num[1]+(S_maxmin_num[1]-S_maxmin_num[0])*0.05"}
       ],
       "range": [
-        {"signal": "Min_Point_Size"},
-        {"signal": "if(Size_By!='None',Max_Point_Size,Min_Point_Size)"}
+        {"signal": "Min_Point"},
+        {"signal": "if(Size_By!='None',Max_Point,Min_Point)"}
       ]
     },
     {
@@ -1252,16 +1993,16 @@
             }
           ],
           "scales": [
-              {
-                  "name": "x_cont_scale",
-                  "type": "linear",
-                  "round": true,
-                  "nice": true,
-                  "zero": false,
-                  "reverse": {"signal": "Reverse_X"},
-                  "domain": {"signal": "xdom"},
-                  "range": [{"signal": "0"}, {"signal": "Plot_Width"}]
-                },                
+            {
+              "name": "x_cont_scale",
+              "type": "linear",
+              "round": true,
+              "nice": true,
+              "zero": false,
+              "reverse": {"signal": "Reverse_X"},
+              "domain": {"signal": "xdom"},
+              "range": [{"signal": "0"}, {"signal": "Plot_Width"}]
+            },
             {
               "name": "y_cont_scatter_scale",
               "type": "linear",
@@ -1308,8 +2049,7 @@
           "marks": [
             {
               "name": "row_header",
-              "clip":true,
-              
+              "clip": true,
               "type": "group",
               "from": {"data": "rows_domain"},
               "encode": {
@@ -1504,8 +2244,7 @@
                   "x": {"signal": "datum['Col_Value']", "scale": "col_scale"},
                   "y": {"signal": "datum['Row_Value']", "scale": "row_scale"},
                   "height": {"signal": "Plot_Height"},
-                  "fill": {"value": "#EEE"},
-                  "fillOpacity": {"value": 0.1},
+                  "fill": {"signal": "Background_Color"},
                   "stroke": {"value": "#ccc"},
                   "strokeWidth": {"value": 0.5}
                 }
@@ -1530,7 +2269,7 @@
                       "type": "regression",
                       "groupby": [
                         {
-                          "signal": "if(colors_count<10 & Regression_,Color_By,'None')"
+                          "signal": "if(colors_count<20 & Regression_,Color_By,'None')"
                         }
                       ],
                       "method": "linear",
@@ -1546,13 +2285,7 @@
                   "values": [1],
                   "transform": [{"type": "filter", "expr": "show_hist_graph"}]
                 },
-                {
-                  "name": "run_correl",
-                  "values": [1],
-                  "transform": [
-                    {"type": "filter", "expr": "Regression_&show_scatter_graph"}
-                  ]
-                },
+
                 {
                   "name": "run_contours_cat",
                   "values": [1],
@@ -1953,7 +2686,7 @@
                           "type": "kde2d",
                           "groupby": [
                             {
-                              "signal": "if(colors_count<10 & Contours_,'Color_Value','None')"
+                              "signal": "if(colors_count<20 & Contours_,'Color_Value','None')"
                             }
                           ],
                           "size": [
@@ -2027,7 +2760,7 @@
                         "update": {
                           "strokeWidth": {"value": 1},
                           "strokeOpacity": {"signal": "Cnt_St_Opacity"},
-                          "tooltip":{"signal":"datum"},
+                          "tooltip": {"signal": "datum"},
                           "stroke": {
                             "scale": "color_scale_cat",
                             "field": "Color_Value"
@@ -2189,7 +2922,7 @@
                             "signal": "'y='+format(datum['coef'][1],'.4f')+'x+'+format(datum['coef'][0],'.4f')+',(r2='+format(datum['rSquared'],'.4f')+')'"
                           },
                           "stroke": {
-                            "signal": "datum.keys",
+                            "signal": "datum.keys[0]",
                             "scale": "color_scale_cat"
                           },
                           "strokeWidth": {"signal": "2"}
@@ -2199,6 +2932,7 @@
                     {
                       "type": "text",
                       "name": "statistics",
+                      "clip":true,
                       "interactive": true,
                       "from": {"data": "correl_data"},
                       "encode": {
@@ -2208,7 +2942,9 @@
                           },
                           "fontSize": {"value": 10},
                           "angle": {"value": 0},
-                          "y": {"signal": "X_Axis_Height-2"},
+                          "y": {
+                            "signal": "min(scatter_graph_height-10,max(5,scale('y_cont_scale2',X_maxmin_num[0]*datum.coef[1]+datum.coef[0]-X_maxmin_num[0])/2+X_maxmin_num[0]))"
+                          },
                           "tooltip": {"signal": "datum"},
                           "opacity": {"value": 0.5}
                         }
@@ -2337,7 +3073,7 @@
           "marks": [
             {
               "name": "row_header",
-              "clip":true,
+              "clip": true,
               "type": "group",
               "from": {"data": "rows_domain"},
               "encode": {
@@ -2363,7 +3099,7 @@
                     "title": {
                       "update": {
                         "text": {
-                          "signal": "if(Facet_Rows_By=='None',Sum_By=='None'?'Counts':'Σ of '+Sum_By,'# '+parent.data)"
+                          "signal": "if(Facet_Rows_By=='None',Sum_By=='None'?'Counts':'Σ of '+Color_By+' ','# '+parent.data)"
                         }
                       }
                     }
@@ -2439,10 +3175,9 @@
                   "x": {"signal": "datum['Col_Value']", "scale": "col_scale"},
                   "y": {"signal": "datum['Row_Value']", "scale": "row_scale"},
                   "height": {"signal": "Plot_Height"},
-                  "fill": {"value": "#EEE"},
-                  "fillOpacity": {"value": 0.1},
+                  "fill": {"signal": "Background_Color"},
                   "stroke": {"value": "#ccc"},
-                  "strokeWidth": {"value": 0.5}
+                  "strokeWidth": {"signal": "Grids_"}
                 }
               },
               "scales": [],
@@ -2463,11 +3198,11 @@
                         },
                         {"scale": "color_scale_cat", "field": "Color_Value"}
                       ],
-                      "opacity": {"value": 0.7},
+                      "opacity": {"signal": "Opacity_"},
                       "tooltip": {
                         "signal": "{'Number': format(datum['sum_yield'], ''), Group: ''+datum['X_Value'], 'Sub-group': ''+datum['Color_Value']}"
                       },
-                      "strokeWidth": {"value": 0.4},
+                      "strokeWidth": {"signal": "Grids_?0.4:0"},
                       "y2": {
                         "scale": "stacked_scale",
                         "field": "sum_yield_end"
@@ -2564,7 +3299,7 @@
           "marks": [
             {
               "name": "row_header",
-              "clip":true,
+              "clip": true,
               "type": "group",
               "from": {"data": "rows_domain"},
               "data": [
@@ -2704,8 +3439,7 @@
                   "encode": {
                     "update": {
                       "width": {"signal": "Plot_Width"},
-                      "fill": {"value": "#EEE"},
-                      "fillOpacity": {"value": 0.1},
+                      "fill": {"signal": "Background_Color"},
                       "x": {
                         "signal": "datum['Col_Value']",
                         "scale": "col_scale"
@@ -2978,7 +3712,7 @@
                                 {"value": 0}
                               ],
                               "tooltip": {
-                                "signal": "{'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
+                                "signal": "{'Group':datum['X_Value'],'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
                               },
                               "yc": [
                                 {
@@ -2997,14 +3731,11 @@
                                   "scale": "y_cont_log_scale",
                                   "signal": "datum.q3"
                                 },
-                                {
-                                  "scale": "y_cont_scale",
-                                  "signal": "datum.q3"
-                                }
+                                {"scale": "y_cont_scale", "signal": "datum.q3"}
                               ]
                             }
                           }
-                        },                          
+                        },
                         {
                           "type": "rect",
                           "interactive": true,
@@ -3031,7 +3762,7 @@
                                 {"value": 0}
                               ],
                               "tooltip": {
-                                "signal": "{'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
+                                "signal": "{'X':datum['X_Value'],'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
                               },
                               "y": [
                                 {
@@ -3050,10 +3781,7 @@
                                   "scale": "y_cont_log_scale",
                                   "signal": "datum.q3"
                                 },
-                                {
-                                  "scale": "y_cont_scale",
-                                  "signal": "datum.q3"
-                                }
+                                {"scale": "y_cont_scale", "signal": "datum.q3"}
                               ]
                             }
                           }
@@ -3085,7 +3813,7 @@
                                 {"value": 0}
                               ],
                               "tooltip": {
-                                "signal": "{'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
+                                "signal": "{'X':datum['X_Value'],'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
                               },
                               "yc": [
                                 {
@@ -3100,7 +3828,7 @@
                               ]
                             }
                           }
-                        },                           
+                        },
                         {
                           "type": "rect",
                           "interactive": true,
@@ -3127,7 +3855,7 @@
                                 {"value": 0}
                               ],
                               "tooltip": {
-                                "signal": "{'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
+                                "signal": "{'X':datum['X_Value'],'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
                               },
                               "y": [
                                 {
@@ -3135,10 +3863,7 @@
                                   "scale": "y_cont_log_scale",
                                   "signal": "datum.q1"
                                 },
-                                {
-                                  "scale": "y_cont_scale",
-                                  "signal": "datum.q1"
-                                }
+                                {"scale": "y_cont_scale", "signal": "datum.q1"}
                               ],
                               "y2": [
                                 {
@@ -3153,7 +3878,7 @@
                               ]
                             }
                           }
-                        },                          
+                        },
                         {
                           "type": "rect",
                           "name": "quartileboxes",
@@ -3171,7 +3896,7 @@
                                 {"test": "!Boxplot_", "value": "transparent"}
                               ],
                               "tooltip": {
-                                "signal": "{'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
+                                "signal": "{'X':datum['X_Value'],'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
                               },
                               "co`rn`erRadius": {"value": 3},
                               "opacity": [
@@ -3219,7 +3944,7 @@
                                 {"test": "!Barplot_", "value": "transparent"}
                               ],
                               "tooltip": {
-                                "signal": "{'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
+                                "signal": "{'X':datum['X_Value'],'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
                               },
                               "cornerRadius": {"value": 3},
                               "opacity": [
@@ -3279,9 +4004,7 @@
                               "height": {"signal": "Dash_Height"},
                               "cornerRadius": {"signal": "Dash_Radius"},
                               "width": {"signal": "viol_width*Dash_Width"},
-                              "tooltip": {
-                                "signal": "datum"
-                              }
+                              "tooltip": {"signal": "datum"}
                             }
                           }
                         },
@@ -3363,9 +4086,7 @@
                                   },
                                   "stroke": {"value": "transparent"},
                                   "shape": {"signal": "Shape"},
-                                  "tooltip": {
-                                    "signal": "datum"
-                                  },
+                                  "tooltip": {"signal": "datum"},
                                   "opacity": [
                                     {"test": "Jitter_", "signal": "Opacity_"},
                                     {"value": 0}
@@ -3388,7 +4109,7 @@
                               ],
                               "fill": {"value": "aliceblue"},
                               "tooltip": {
-                                "signal": "{'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
+                                "signal": "{'X':datum['X_Value'],'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
                               },
                               "xc": {"signal": "viol_width / 2"},
                               "width": {"signal": "max(viol_width/2 / 2,10)"},
@@ -3419,7 +4140,7 @@
                               "xc": {"signal": "viol_width/4"},
                               "y": {"signal": "Plot_Height"},
                               "tooltip": {
-                                "signal": "{'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
+                                "signal": "{'X':datum['X_Value'],'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
                               },
                               "opacity": {"value": 0.5}
                             }
@@ -3457,7 +4178,7 @@
                               "from": {"data": "MyOutliers_"},
                               "encode": {
                                 "update": {
-                                  "size": {"signal": "Max_Point_Size"},
+                                  "size": {"signal": "Max_Point"},
                                   "xc": {"signal": "viol_width / 2"},
                                   "y": [
                                     {
@@ -3471,9 +4192,7 @@
                                     }
                                   ],
                                   "fill": {"value": "firebrick"},
-                                  "tooltip": {
-                                    "signal": "datum"
-                                  },
+                                  "tooltip": {"signal": "datum"},
                                   "opacity": [
                                     {"test": "Outliers_", "value": 0.5},
                                     {"value": 0}
@@ -3584,16 +4303,16 @@
             }
           ],
           "scales": [
-              {
-                  "name": "x_cont_scale",
-                  "type": "linear",
-                  "round": true,
-                  "nice": true,
-                  "zero": false,
-                  "reverse": {"signal": "Reverse_X"},
-                  "domain": {"signal": "xdom"},
-                  "range": [{"signal": "0"}, {"signal": "Plot_Width"}]
-                },                   
+            {
+              "name": "x_cont_scale",
+              "type": "linear",
+              "round": true,
+              "nice": true,
+              "zero": false,
+              "reverse": {"signal": "Reverse_X"},
+              "domain": {"signal": "xdom"},
+              "range": [{"signal": "0"}, {"signal": "Plot_Width"}]
+            },
             {
               "name": "bin_band_scale",
               "type": "band",
@@ -3615,7 +4334,7 @@
           "marks": [
             {
               "name": "row_header",
-              "clip":true,
+              "clip": true,
               "type": "group",
               "from": {"data": "rows_domain"},
               "encode": {
@@ -3782,8 +4501,7 @@
               "encode": {
                 "update": {
                   "width": {"signal": "Plot_Width"},
-                  "fill": {"value": "#EEE"},
-                  "fillOpacity": {"value": 0.1},
+                  "fill": {"signal": "Background_Color"},
                   "x": {"signal": "datum['Col_Value']", "scale": "col_scale"},
                   "y": {"signal": "datum['Row_Value']", "scale": "row_scale"},
                   "height": {"signal": "Plot_Height"}
@@ -3995,8 +4713,8 @@
                             "field": "y2"
                           },
                           "tooltip": {
-                            "signal": "{'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
-                          },                          
+                            "signal": "{'X':datum['X_Value'],'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
+                          },
                           "interpolate": {"value": "natural"},
                           "x": [
                             {
@@ -4016,7 +4734,7 @@
                     },
                     {
                       "type": "rect",
-                      "name":"mystuff",
+                      "name": "mystuff",
                       "interactive": true,
                       "from": {"data": "category_summary_data"},
                       "encode": {
@@ -4037,9 +4755,7 @@
                             {"value": 0}
                           ],
                           "cornerRadius": {"value": 3},
-                          "tooltip": {
-                            "signal": "datum"
-                          },
+                          "tooltip": {"signal": "datum"},
                           "x": [
                             {
                               "test": "LogX_",
@@ -4089,7 +4805,7 @@
                           ],
                           "cornerRadius": {"value": 3},
                           "tooltip": {
-                            "signal": "{'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
+                            "signal": "{'X':datum['X_Value'],'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
                           },
                           "x": [
                             {
@@ -4109,8 +4825,7 @@
                           ]
                         }
                       }
-                    },                    
-
+                    },
                     {
                       "type": "rect",
                       "interactive": true,
@@ -4135,7 +4850,7 @@
                           ],
                           "cornerRadius": {"value": 3},
                           "tooltip": {
-                            "signal": "{'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
+                            "signal": "{'X':datum['X_Value'],'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
                           },
                           "x": [
                             {
@@ -4189,7 +4904,7 @@
                           "cornerRadius": {"signal": "Dash_Radius"},
                           "height": {"signal": "viol_ht*Dash_Width"},
                           "tooltip": {
-                            "signal": "{'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
+                            "signal": "{'X':datum['X_Value'],'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
                           }
                         }
                       }
@@ -4261,13 +4976,11 @@
                                   "scale": "color_scale_cont"
                                 }
                               ],
-                              "size": {"signal": "Max_Point_Size"},
+                              "size": {"signal": "Max_Point"},
                               "stroke": {"value": "transparent"},
                               "height": {"signal": "viol_ht*0.3"},
                               "shape": {"signal": "Shape"},
-                              "tooltip": {
-                                "signal": "datum"
-                              },
+                              "tooltip": {"signal": "datum"},
                               "opacity": [
                                 {"test": "Dashes_", "signal": "Opacity_"},
                                 {"value": 0}
@@ -4290,7 +5003,7 @@
                           ],
                           "fill": {"value": "aliceblue"},
                           "tooltip": {
-                            "signal": "{'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
+                            "signal": "{'X':datum['X_Value'],'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
                           },
                           "yc": {"signal": "viol_ht / 2"},
                           "height": {"signal": "viol_ht / 2"},
@@ -4320,9 +5033,9 @@
                           "angle": {"value": -90},
                           "yc": {"signal": "viol_ht/4"},
                           "x": {"signal": "Plot_Width"},
-                              "tooltip": {
-                                "signal": "{'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
-                              },
+                          "tooltip": {
+                            "signal": "{'X':datum['X_Value'],'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
+                          },
                           "opacity": {"value": 0.5}
                         }
                       }
@@ -4359,7 +5072,7 @@
                           "from": {"data": "MyOutliers_"},
                           "encode": {
                             "update": {
-                              "size": {"signal": "Max_Point_Size"},
+                              "size": {"signal": "Max_Point"},
                               "yc": {"signal": "viol_ht / 2"},
                               "x": [
                                 {
@@ -4371,7 +5084,7 @@
                               ],
                               "fill": {"value": "firebrick"},
                               "tooltip": {
-                                "signal": "{'Group':format(datum['Y_Value'],'0.2f'),'Value':format(datum['Y_Value'],'0.2f')}"
+                                "signal": "datum"
                               },
                               "opacity": [
                                 {"test": "Outliers_", "value": 0.5},
@@ -4424,23 +5137,13 @@
             {
               "name": "run_jitter",
               "values": [1],
-              "transform": [
-                {
-                  "type": "filter",
-                  "expr": "Jitter_"
-                }
-              ]
-            },  
+              "transform": [{"type": "filter", "expr": "Jitter_"}]
+            },
             {
               "name": "show_heat",
               "values": [1],
-              "transform": [
-                {
-                  "type": "filter",
-                  "expr": "!Jitter_"
-                }
-              ]
-            },                       
+              "transform": [{"type": "filter", "expr": "!Jitter_"}]
+            },
             {
               "name": "grid_data",
               "source": "tdata",
@@ -4479,9 +5182,7 @@
                 {
                   "signal": "if(Size_By!='None',min(bandwidth('gx_scale')*0.05,bandwidth('gx_scale')*0.95),bandwidth('gx_scale')*0.95)"
                 },
-                {
-                  "signal": "bandwidth('gx_scale')*0.95"
-                }
+                {"signal": "bandwidth('gx_scale')*0.95"}
               ]
             },
             {
@@ -4497,7 +5198,7 @@
                   "signal": "min(bandwidth('gx_scale')*0.95,bandwidth('gy_scale')*0.95)"
                 }
               ]
-            },           
+            },
             {
               "name": "size_scale",
               "type": "pow",
@@ -4516,9 +5217,9 @@
           "marks": [
             {
               "name": "row_header",
-              "clip":true,
+              "clip": true,
               "type": "group",
-              "from": {"data": "rows_domain"},              
+              "from": {"data": "rows_domain"},
               "encode": {
                 "update": {
                   "height": {"signal": "Plot_Height"},
@@ -4630,7 +5331,7 @@
                 {
                   "name": "grid_chart",
                   "type": "group",
-                  "from":{"data":"run_jitter"},
+                  "from": {"data": "run_jitter"},
                   "axes": [
                     {
                       "scale": "gy_scale",
@@ -4704,50 +5405,38 @@
                             }
                           ]
                         }
-                      ],                      
+                      ],
                       "encode": {
                         "update": {
                           "xfocus": [
                             {
-                            "band": 0.5,
-                            "scale": "gx_scale",
-                            "field": "X_Value"
-                            }                           
+                              "band": 0.5,
+                              "scale": "gx_scale",
+                              "field": "X_Value"
+                            }
                           ],
                           "yfocus": {
                             "band": 0.5,
                             "scale": "gy_scale",
                             "field": "Y_Value"
-                          },                          
+                          },
                           "width": [
+                            {"test": "Jitter_", "signal": "Jitter_Radius*1.8"},
                             {
-                              "test":"Jitter_",
-                              "signal": "Jitter_Radius*1.8"
-                            },                            
-                            {
-                              "test":"!Grid_Spacing",
+                              "test": "!Grid_Spacing",
                               "scale": "size_scale",
                               "field": "Size_Value"
                             },
-                            {
-                              "scale": "size_scale_x",
-                              "field": "Size_Value"
-                            }                            
+                            {"scale": "size_scale_x", "field": "Size_Value"}
                           ],
                           "height": [
+                            {"test": "Jitter_", "signal": "Jitter_Radius*1.8"},
                             {
-                              "test":"Jitter_",
-                              "signal": "Jitter_Radius*1.8"
-                            },                                
-                            {
-                            "scale": "size_scale",
-                            "test":"!Grid_Spacing",
-                            "field": "Size_Value"
-                            },
-                            {
-                              "scale": "size_scale_y",
+                              "scale": "size_scale",
+                              "test": "!Grid_Spacing",
                               "field": "Size_Value"
-                            }                            
+                            },
+                            {"scale": "size_scale_y", "field": "Size_Value"}
                           ],
                           "tooltip": {
                             "signal": "{'X':datum['X_Value'],'Y': datum['X_Value'],'C':datum['Color_Value'],'Row':datum['Col_Value'],'Col':datum['Row_Value'],'Size':datum['Size_Value']}"
@@ -4772,7 +5461,7 @@
                 },
                 {
                   "name": "heat_grid_chart",
-                  "from":{"data":"show_heat"},
+                  "from": {"data": "show_heat"},
                   "type": "group",
                   "axes": [
                     {
@@ -4863,7 +5552,7 @@
                       }
                     }
                   ]
-                }                
+                }
               ]
             }
           ]
@@ -5246,7 +5935,7 @@
           "gradientThickness": {"signal": "if(!Cord,10,0)"},
           "gradientLength": {"signal": "if(!Cord,200,0)"},
           "labelLimit": {"signal": "if(!Cord,26,0)"},
-          "labelSeparation":10,
+          "labelSeparation": 10,
           "direction": "horizontal",
           "orient": "bottom",
           "title": {

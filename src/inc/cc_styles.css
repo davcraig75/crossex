@@ -456,6 +456,7 @@ div.vega-bind select {
 .vega-bind-radio input {
 	font-size:x-small !important;
 }
+
 #vg-tooltip-element {
 	visibility: hidden;
 	padding: 0.7em !important;
@@ -551,7 +552,7 @@ div.vega-bind > label > input[type=range]::-ms-track {
 	color: transparent !important;
 }
 div.vega-bind>label>span {
-    font-size: x-small !important;
+    font-size: xx-small !important;
     font-family: sans-serif !important;
     vertical-align: top !important;
     position: relative !important;
