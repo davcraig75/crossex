@@ -507,7 +507,7 @@
     },
     {
         "name": "Background_Color",
-        "value": "#f9f9f9",
+        "value": "#FFF",
         "bind": {
           "element": "#Background_Color-ccnm",
           "input": "text"
@@ -693,10 +693,13 @@
     },
     {
       "name": "Max_Plot_Height",
-      "value": 400,
+      "value": 800,
       "bind": {
         "element": "#Max_Plot_Height-ccnm",
-        "input": "text"
+        "input": "range",
+        "min": 50,
+        "max": 3000,
+        "step": 50
       }
     },
     {"name": "PlotTitle_Height", "value": 0},
@@ -727,8 +730,11 @@
       "value": 800,
       "bind": {
         "element": "#Max_Plot_Width-ccnm",
-        "input": "text"
-      }
+          "input": "range",
+          "min": 50,
+          "max": 3000,
+          "step": 50
+        }
     },
     {
       "name": "Row_Height",
@@ -2269,7 +2275,7 @@
                       "type": "regression",
                       "groupby": [
                         {
-                          "signal": "if(colors_count<20 & Regression_,Color_By,'None')"
+                          "signal": "if(colors_count<100 & Regression_,Color_By,'None')"
                         }
                       ],
                       "method": "linear",
@@ -2686,7 +2692,7 @@
                           "type": "kde2d",
                           "groupby": [
                             {
-                              "signal": "if(colors_count<20 & Contours_,'Color_Value','None')"
+                              "signal": "if(colors_count<100 & Contours_,'Color_Value','None')"
                             }
                           ],
                           "size": [
