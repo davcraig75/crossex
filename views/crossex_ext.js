@@ -207,6 +207,12 @@ document.getElementById("graph_button").onclick = function clicks() {
 		"bind": {
 			"options": headers
 		}
+	}, {
+		"name": "Stroke_By",
+		"value": "None",
+		"bind": {
+			"options": headers
+		}
 	}],"About");
 };
 
