@@ -129,6 +129,10 @@
       }
     },
     {
+      "name": "Stroke_Categories",
+      "value": "None"
+    },    
+    {
       "name": "Shape",
       "value": "circle",
       "bind": {
@@ -9118,7 +9122,7 @@
       "name": "stroke_color_scale",
       "type": "ordinal",
       "domain": {"field": "Stroke_Value", "data": "stroke_domain"},
-      "range": ["#e41a1b","#13bece","#cd6ebd","#ffff33","#bcbd21","#2ca02b","#ff7f00"]
+      "range":{"scheme": {"signal": "'sinebow'"}}
     }
   ],
   "marks": [
