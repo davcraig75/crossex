@@ -247,8 +247,15 @@ var crossex = function crossex(element, data, options,widthid) {
 					spec.signals[index].value = repSignalsJson[i].value;
 				}
 			} else {
-				//console.log('name',repSignalsJson[i].name,'index',index);
+				var dataIndex = Index(spec.data, repSignalsJson[i].name);
+				console.log('here',dataIndex, repSignalsJson[i].name)
+				if (dataIndex>=0){
+					if ('values' in repSignalsJson[i]) {spec.data[dataIndex]['values'] = JSON.stringify(repSignalsJson[i].values);}
+					spec.data[dataIndex]['transform']=JSON.parse("[]");
+				}
 			}
+
+
 		}
 	}
 	spec.data[Index(spec.data, "columns")].values = JSON.parse(JSON.stringify(mycols));
