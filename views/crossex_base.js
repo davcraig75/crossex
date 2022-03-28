@@ -158,7 +158,7 @@ var crossex = function crossex(element, data, options,widthid) {
 	var spec = JSON.parse(res);
 	var mycols=[];	
 	var hide_panel=false;
-	var editable=true;
+	var editable=false;
 	var exportable=true;
 	var new_signalsString = JSON.stringify(options);
 	if (new_signalsString != null) {
@@ -292,8 +292,8 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 		tooltip: true,
 		warn: false,
 		actions: {
-			export: true,
-			csv:true,
+			export: exportable,
+			csv:exportable,
 			source: false,
 			editor: editable,
 			editorURL: "https://itg.usc.edu/editor",

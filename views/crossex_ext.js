@@ -213,10 +213,6 @@ document.getElementById("graph_button").onclick = function clicks() {
 		"bind": {
 			"options": headers
 		}
-	}, 
-	{
-			"name": "stroke_domain",
-			"values": [{'Stroke_Value':'2009'},{'Stroke_Value':'2010'}]
 	}],"About");
 };
 
