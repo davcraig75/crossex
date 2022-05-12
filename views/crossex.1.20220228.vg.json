@@ -495,7 +495,7 @@
     {"name": "col_header_fontsize", "value": 14},
     {
       "name": "Max_Point",
-      "value": 20,
+      "value": 100,
       "bind": {
         "element": "#Max_Point-ccnm",
         "input": "range",
@@ -506,7 +506,7 @@
     },
     {
       "name": "Min_Point",
-      "value": 10,
+      "value": 20,
       "bind": {
         "element": "#Min_Point-ccnm",
         "input": "range",
@@ -584,7 +584,7 @@
     },
     {
       "name": "Palette",
-      "value": "Cividis",
+      "value": "Rainbow",
       "bind": {
         "input": "select",
         "element": "#Palette-ccnm",
@@ -599,7 +599,6 @@
           "Rainbow",
           "Plasma",
           "Blues",
-          "rainbow",
           "Sinebow",
           "Reds",
           "Oranges",
@@ -656,7 +655,7 @@
     },
     {
       "name": "Opacity_",
-      "value": 0.5,
+      "value": 1,
       "bind": {
         "element": "#Opacity_-ccnm",
         "input": "range",
