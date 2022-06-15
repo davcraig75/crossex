@@ -44,35 +44,30 @@
   "signals": [
     {
       "name": "X_Axis",
-      "value": "bill_length_mm",
+      "value": "species",
       "bind": {
         "input": "select",
         "element": "#X_Axis-ccnm",
-        "options": [
-          "None"
-        ]
+        "options": ["None"]
       }
     },
     {
       "name": "Y_Axis",
-      "value": "bill_depth_mm",
+      "value": "None",
       "bind": {
         "input": "select",
         "element": "#Y_Axis-ccnm",
-        "options": [
-          "None"
-        ]
+        "options": ["None"]
       }
     },
+
     {
       "name": "Size_By",
       "value": "None",
       "bind": {
         "input": "select",
         "element": "#Size_By-ccnm",
-        "options": [
-          "None"
-        ]
+        "options": ["None"]
       }
     },
     {
@@ -81,9 +76,7 @@
       "bind": {
         "input": "select",
         "element": "#Facet_Cols_By-ccnm",
-        "options": [
-          "None"
-        ]
+        "options": ["None"]
       }
     },
     {
@@ -92,20 +85,16 @@
       "bind": {
         "input": "select",
         "element": "#Facet_Rows_By-ccnm",
-        "options": [
-          "None"
-        ]
+        "options": ["None"]
       }
     },
     {
       "name": "Color_By",
-      "value": "species",
+      "value": "None",
       "bind": {
         "input": "select",
         "element": "#Color_By-ccnm",
-        "options": [
-          "None"
-        ]
+        "options": ["None"]
       }
     },
     {
@@ -117,21 +106,26 @@
         "options": ["None"]
       }
     },
+  
+    {
+      "name": "SortX_By",
+      "value": "None",
+      "bind": {
+        "input": "select",
+        "element": "#SortX_By-ccnm",
+        "options": ["None"]
+      }
+    },    
     {
       "name": "Stroke_By",
       "value": "None",
       "bind": {
         "input": "select",
         "element": "#Stroke_By-ccnm",
-        "options": [
-          "None"
-        ]
+        "options": ["None"]
       }
     },
-    {
-      "name": "Stroke_Categories",
-      "value": "None"
-    },    
+    {"name": "Stroke_Categories", "value": "None"},
     {
       "name": "Shape",
       "value": "circle",
@@ -160,9 +154,7 @@
       "bind": {
         "input": "select",
         "element": "#Filter_Out_From-ccnm",
-        "options": [
-          "None"
-        ]
+        "options": ["None"]
       }
     },
     {
@@ -171,9 +163,7 @@
       "bind": {
         "input": "select",
         "element": "#Sum_By-ccnm",
-        "options": [
-          "None"
-        ]
+        "options": ["None"]
       }
     },
     {"name": "Export_CSV", "value": true},
@@ -294,18 +284,18 @@
     },
     {
       "name": "Violin_Opacity",
-      "value": 0.3,
+      "value": 0.15,
       "bind": {
         "element": "#Violin_Opacity-ccnm",
         "input": "range",
         "min": 0,
         "max": 1,
-        "step": 0.1
+        "step": 0.05
       }
     },
     {
       "name": "Grid_Opacity",
-      "value": 0.8,
+      "value": 1,
       "bind": {
         "element": "#Grid_Opacity-ccnm",
         "input": "range",
@@ -349,7 +339,7 @@
     },
     {
       "name": "Boxplot_Opacity",
-      "value": 0.6,
+      "value": 0.4,
       "bind": {
         "element": "#Boxplot_Opacity-ccnm",
         "input": "range",
@@ -365,7 +355,7 @@
         "element": "#Stroke_Width-ccnm",
         "input": "range",
         "min": 0,
-        "max": 10,
+        "max": 8,
         "step": 0.01
       }
     },
@@ -916,6 +906,7 @@
           "as": "Y_Value",
           "expr": "Datatype_Y=='Unknown'?datum[Y_Axis]:Datatype_Y=='Numerical'?toNumber(datum[Y_Axis]):Datatype_Y=='Categorical'?toString(datum[Y_Axis]):Datatype_Y=='Date'?toDate(datum[Y_Axis]):datum[Y_Axis]"
         },
+
         {
           "type": "filter",
           "expr": "X_Axis=='None'|| (X_Axis != 'None' && !(!isValid(datum[X_Axis]) || datum[X_Axis]==Filter_If || datum[X_Axis] =='NA' || datum[X_Axis] =='null' || datum[X_Axis] =='NaN' || datum[X_Axis] =='N/A'))"
@@ -940,6 +931,7 @@
           "type": "filter",
           "expr": "Size_By == 'None' || (Size_By != 'None' && !(!isValid(datum[Size_By]) || datum[Size_By]==Filter_If || datum[Size_By] =='NA' || datum[Size_By] =='null' || datum[Size_By] =='NaN' || datum[Size_By] =='N/A'))"
         },
+        {"type": "formula", "as": "SortX_Value", "expr": "datum[SortX_By]"},
         {"type": "formula", "as": "Stroke_Value", "expr": "datum[Stroke_By]"},
         {"type": "formula", "as": "Col_Value", "expr": "datum[Facet_Cols_By]"},
         {"type": "formula", "as": "Color_Value", "expr": "datum[Color_By]"},
@@ -8905,10 +8897,7 @@
       "transform": [
         {"type": "collect", "sort": {"field": "Stroke_Value"}},
         {"type": "aggregate", "groupby": ["Stroke_Value"]},
-        {
-          "type": "filter",
-          "expr": "isValid(datum.Stroke_Value)"
-        }
+        {"type": "filter", "expr": "isValid(datum.Stroke_Value)"}
       ]
     },
     {
@@ -9121,7 +9110,7 @@
       "name": "stroke_color_scale",
       "type": "ordinal",
       "domain": {"field": "Stroke_Value", "data": "stroke_domain"},
-      "range":{"scheme": {"signal": "'sinebow'"}}
+      "range": {"scheme": {"signal": "'sinebow'"}}
     }
   ],
   "marks": [
@@ -9212,7 +9201,6 @@
                 {"signal": "Plot_Height"}
               ]
             },
-          
             {
               "name": "y_cont_scatter_log_scale",
               "type": "log",
@@ -9258,7 +9246,7 @@
                   "x": {"signal": "Row_Header_Width-5"}
                 }
               },
-              "scales":[],
+              "scales": [],
               "axes": [
                 {
                   "scale": "y_cont_scatter_scale",
@@ -9445,7 +9433,7 @@
                   "height": {"signal": "Plot_Height"},
                   "fill": {"signal": "Background_Color"},
                   "stroke": {"value": "#ccc"},
-                  "strokeWidth": {"value": 0.5}
+                  "strokeWidth": {"signal": "Stroke_Width"}
                 }
               },
               "scales": [],
@@ -9526,7 +9514,7 @@
                     {
                       "type": "group",
                       "name": "histo",
-                      "clip": false,
+                      "clip": true,
                       "encode": {
                         "update": {
                           "height": {"signal": "hist_graph_height"},
@@ -9665,7 +9653,9 @@
                               "x": {"scale": "x_cont_scale", "field": "bin0"},
                               "x2": {"scale": "x_cont_scale", "field": "bin1"},
                               "stroke": {"value": "aliceblue"},
-                              "strokeWidth": {"signal": "if(Cord,0.5,0)"},
+                              "strokeWidth": {
+                                "signal": "if(Cord,Stroke_Width,0)"
+                              },
                               "fillOpacity": {"signal": "0.7"},
                               "tooltip": {
                                 "signal": "{'count':datum.count,'bin':format(datum['bin0'],'0.2f')+'-'+format(datum['bin1'],'0.2f'),'Sub-group': ''+datum['Color_Value']}"
@@ -9835,22 +9825,21 @@
                               "scale": "stroke_color_scale",
                               "field": "Stroke_Value"
                             },
-                            {
-                              "value": "transparent"
-                            }                            
+                            {"value": "transparent"}
                           ],
                           "strokeOpacity": [
                             {
-                              "test": "isValid(datum.Stroke_Value)",
+                              "test": "isValid(datum.Stroke_Value)&&Stroke_By!='None'",
                               "value": 1
                             },
-                            {
-                              "value": 0
-                            }                            
-                          ],                          
-                          "strokeWidth": {"signal": "Stroke_By=='None'?0:Stroke_Width"}
+                            {"value": 0}
+                          ],
+                          "strokeWidth": {"signal": "Stroke_Width"}
                         },
-                        "hover": {"size": {"value": 120}, "fill": {"value": "gold"}}
+                        "hover": {
+                          "size": {"value": 120},
+                          "fill": {"value": "gold"}
+                        }
                       }
                     }
                   ]
@@ -9976,7 +9965,7 @@
                       "from": {"data": "contours_data"},
                       "encode": {
                         "update": {
-                          "strokeWidth": {"value": 1},
+                          "strokeWidth": {"signal": "Stroke_Width"},
                           "strokeOpacity": {"signal": "Cnt_St_Opacity"},
                           "tooltip": {"signal": "datum"},
                           "stroke": {
@@ -10077,7 +10066,7 @@
                       "from": {"data": "contours_data"},
                       "encode": {
                         "update": {
-                          "strokeWidth": {"value": 1},
+                          "strokeWidth": {"signal": "Stroke_Width"},
                           "strokeOpacity": {"signal": "Contour_Opacity"},
                           "stroke": {"value": "#ccc"},
                           "tooltip": {"signal": "datum"},
@@ -10185,6 +10174,7 @@
         {
           "type": "group",
           "name": "stack_graphs",
+          "clip":false,
           "encode": {
             "update": {
               "height": {
@@ -10234,9 +10224,9 @@
                     "Col_Value",
                     "Row_Value"
                   ],
-                  "ops": ["sum"],
-                  "fields": ["Count"],
-                  "as": ["sum_yield"]
+                  "ops": ["sum","max"],
+                  "fields": ["Count","Stroke_Value"],
+                  "as": ["sum_yield","Stroke_Value"]
                 },
                 {
                   "type": "stack",
@@ -10245,6 +10235,11 @@
                   "sort": {"field": ["sum_yield"], "order": ["descending"]},
                   "as": ["sum_yield_start", "sum_yield_end"],
                   "offset": "zero"
+                },
+                {
+                  "type": "formula",
+                  "as": "sorted_by",
+                  "expr": "SortX_By!='None'?datum.SortX_Value:datum.sum_yield_end"
                 }
               ]
             },
@@ -10280,7 +10275,11 @@
               "domain": {
                 "data": "binned_stacked_data",
                 "field": "X_Value",
-                "sort": true
+                "sort": {
+                  "op": "max",
+                  "field": "sorted_by",
+                  "order": "descending"
+                }
               },
               "range": [{"signal": "0"}, {"signal": "Plot_Width"}],
               "paddingInner": 0.1,
@@ -10330,6 +10329,7 @@
             {
               "name": "col_footer",
               "type": "group",
+              
               "from": {"data": "cols_domain"},
               "encode": {
                 "update": {
@@ -10379,7 +10379,7 @@
             {
               "name": "stacked_chart",
               "type": "group",
-              "clip": true,
+              "clip": false,
               "from": {
                 "facet": {
                   "data": "binned_stacked_data",
@@ -10403,7 +10403,7 @@
                 {
                   "name": "child_marks",
                   "interactive": true,
-                  "clip": true,
+                  "clip": false,
                   "type": "rect",
                   "style": "cell",
                   "from": {"data": "mystackfacet"},
@@ -10418,9 +10418,16 @@
                       ],
                       "opacity": {"signal": "Opacity_"},
                       "tooltip": {
-                        "signal": "{'Number': format(datum['sum_yield'], ''), Group: ''+datum['X_Value'], 'Sub-group': ''+datum['Color_Value']}"
+                        "signal": "datum"
                       },
-                      "strokeWidth": {"signal": "Grids_?0.4:0"},
+                      "stroke": [
+                        {
+                          "test": "isValid(datum.Stroke_Value) && Stroke_By!='None'",
+                          "scale": "stroke_color_scale",
+                          "field": "Stroke_Value"
+                        },{"value":"333333b5"}
+                      ],
+                      "strokeWidth": {"signal": "Stroke_Width"},
                       "y2": {
                         "scale": "stacked_scale",
                         "field": "sum_yield_end"
@@ -10849,7 +10856,7 @@
                               "type": "filter",
                               "expr": "datum['median'] != null"
                             },
-                            {"type": "filter", "expr": "datum['count'] > 7"}
+                            {"type": "filter", "expr": "datum['count'] > 1"}
                           ]
                         }
                       ],
@@ -11229,7 +11236,9 @@
                                   "field": "Stroke_Value"
                                 }
                               ],
-                              "strokeWidth": {"signal": "Stroke_By=='None'?0:Stroke_Width"},                              
+                              "strokeWidth": {
+                                "signal": "Stroke_By=='None'?0:Stroke_Width"
+                              },
                               "fillOpacity": {"signal": "Dash_Opacity"},
                               "height": {"signal": "Dash_Height"},
                               "cornerRadius": {"signal": "Dash_Radius"},
@@ -11905,7 +11914,7 @@
                           ]
                         },
                         {"type": "filter", "expr": "datum['median'] != null"},
-                        {"type": "filter", "expr": "datum['count'] > 7"}
+                        {"type": "filter", "expr": "datum['count'] > 1"}
                       ]
                     }
                   ],
@@ -12667,7 +12676,7 @@
                             {"scale": "size_scale_y", "field": "Size_Value"}
                           ],
                           "tooltip": {
-                            "signal": "{'X':datum['X_Value'],'Y': datum['X_Value'],'C':datum['Color_Value'],'Row':datum['Col_Value'],'Col':datum['Row_Value'],'Size':datum['Size_Value']}"
+                            "signal": "{'X':datum['X_Value'],'Y': datum['Y_Value'],'C':datum['Color_Value'],'Row':datum['Col_Value'],'Col':datum['Row_Value'],'Size':datum['Size_Value']}"
                           },
                           "cornerRadius": {"signal": "Jitter_Radius"},
                           "opacity": [{"signal": "Opacity_"}],
@@ -13121,7 +13130,7 @@
                                     "band": 0.1
                                   },
                                   "stroke": {"value": "steelblue"},
-                                  "strokeWidth": {"value": 1},
+                                  "strokeWidth": {"signal": "Stroke_Width"},
                                   "width": {"scale": "X2_scale", "band": 0.9},
                                   "height": {"scale": "X2_scale", "band": 0.9},
                                   "y": {
@@ -13236,7 +13245,7 @@
               }
             }
           }
-        },         
+        },
         {
           "stroke": "filter_scale",
           "title": {

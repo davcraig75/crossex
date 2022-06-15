@@ -2,6 +2,15 @@
 Data Visualization of Dataframes and Tables
 **Version: 1.10210426**
 
+## To do
+
+1. Add summary preview
+2. Add correlation view
+3. Add chromosome/type
+4. Add BED support
+5. Add Kaplan Meyer
+6. Add Pie
+7. Distribution
 ## Installation
 
 This page provides for building and installation of crosscorrelate.  There are typically **2** to **3** lines of HTML required.
