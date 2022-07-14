@@ -17,6 +17,9 @@ var Index = function Index(items, name) {
 	}
 	return index;
 };
+function isNumeric(n) {
+	return !isNaN(parseFloat(n)) && isFinite(n);
+}
 var json2csv = function json2csv(filename,json) {
     var fields = [];
 	var filtered = ["Y_Value", "Col_Value", "X_Value", "Row_Value", "Count","None","O_Value","Color_Value","Cstr","Xstr","Ystr","Size_Value"];
@@ -195,8 +198,7 @@ var crossex = function crossex(element, data, options,widthid) {
 				continue; 
 			}
 			var index = Index(spec.signals, repSignalsJson[i].name);
-			
-
+			var sum_cols=[];
 			if (index>=0){
 				spec.signals[index].value = repSignalsJson[i].value;
 				if (repSignalsJson[i].bind != null) {
@@ -205,10 +207,22 @@ var crossex = function crossex(element, data, options,widthid) {
 					}
 					if (repSignalsJson[i].bind.options != null) {
 						var headers = repSignalsJson[i].bind.options;
-						var finalheaders = [];
+						var finalheaders = [];						
 						headers.forEach(function(element) {
 							var distinct = [...new Set(data.map(x => x[element]))];
 							var ln = distinct.length;
+							var isNum=true;
+							data.forEach(function(row) {
+								if (!isNumeric(row[element]) && row[element] != null && row[element] != "NA") {
+									isNum=false;
+								}
+							});
+							if (isNum) {
+								sum_cols.push({"feature":element,"type":"num"})
+							} else {
+								sum_cols.push({"feature":element,"type":"cat"})
+							}
+
 							if (ln > 0) {							
 								if (repSignalsJson[i].name == "Facet_By" && ln < mymax) {
 									finalheaders.push(element);
@@ -260,7 +274,7 @@ var crossex = function crossex(element, data, options,widthid) {
 
 		}
 	}
-	spec.data[Index(spec.data, "columns")].values = JSON.parse(JSON.stringify(mycols));
+	spec.data[Index(spec.data, "columns")].values = JSON.parse(JSON.stringify(sum_cols));
 	if (data != null) {
 		spec.data[Index(spec.data, "mydata")].values = JSON.parse(JSON.stringify(data));
 	}
