@@ -9347,10 +9347,10 @@
     {
       "name": "columns",
       "values": [
-        {"feature":"bill_length_mm","type":"num"},
-        {"feature":"species","type":"cat"},
-        {"feature":"bill_depth_mm","type":"num"},
-        {"feature":"body_mass_g","type":"num"}
+        {"feature": "bill_length_mm", "type": "num"},
+        {"feature": "species", "type": "cat"},
+        {"feature": "bill_depth_mm", "type": "num"},
+        {"feature": "body_mass_g", "type": "num"}
       ],
       "transform": [{"type": "filter", "expr": "show_explorer"}]
     },
@@ -9551,8 +9551,11 @@
               "transform": [{"type": "filter", "expr": "show_explorer"}]
             },
             {"name": "row_columns", "source": "columns"},
-            {"name": "hist_columns", "source": "columns",
-              "transform": [{"type": "filter", "expr": "datum.type=='num'"}]}
+            {
+              "name": "hist_columns",
+              "source": "columns",
+              "transform": [{"type": "filter", "expr": "datum.type=='num'"}]
+            }
           ],
           "encode": {
             "update": {
@@ -9570,147 +9573,310 @@
               "domain": {"field": "feature", "data": "row_columns"}
             }
           ],
-                "marks": [
-        {
-          "type": "group",
-          "from": {"data": "show_variant_legends"},
           "marks": [
             {
               "type": "group",
-              "interactive": true,
-              "from": {"data": "hist_columns"},
-              "title":{"text":{"signal":"parent['feature']"},"anchor":"start"},
-              "encode": {
-                "update": {
-                  "y": {"scale": "row_bands", "signal": "datum.feature"},
-                  "x": {"signal": "0"},
-                  "width": {"signal": "width-70"},
-                  "height": {"signal": "bandwidth('row_bands')-30"}
-                }
-              },
-              "signals":[{"name": "t1", "update": "parent.data"}],
-              "data": [
-                {
-                  "name": "col_data",
-                  "source": "filtered_data",
-                  "transform": [
-                    {
-                      "type": "formula",
-                      "as": "X",
-                      "expr": "datum[parent.feature]"
-                    },
-                    {"type": "filter", "expr": "datum.X!='NA'"},
-                    {"type": "extent", "field": "X", "signal": "col_maxmin_num"}
-                  ]
-                },
-                {
-                  "name": "binned",
-                  "source": "col_data",
-                  "transform": [
-                    {
-                      "type": "bin",
-                      "field": "X",
-                      "extent": {"signal": "col_maxmin_num"},
-                      "anchor": {"signal": "0"},
-                      "step": {
-                        "signal": "(col_maxmin_num[1]-col_maxmin_num[0])/10"
-                      },
-                      "nice": false
-                    },
-                    {
-                      "type": "aggregate",
-                      "key": "bin0",
-                      "groupby": ["bin0", "bin1"],
-                      "fields": ["bin0"],
-                      "ops": ["count"],
-                      "as": ["count"]
-                    }
-                  ]
-                }
-              ],
-              "axes": [
-                {
-                  "scale": "X_scale",
-                  "gridScale": "Y_scale",
-                  "offset": 0,
-                  "labels": true,
-                  "domain": true,
-                  "encode": {
-                    "labels": {
-                      "update": {
-                        "fontSize": {"value": 7},
-                        "angle": {"value": -45}
-                      }
-                    }
-                  },
-                  "orient": "bottom"
-                },
-                {
-                  "scale": "Y_scale",
-                  "gridScale": "X_scale",
-                  "offset": 0,
-                  "labels": true,
-                  "domain": true,
-                  "tickCount":3,
-                  "encode": {
-                    "labels": {
-                      "update": {
-                        "fontSize": {"value": 7},
-                        "angle": {"value": -45}
-                      }
-                    }
-                  },
-                  "orient": "left"
-                }
-              ],
-              "scales": [
-                {
-                  "name": "X_scale",
-                  "type": "linear",
-                  "range": [{"signal": "0"}, {"signal": "width-50"}],
-                  "domain": {"field": "X", "data": "col_data"}
-                },
-                {
-                  "name": "Y_scale",
-                  "type": "linear",
-                  "reverse": true,
-                  "range": {"signal": "[0,bandwidth('row_bands')-30]"},
-                  "domain": {"field": "count", "data": "binned"}
-                }
-              ],
+              "from": {"data": "show_variant_legends"},
               "marks": [
                 {
-                  "type": "rect",
-                  "from": {"data": "binned"},
+                  "type": "group",
+                  "interactive": true,
+                  "from": {"data": "hist_columns"},
+                  "title": {
+                    "text": {"signal": "parent['feature']"},
+                    "anchor": "start"
+                  },
                   "encode": {
                     "update": {
-                      "x": {"scale": "X_scale", "field": "bin0"},
-                      "x2": {"scale": "X_scale", "field": "bin1"},
-                      "y": {"scale": "Y_scale", "field": "count"},
-                      "y2": {"scale": "Y_scale", "value": 0},
-                      "fill": {"value": "steelblue"}
-                    },
-                    "hover": {"fill": {"value": "firebrick"}}
-                  }
-                },
-                {
-                  "type": "rect",
-                  "from": {"data": "col_data"},
-                  "encode": {
-                    "enter": {
-                      "x": {"scale": "X_scale", "field": "u"},
-                      "width": {"value": 1},
-                      "y": {"value": 25, "offset": {"signal": "height"}},
-                      "height": {"value": 5},
-                      "fill": {"value": "steelblue"},
-                      "fillOpacity": {"value": 0.4}
+                      "y": {"scale": "row_bands", "signal": "datum.feature"},
+                      "x": {"signal": "0"},
+                      "width": {"signal": "width-70"},
+                      "height": {"signal": "bandwidth('row_bands')-30"}
                     }
-                  }
+                  },
+                  "signals": [{"name": "t1", "update": "parent.data"}],
+                  "data": [
+                    {
+                      "name": "col_data",
+                      "source": "filtered_data",
+                      "transform": [
+                        {
+                          "type": "formula",
+                          "as": "X",
+                          "expr": "datum[parent.feature]"
+                        },
+                        {"type": "filter", "expr": "datum.X!='NA'"},
+                        {
+                          "type": "extent",
+                          "field": "X",
+                          "signal": "col_maxmin_num"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "binned",
+                      "source": "col_data",
+                      "transform": [
+                        {
+                          "type": "bin",
+                          "field": "X",
+                          "extent": {"signal": "col_maxmin_num"},
+                          "anchor": {"signal": "0"},
+                          "step": {
+                            "signal": "(col_maxmin_num[1]-col_maxmin_num[0])/10"
+                          },
+                          "nice": false
+                        },
+                        {
+                          "type": "aggregate",
+                          "key": "bin0",
+                          "groupby": ["bin0", "bin1"],
+                          "fields": ["bin0"],
+                          "ops": ["count"],
+                          "as": ["count"]
+                        }
+                      ]
+                    }
+                  ],
+                  "axes": [
+                    {
+                      "scale": "X_scale",
+                      "gridScale": "Y_scale",
+                      "offset": 0,
+                      "labels": true,
+                      "domain": true,
+                      "encode": {
+                        "labels": {
+                          "update": {
+                            "fontSize": {"value": 7},
+                            "angle": {"value": -45}
+                          }
+                        }
+                      },
+                      "orient": "bottom"
+                    },
+                    {
+                      "scale": "Y_scale",
+                      "gridScale": "X_scale",
+                      "offset": 0,
+                      "labels": true,
+                      "domain": true,
+                      "tickCount": 3,
+                      "encode": {
+                        "labels": {
+                          "update": {
+                            "fontSize": {"value": 7},
+                            "angle": {"value": -45}
+                          }
+                        }
+                      },
+                      "orient": "left"
+                    }
+                  ],
+                  "scales": [
+                    {
+                      "name": "X_scale",
+                      "type": "linear",
+                      "range": [{"signal": "0"}, {"signal": "width-50"}],
+                      "domain": {"field": "X", "data": "col_data"}
+                    },
+                    {
+                      "name": "Y_scale",
+                      "type": "linear",
+                      "reverse": true,
+                      "range": {"signal": "[0,bandwidth('row_bands')-30]"},
+                      "domain": {"field": "count", "data": "binned"}
+                    }
+                  ],
+                  "marks": [
+                    {
+                      "type": "rect",
+                      "from": {"data": "binned"},
+                      "encode": {
+                        "update": {
+                          "x": {"scale": "X_scale", "field": "bin0"},
+                          "x2": {"scale": "X_scale", "field": "bin1"},
+                          "y": {"scale": "Y_scale", "field": "count"},
+                          "y2": {"scale": "Y_scale", "value": 0},
+                          "fill": {"value": "steelblue"}
+                        },
+                        "hover": {"fill": {"value": "firebrick"}}
+                      }
+                    },
+                    {
+                      "type": "rect",
+                      "from": {"data": "col_data"},
+                      "encode": {
+                        "enter": {
+                          "x": {"scale": "X_scale", "field": "u"},
+                          "width": {"value": 1},
+                          "y": {"value": 25, "offset": {"signal": "height"}},
+                          "height": {"value": 5},
+                          "fill": {"value": "steelblue"},
+                          "fillOpacity": {"value": 0.4}
+                        }
+                      }
+                    }
+                  ]
                 }
               ]
             }
           ]
-        }]
+        },
+        {
+          "type": "group",
+          "data": [
+            {
+              "name": "filtered_data",
+              "source": "mydata",
+              "transform": [{"type": "filter", "expr": "show_explorer"}]
+            },
+            {"name": "row_columns", "source": "columns"},
+            {
+              "name": "hist_columns",
+              "source": "columns",
+              "transform": [{"type": "filter", "expr": "datum.type=='cat'"}]
+            }
+          ],
+          "encode": {
+            "update": {
+              "x": {"value": 50},
+              "y": {"value": 50},
+              "height": {"signal": "width-50"},
+              "width": {"signal": "width-50"}
+            }
+          },
+          "scales": [
+            {
+              "name": "row_bands",
+              "type": "band",
+              "range": [0, {"signal": "width-50"}],
+              "domain": {"field": "feature", "data": "row_columns"}
+            }
+          ],
+          "marks": [
+            {
+              "type": "group",
+              "from": {"data": "show_variant_legends"},
+              "marks": [
+                {
+                  "type": "group",
+                  "interactive": true,
+                  "from": {"data": "hist_columns"},
+                  "title": {
+                    "text": {"signal": "parent['feature']"},
+                    "anchor": "start"
+                  },
+                  "encode": {
+                    "update": {
+                      "y": {"scale": "row_bands", "signal": "datum.feature"},
+                      "x": {"signal": "0"},
+                      "width": {"signal": "width-70"},
+                      "height": {"signal": "bandwidth('row_bands')-30"}
+                    }
+                  },
+                  "signals": [{"name": "t1", "update": "parent.data"}],
+                  "data": [
+                    {
+                      "name": "col_data",
+                      "source": "filtered_data",
+                      "transform": [
+                        {
+                          "type": "formula",
+                          "as": "X",
+                          "expr": "datum[parent.feature]"
+                        },
+                        {"type": "filter", "expr": "datum.X!='NA'"},
+                        {
+                          "type": "extent",
+                          "field": "X",
+                          "signal": "col_maxmin_num"
+                        }
+                      ]
+                    },           
+                    {
+                      "name": "binned",
+                      "source": "col_data",
+                      "transform": [                   
+                  {"type": "stack",
+                  "groupby": ["X"],
+                  "field": "Count",
+                  "sort": {"field": ["Count"], "order": ["descending"]},
+                  "as": ["sum_yield_start", "count"],
+                  "offset": "zero"}
+                      ]
+                    }
+                  ],
+                  "axes": [
+                    {
+                      "scale": "X_scale",
+                      "gridScale": "Y_scale",
+                      "offset": 0,
+                      "labels": true,
+                      "domain": true,
+                      "encode": {
+                        "labels": {
+                          "update": {
+                            "fontSize": {"value": 8},
+                            "angle": {"value": -45}
+                          }
+                        }
+                      },
+                      "orient": "bottom"
+                    },
+                    {
+                      "scale": "Y_scale",
+                      "gridScale": "X_scale",
+                      "offset": 0,
+                      "labels": true,
+                      "domain": true,
+                      "tickCount": 3,
+                      "encode": {
+                        "labels": {
+                          "update": {
+                            "fontSize": {"value": 7},
+                            "angle": {"value": -45}
+                          }
+                        }
+                      },
+                      "orient": "left"
+                    }
+                  ],
+                  "scales": [
+                    {
+                      "name": "X_scale",
+                      "type":"band",
+                      "range": [{"signal": "0"}, {"signal": "width-50"}],
+                      "domain": {"field": "X", "data": "binned"}
+                    },
+                    {
+                      "name": "Y_scale",
+                      "type": "linear",
+                      "reverse": true,
+                      "range": {"signal": "[0,bandwidth('row_bands')-30]"},
+                      "domain": {"field": "count", "data": "binned"}
+                    }
+                  ],
+                  "marks": [
+                    {
+                      "type": "rect",
+                      "from": {"data": "binned"},
+                      "encode": {
+                        "update": {
+                          "x": {"scale": "X_scale", "field": "X"},
+                          "width": {"scale": "X_scale", "band": 1, "offset": -1},
+                          "y": {"scale": "Y_scale", "field": "count"},
+                          "y2": {"scale": "Y_scale", "value": 0},
+                          "fill": {"value": "steelblue"}
+                        },
+                        "hover": {"fill": {"value": "firebrick"}}
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         }
       ]
     }

@@ -136,83 +136,21 @@ document.getElementById("graph_button").onclick = function clicks() {
 	var axis = optimize_axis(headers, struct);
 	var init_val=headers[1];
 	if (headers.length<4) {init_val="None"} 
-	crossex("smartplot_id", struct, [
-		{"editable":true},
-		{"exportable":true},
-		{"link":true},		
 
-	{
-		"name": "X_Axis",
-		"value": axis[0],
-		"bind": {
-			"options": headers
-		}
-	}, {
-		"name": "Y_Axis",
-		"value": axis[1],
-		"bind": {
-			"options": headers
-		}
-	}, {
-		"name": "Facet_Rows_By",
-		"value": "None",
-		"bind": {
-			"options": headers
-		}
-	}, {
-		"name": "Facet_Cols_By",
-		"value": "None",
-		"bind": {
-			"options": headers
-		}
-	}, {
-		"name": "Color_By",
-		"value":  axis[4],
-		"bind": {
-			"options": headers
-		}
-	}, {
-		"name": "Sum_By",
-		"value":  "None",
-		"bind": {
-			"options": headers
-		}
-	}, {
-		"name": "Size_By",
-		"value":  "None",
-		"bind": {
-			"options": headers
-		}
-	}, {
-		"name": "Opacity_By",
-		"value": 'None',
-		"bind": {
-			"options": headers
-		}
-	}, {
-		"name": "Filter_By_Value",
-		"value": "None",
-		"bind": {
-			"options": headers
-		}
-	}, {
-		"name": "Filter_Additional",
-		"value": "None",
-		"bind": {
-			"options": headers
-		}
-	}, {
-		"name": "Filter_Out_From",
-		"value": "None",
-		"bind": {
-			"options": headers
-		}
-	}, {
-		"name": "Stroke_By",
-		"value": "None",
-		"bind": {
-			"options": headers
-		}
-	}],"About");
+
+	
+	    // When using the 'TSV Export' Renderer, you can
+    // copy from this textarea straight into Excel.
+//
+    $(function(){
+        var renderers = $.extend($.pivotUtilities.renderers,
+		$.pivotUtilities.export_renderers);
+		$("#pivot_id").pivotUI(struct, {
+			renderers: renderers,
+			cols: [], rows: [],
+			rendererName: "Crossex"
+		});
+		
+    });
 };
 
