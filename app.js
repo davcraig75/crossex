@@ -46,9 +46,9 @@ d3 = require("./src/d3-dsv.v1.min.js");
 
 var data = {
   min_smartplot: [],
-  orien:itg_comp("src/Orien.master.2021.txt"),
   demo: itg_comp("src/penguins.csv"),
   cc_css: itg_comp("src/inc/cc_styles.css"),
+  pvt_css: itg_comp("src/lib/pivot.css"),
   ext_styles:itg_comp("src/ext_styles.css"),
   save_icon: itg_comp("src/inc/file-download-solid.svg"),
   body: itg_comp("views/body.ejs"),
@@ -61,7 +61,6 @@ var file_str=fs.readFileSync("src/penguins.csv", "utf8");
 dat_json = d3.csvParse(file_str, d3.autoType);
 var template_data = {
   min_smartplot: [],
-  orien:itg_engz(dat_json),
   cc_css: itg_comp("src/inc/cc_styles.css"),
   bootstrap_css:itg_comp("src/bootstrap.min.css"),
   jqueryui_css:itg_comp("src/jquery-ui.css"),
