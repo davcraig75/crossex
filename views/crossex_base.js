@@ -17,9 +17,11 @@ var Index = function Index(items, name) {
 	}
 	return index;
 };
+
 function isNumeric(n) {
 	return !isNaN(parseFloat(n)) && isFinite(n);
 }
+
 var json2csv = function json2csv(filename,json) {
     var fields = [];
 	var filtered = ["Y_Value", "Col_Value", "X_Value", "Row_Value", "Count","None","O_Value","Color_Value","Cstr","Xstr","Ystr","Size_Value"];
@@ -130,6 +132,86 @@ var getKeys = function (arr) {
 	return Object.keys(keys);
 };
 
+var corrmatrix =  function (df,cols) {
+	if (!cols) {
+		cols=Object.keys(df[0])
+	}
+	var colTypes={};
+	var corr={};
+	cols.forEach(function(col) {  
+		var isNum=true;
+		df.forEach(function(row) {
+			if (!isNumeric(row[col]) && row[col] != null && row[col] != "NA") {
+				isNum=false;
+			}
+		});
+		if (isNum) {
+			colTypes[col]="num";
+		} else {
+			colTypes[col]="cat";
+		}
+	});
+	cols.forEach(function(col1) {  
+		if (!corr[col1]) {
+			corr[col1]={};
+		}
+		cols.forEach(function(col2) { 
+			var pair=[];
+			for(i=0;i<df.length;++i) {
+				var v1=df[i][col1];
+				var v2=df[i][col2];
+				if(colTypes[col1]=="num") {
+					v1=Number(v1);
+				}
+				if(colTypes[col2]=="num") {
+					v2=Number(v2);
+				}				
+				if((df[i][col1]!='NA' && df[i][col1]!='')  && (df[i][col2]!='NA' && df[i][col2]!='')) {
+					pair.push({col1:v1,col2:v2})
+				}
+			}
+			//console.log(col1,col2,pair,icc(pair,'col1','col2'),icc(pair,'col2','col1'),Math.pow(stats.cor.rank(pair,'col1','col2'),2));
+			if(colTypes[col1]=="cat" && colTypes[col2]=="num") {
+				corr[col1][col2]=icc(pair,'col1','col2');
+				console.log('icc1',corr[col1][col2]);
+			} else if (colTypes[col2]=="cat" && colTypes[col1]=="num") {
+				corr[col1][col2]=icc(pair,'col2','col1');
+				console.log('icc2',corr[col1][col2]);
+			} else {
+				corr[col1][col2]=Math.pow(stats.cor.rank(pair,'col1','col2'),2);
+			}
+			
+			
+		});		
+	});
+	//console.log(corr)
+	return corr;
+};
+
+var icc=function icc(df,col1,col2) {
+	//col1 is categorial
+	var distinct = [...new Set(df.map(x => x[col1]))]; 
+	var catCount=distinct.length;
+	var c=0;
+	var varianceSum=0;
+	while (catCount--) {
+		var len = distinct.length;
+		var td=[];
+		while (len--) {
+			td.push({'c':df[len][col2]});
+		}
+		varianceSum=varianceSum+stats.variance(td,'c');
+		c++;
+	}
+	var varComp=varianceSum/c;
+	var avar=stats.variance(df,col2);
+	var icc=varComp/avar;	
+	icc=Math.min(1,Math.max(1-icc,0));
+
+	return icc;
+
+}
+
 var crossex = function crossex(element, data, options,widthid) {
 	//legacy
 	var ElementWidth=0;
@@ -159,7 +241,6 @@ var crossex = function crossex(element, data, options,widthid) {
 	ccPanelProxy[element]={};
 	var res = local_vgspec.replace(/\-ccnm/g, element);
 	var spec = JSON.parse(res);
-	var mycols=[];	
 	var hide_panel=false;
 	var editable=false;
 	var exportable=true;
@@ -199,6 +280,7 @@ var crossex = function crossex(element, data, options,widthid) {
 			}
 			var index = Index(spec.signals, repSignalsJson[i].name);
 			var sum_cols=[];
+			var col_names=[];
 			if (index>=0){
 				spec.signals[index].value = repSignalsJson[i].value;
 				if (repSignalsJson[i].bind != null) {
@@ -222,6 +304,7 @@ var crossex = function crossex(element, data, options,widthid) {
 							} else {
 								sum_cols.push({"feature":element,"type":"cat"})
 							}
+							col_names.push(element);
 
 							if (ln > 0) {							
 								if (repSignalsJson[i].name == "Facet_By" && ln < mymax) {
@@ -244,10 +327,8 @@ var crossex = function crossex(element, data, options,widthid) {
 									finalheaders.push(element);									
 								} else if (repSignalsJson[i].name == "Y_Axis") {
 									finalheaders.push(element);
-									if(ln<10000){mycols.push(element)};
 								} else if (repSignalsJson[i].name == "Stroke_By") {
 									finalheaders.push(element);
-									if(ln<100){mycols.push(element)};
 								} else if (repSignalsJson[i].name == "Color_By") {
 									finalheaders.push(element);
 								}
@@ -264,7 +345,6 @@ var crossex = function crossex(element, data, options,widthid) {
 				}
 			} else {
 				var dataIndex = Index(spec.data, repSignalsJson[i].name);
-				//console.log('here',dataIndex, repSignalsJson[i].name)
 				if (dataIndex>=0){
 					if ('values' in repSignalsJson[i]) {spec.data[dataIndex]['values'] = JSON.stringify(repSignalsJson[i].values);}
 					spec.data[dataIndex]['transform']=JSON.parse("[]");
@@ -278,6 +358,19 @@ var crossex = function crossex(element, data, options,widthid) {
 	if (data != null) {
 		spec.data[Index(spec.data, "mydata")].values = JSON.parse(JSON.stringify(data));
 	}
+	var corrdf=corrmatrix(spec.data[Index(spec.data, "mydata")].values,col_names);
+	var i=Index(spec.data, "mydata");
+	col_names.forEach(function(var1) {
+		col_names.forEach(function(var2) {  
+			spec.data[i].values.push({"var1":var1,"var2":var2,"% Variance":corrdf[var1][var2]})
+		})
+	});	
+	spec.signals[Index(spec.signals, "X_Axis")].bind.options.push("var1");
+	spec.signals[Index(spec.signals, "X_Axis")].bind.options.push("var2");
+	spec.signals[Index(spec.signals, "Y_Axis")].bind.options.push("var1");
+	spec.signals[Index(spec.signals, "Y_Axis")].bind.options.push("var2");
+	spec.signals[Index(spec.signals, "Color_By")].bind.options.push("% Variance");
+	console.log('corrmatrix',d,data,sum_cols)
 	if (add_css) {
 		var css = itgz.decompressFromEncodedURIComponent("<%=cc_css%>"),
 		head = document.head || document.getElementsByTagName('head')[0],
