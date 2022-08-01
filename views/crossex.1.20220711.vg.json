@@ -13287,7 +13287,7 @@
                             "field": "Size_Value"
                           },
                           "tooltip": {
-                            "signal": "{'X':datum['X_Value'],'Y': datum['X_Value'],'C':datum['Color_Value'],'Row':datum['Col_Value'],'Col':datum['Row_Value'],'Size':datum['Size_Value']}"
+                            "signal": "{'X':datum['X_Value'],'Y': datum['Y_Value'],'C':datum['Color_Value'],'Row':datum['Col_Value'],'Col':datum['Row_Value'],'Size':datum['Size_Value']}"
                           },
                           "cornerRadius": {"signal": "Grid_Radius"},
                           "opacity": [{"signal": "Opacity_"}],
