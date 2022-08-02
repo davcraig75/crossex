@@ -135,10 +135,7 @@ document.getElementById("graph_button").onclick = function clicks() {
 	var headers = struct.columns;
 	var axis = optimize_axis(headers, struct);
 	var init_val=headers[1];
-	if (headers.length<4) {init_val="None"} 
-	axis[0]="var1";
-	axis[1]="var2";
-	axis[4]="% Variance"
+	if (headers.length<4) {init_val="None"}
 	crossex("smartplot_id", struct, [
 		{"editable":true},
 		{"exportable":true},

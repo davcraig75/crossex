@@ -173,10 +173,8 @@ var corrmatrix =  function (df,cols) {
 			//console.log(col1,col2,pair,icc(pair,'col1','col2'),icc(pair,'col2','col1'),Math.pow(stats.cor.rank(pair,'col1','col2'),2));
 			if(colTypes[col1]=="cat" && colTypes[col2]=="num") {
 				corr[col1][col2]=icc(pair,'col1','col2');
-				console.log('icc1',corr[col1][col2]);
 			} else if (colTypes[col2]=="cat" && colTypes[col1]=="num") {
 				corr[col1][col2]=icc(pair,'col2','col1');
-				console.log('icc2',corr[col1][col2]);
 			} else {
 				corr[col1][col2]=Math.pow(stats.cor.rank(pair,'col1','col2'),2);
 			}
@@ -184,7 +182,6 @@ var corrmatrix =  function (df,cols) {
 			
 		});		
 	});
-	//console.log(corr)
 	return corr;
 };
 
@@ -194,19 +191,26 @@ var icc=function icc(df,col1,col2) {
 	var catCount=distinct.length;
 	var c=0;
 	var varianceSum=0;
-	while (catCount--) {
-		var len = distinct.length;
-		var td=[];
-		while (len--) {
-			td.push({'c':df[len][col2]});
+	var icc=0;
+
+	if(catCount<20 && catCount>1) {		
+		while (catCount--) {
+			var len = df.length;
+			var td=[];
+			while (len--) {
+				if(df[len][col1]==distinct[catCount]) {
+					td.push({'c':df[len][col2]});
+				}
+			}
+			varianceSum=varianceSum+stats.variance(td,'c');
+			c++;
 		}
-		varianceSum=varianceSum+stats.variance(td,'c');
-		c++;
+		var varComp=varianceSum/c;
+		var avar=stats.variance(df,col2);
+		var icc=varComp/avar;	
+		icc=Math.min(1,Math.max(1-icc,0));
 	}
-	var varComp=varianceSum/c;
-	var avar=stats.variance(df,col2);
-	var icc=varComp/avar;	
-	icc=Math.min(1,Math.max(1-icc,0));
+
 
 	return icc;
 
@@ -359,18 +363,12 @@ var crossex = function crossex(element, data, options,widthid) {
 		spec.data[Index(spec.data, "mydata")].values = JSON.parse(JSON.stringify(data));
 	}
 	var corrdf=corrmatrix(spec.data[Index(spec.data, "mydata")].values,col_names);
-	var i=Index(spec.data, "mydata");
+	var i=Index(spec.data, "covariance");
 	col_names.forEach(function(var1) {
 		col_names.forEach(function(var2) {  
 			spec.data[i].values.push({"var1":var1,"var2":var2,"% Variance":corrdf[var1][var2]})
 		})
-	});	
-	spec.signals[Index(spec.signals, "X_Axis")].bind.options.push("var1");
-	spec.signals[Index(spec.signals, "X_Axis")].bind.options.push("var2");
-	spec.signals[Index(spec.signals, "Y_Axis")].bind.options.push("var1");
-	spec.signals[Index(spec.signals, "Y_Axis")].bind.options.push("var2");
-	spec.signals[Index(spec.signals, "Color_By")].bind.options.push("% Variance");
-	console.log('corrmatrix',d,data,sum_cols)
+	});
 	if (add_css) {
 		var css = itgz.decompressFromEncodedURIComponent("<%=cc_css%>"),
 		head = document.head || document.getElementsByTagName('head')[0],

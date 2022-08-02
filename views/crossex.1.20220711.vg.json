@@ -47,7 +47,7 @@
       "value": "None",
       "bind": {
         "input": "select",
-        "element": "#X_Axissmartplot_id",
+        "element": "#X_Axis-ccnm",
         "options": [
           "species",
           "species",
@@ -74,7 +74,7 @@
       "value": "None",
       "bind": {
         "input": "select",
-        "element": "#Y_Axissmartplot_id",
+        "element": "#Y_Axis-ccnm",
         "options": [
           "species",
           "species",
@@ -101,7 +101,7 @@
       "value": "None",
       "bind": {
         "input": "select",
-        "element": "#Size_Bysmartplot_id",
+        "element": "#Size_By-ccnm",
         "options": [
           "species",
           "species",
@@ -128,7 +128,7 @@
       "value": "None",
       "bind": {
         "input": "select",
-        "element": "#Facet_Cols_Bysmartplot_id",
+        "element": "#Facet_Cols_By-ccnm",
         "options": [
           "species",
           "species",
@@ -154,7 +154,7 @@
       "value": "None",
       "bind": {
         "input": "select",
-        "element": "#Facet_Rows_Bysmartplot_id",
+        "element": "#Facet_Rows_By-ccnm",
         "options": [
           "species",
           "species",
@@ -180,7 +180,7 @@
       "value": "None",
       "bind": {
         "input": "select",
-        "element": "#Color_Bysmartplot_id",
+        "element": "#Color_By-ccnm",
         "options": [
           "species",
           "species",
@@ -207,7 +207,7 @@
       "value": "None",
       "bind": {
         "input": "select",
-        "element": "#Opacity_Bysmartplot_id",
+        "element": "#Opacity_By-ccnm",
         "options": [
           "species",
           "island",
@@ -226,7 +226,7 @@
       "value": "None",
       "bind": {
         "input": "select",
-        "element": "#SortX_Bysmartplot_id",
+        "element": "#SortX_By-ccnm",
         "options": ["None"]
       }
     },
@@ -235,7 +235,7 @@
       "value": "None",
       "bind": {
         "input": "select",
-        "element": "#Stroke_Bysmartplot_id",
+        "element": "#Stroke_By-ccnm",
         "options": [
           "species",
           "species",
@@ -263,7 +263,7 @@
       "value": "circle",
       "bind": {
         "input": "select",
-        "element": "#Shapesmartplot_id",
+        "element": "#Shape-ccnm",
         "options": [
           "circle",
           "square",
@@ -285,7 +285,7 @@
       "value": "None",
       "bind": {
         "input": "select",
-        "element": "#Filter_Out_Fromsmartplot_id",
+        "element": "#Filter_Out_From-ccnm",
         "options": [
           "species",
           "species",
@@ -311,7 +311,7 @@
       "value": "None",
       "bind": {
         "input": "select",
-        "element": "#Sum_Bysmartplot_id",
+        "element": "#Sum_By-ccnm",
         "options": [
           "species",
           "species",
@@ -338,19 +338,19 @@
     {
       "name": "AxisTitle_Font",
       "value": 12,
-      "bind": {"element": "#AxisTitle_Fontsmartplot_id", "input": "text"}
+      "bind": {"element": "#AxisTitle_Font-ccnm", "input": "text"}
     },
     {
       "name": "Grid_Radius",
       "value": 1,
-      "bind": {"element": "#Grid_Radiussmartplot_id", "input": "text"}
+      "bind": {"element": "#Grid_Radius-ccnm", "input": "text"}
     },
     {
       "name": "Datatype_X",
       "value": "Unknown",
       "bind": {
         "input": "select",
-        "element": "#Datatype_Xsmartplot_id",
+        "element": "#Datatype_X-ccnm",
         "options": ["Unknown", "Numerical", "Categorical", "Date"]
       }
     },
@@ -359,7 +359,7 @@
       "value": "Unknown",
       "bind": {
         "input": "select",
-        "element": "#Datatype_Ysmartplot_id",
+        "element": "#Datatype_Y-ccnm",
         "options": ["Unknown", "Numerical", "Categorical", "Date"]
       }
     },
@@ -368,30 +368,30 @@
       "value": "Unknown",
       "bind": {
         "input": "select",
-        "element": "#Datatype_Colorsmartplot_id",
+        "element": "#Datatype_Color-ccnm",
         "options": ["Unknown", "Numerical", "Categorical", "Date"]
       }
     },
     {
       "name": "Barplot_",
       "value": false,
-      "bind": {"input": "checkbox", "element": "#Barplotsmartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Barplot-ccnm"}
     },
     {
       "name": "Uniform_YLim",
       "value": false,
-      "bind": {"input": "checkbox", "element": "#Uniform_YLimsmartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Uniform_YLim-ccnm"}
     },
     {
       "name": "Grid_Spacing",
       "value": true,
-      "bind": {"input": "checkbox", "element": "#Grid_Spacingsmartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Grid_Spacing-ccnm"}
     },
     {
       "name": "X_Axis_Angle",
       "value": -90,
       "bind": {
-        "element": "#X_Axis_Anglesmartplot_id",
+        "element": "#X_Axis_Angle-ccnm",
         "input": "range",
         "min": -180,
         "max": 180,
@@ -402,7 +402,7 @@
       "name": "Y_Axis_Angle",
       "value": 0,
       "bind": {
-        "element": "#Y_Axis_Anglesmartplot_id",
+        "element": "#Y_Axis_Angle-ccnm",
         "input": "range",
         "min": -180,
         "max": 180,
@@ -412,48 +412,48 @@
     {
       "name": "Manual_Color",
       "value": false,
-      "bind": {"input": "checkbox", "element": "#Manual_Colorsmartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Manual_Color-ccnm"}
     },
     {
       "name": "Min_Color",
       "value": "",
-      "bind": {"element": "#Min_Colorsmartplot_id", "input": "text"}
+      "bind": {"element": "#Min_Color-ccnm", "input": "text"}
     },
     {
       "name": "Max_Color",
       "value": "",
-      "bind": {"element": "#Max_Colorsmartplot_id", "input": "text"}
+      "bind": {"element": "#Max_Color-ccnm", "input": "text"}
     },
     {
       "name": "Y_Upper_Lim",
       "value": "",
-      "bind": {"element": "#Y_Upper_Limsmartplot_id", "input": "text"}
+      "bind": {"element": "#Y_Upper_Lim-ccnm", "input": "text"}
     },
     {
       "name": "Y_Lower_Lim",
       "value": "",
-      "bind": {"element": "#Y_Lower_Limsmartplot_id", "input": "text"}
+      "bind": {"element": "#Y_Lower_Lim-ccnm", "input": "text"}
     },
     {
       "name": "X_Upper_Lim",
       "value": "",
-      "bind": {"element": "#X_Upper_Limsmartplot_id", "input": "text"}
+      "bind": {"element": "#X_Upper_Lim-ccnm", "input": "text"}
     },
     {
       "name": "X_Lower_Lim",
       "value": "",
-      "bind": {"element": "#X_Lower_Limsmartplot_id", "input": "text"}
+      "bind": {"element": "#X_Lower_Lim-ccnm", "input": "text"}
     },
     {
       "name": "Jitter_Radius",
       "value": 5,
-      "bind": {"element": "#Jitter_Radiussmartplot_id", "input": "text"}
+      "bind": {"element": "#Jitter_Radius-ccnm", "input": "text"}
     },
     {
       "name": "Violin_Opacity",
       "value": 0.15,
       "bind": {
-        "element": "#Violin_Opacitysmartplot_id",
+        "element": "#Violin_Opacity-ccnm",
         "input": "range",
         "min": 0,
         "max": 1,
@@ -464,7 +464,7 @@
       "name": "Grid_Opacity",
       "value": 1,
       "bind": {
-        "element": "#Grid_Opacitysmartplot_id",
+        "element": "#Grid_Opacity-ccnm",
         "input": "range",
         "min": 0,
         "max": 1,
@@ -475,7 +475,7 @@
       "name": "Cnt_St_Opacity",
       "value": 0.4,
       "bind": {
-        "element": "#Cnt_St_Opacitysmartplot_id",
+        "element": "#Cnt_St_Opacity-ccnm",
         "input": "range",
         "min": 0,
         "max": 1,
@@ -486,7 +486,7 @@
       "name": "Contour_Opacity",
       "value": 0.4,
       "bind": {
-        "element": "#Contour_Opacitysmartplot_id",
+        "element": "#Contour_Opacity-ccnm",
         "input": "range",
         "min": 0,
         "max": 1,
@@ -497,7 +497,7 @@
       "name": "Dash_Opacity",
       "value": 0.5,
       "bind": {
-        "element": "#Dash_Opacitysmartplot_id",
+        "element": "#Dash_Opacity-ccnm",
         "input": "range",
         "min": 0,
         "max": 1,
@@ -508,7 +508,7 @@
       "name": "Boxplot_Opacity",
       "value": 0.4,
       "bind": {
-        "element": "#Boxplot_Opacitysmartplot_id",
+        "element": "#Boxplot_Opacity-ccnm",
         "input": "range",
         "min": 0,
         "max": 1,
@@ -519,7 +519,7 @@
       "name": "Stroke_Width",
       "value": 0.6,
       "bind": {
-        "element": "#Stroke_Widthsmartplot_id",
+        "element": "#Stroke_Width-ccnm",
         "input": "range",
         "min": 0,
         "max": 8,
@@ -529,43 +529,43 @@
     {
       "name": "TickCount",
       "value": 5,
-      "bind": {"element": "#TickCountsmartplot_id", "input": "text"}
+      "bind": {"element": "#TickCount-ccnm", "input": "text"}
     },
     {
       "name": "Title_Font",
       "value": 14,
-      "bind": {"element": "#Title_Fontsmartplot_id", "input": "text"}
+      "bind": {"element": "#Title_Font-ccnm", "input": "text"}
     },
     {
       "name": "Legend_Font",
       "value": 10,
-      "bind": {"element": "#Legend_Fontsmartplot_id", "input": "text"}
+      "bind": {"element": "#Legend_Font-ccnm", "input": "text"}
     },
     {
       "name": "Legend_Cols",
       "value": 6,
-      "bind": {"element": "#Legend_Colssmartplot_id", "input": "text"}
+      "bind": {"element": "#Legend_Cols-ccnm", "input": "text"}
     },
     {
       "name": "AxisFontSize",
       "value": 10,
-      "bind": {"element": "#AxisFontSizesmartplot_id", "input": "text"}
+      "bind": {"element": "#AxisFontSize-ccnm", "input": "text"}
     },
     {
       "name": "Dash_Height",
       "value": 1,
-      "bind": {"element": "#Dash_Heightsmartplot_id", "input": "text"}
+      "bind": {"element": "#Dash_Height-ccnm", "input": "text"}
     },
     {
       "name": "Interactive_",
       "value": false,
-      "bind": {"input": "checkbox", "element": "#Interactive_smartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Interactive_-ccnm"}
     },
     {
       "name": "Dash_Radius",
       "value": 0,
       "bind": {
-        "element": "#Dash_Radiussmartplot_id",
+        "element": "#Dash_Radius-ccnm",
         "input": "range",
         "min": 0,
         "max": 10,
@@ -576,7 +576,7 @@
       "name": "Dash_Width",
       "value": 0.25,
       "bind": {
-        "element": "#Dash_Widthsmartplot_id",
+        "element": "#Dash_Width-ccnm",
         "input": "range",
         "min": 0,
         "max": 5,
@@ -586,75 +586,75 @@
     {
       "name": "Jitter_",
       "value": false,
-      "bind": {"input": "checkbox", "element": "#Jitter_smartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Jitter_-ccnm"}
     },
     {
       "name": "Regression_",
       "value": false,
-      "bind": {"input": "checkbox", "element": "#Regression_smartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Regression_-ccnm"}
     },
     {
       "name": "Link",
       "value": false,
-      "bind": {"input": "checkbox", "element": "#Linksmartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Link-ccnm"}
     },
     {
       "name": "LinkField",
       "value": "",
-      "bind": {"input": "text", "element": "#LinkFieldsmartplot_id"}
+      "bind": {"input": "text", "element": "#LinkField-ccnm"}
     },
     {
       "name": "LinkURL",
       "value": "",
-      "bind": {"input": "text", "element": "#LinkURLsmartplot_id"}
+      "bind": {"input": "text", "element": "#LinkURL-ccnm"}
     },
     {
       "name": "LinkTail",
       "value": "",
-      "bind": {"input": "text", "element": "#LinkTailsmartplot_id"}
+      "bind": {"input": "text", "element": "#LinkTail-ccnm"}
     },
     {
       "name": "Outliers_",
       "value": true,
-      "bind": {"input": "checkbox", "element": "#Outliers_smartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Outliers_-ccnm"}
     },
     {
       "name": "Grids_",
       "value": true,
-      "bind": {"input": "checkbox", "element": "#Gridssmartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Grids-ccnm"}
     },
     {
       "name": "Dashes_",
       "value": false,
-      "bind": {"input": "checkbox", "element": "#Dashes_smartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Dashes_-ccnm"}
     },
     {"name": "Map_XY_Cat_", "value": true},
     {
       "name": "Points_",
       "value": true,
-      "bind": {"input": "checkbox", "element": "#Points_smartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Points_-ccnm"}
     },
     {
       "name": "Boxplot_",
       "value": true,
-      "bind": {"input": "checkbox", "element": "#Boxplot_smartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Boxplot_-ccnm"}
     },
     {
       "name": "Stats_",
       "value": false,
-      "bind": {"input": "checkbox", "element": "#Stats_smartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Stats_-ccnm"}
     },
     {
       "name": "Contours_",
       "value": false,
-      "bind": {"input": "checkbox", "element": "#Contours_smartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Contours_-ccnm"}
     },
     {"name": "col_header_fontsize", "value": 14},
     {
       "name": "Max_Point",
       "value": 100,
       "bind": {
-        "element": "#Max_Pointsmartplot_id",
+        "element": "#Max_Point-ccnm",
         "input": "range",
         "min": 0,
         "max": 200,
@@ -665,7 +665,7 @@
       "name": "Min_Point",
       "value": 20,
       "bind": {
-        "element": "#Min_Pointsmartplot_id",
+        "element": "#Min_Point-ccnm",
         "input": "range",
         "min": 0,
         "max": 100,
@@ -675,34 +675,34 @@
     {
       "name": "Background_Color",
       "value": "#FFF",
-      "bind": {"element": "#Background_Colorsmartplot_id", "input": "text"}
+      "bind": {"element": "#Background_Color-ccnm", "input": "text"}
     },
     {
       "name": "Include_Only",
       "value": " ",
-      "bind": {"element": "#Include_Onlysmartplot_id", "input": "text"}
+      "bind": {"element": "#Include_Only-ccnm", "input": "text"}
     },
     {
       "name": "Filter_If",
       "value": "-",
-      "bind": {"element": "#Filter_Ifsmartplot_id", "input": "text"}
+      "bind": {"element": "#Filter_If-ccnm", "input": "text"}
     },
     {
       "name": "filter_min",
       "value": "-1000000",
-      "bind": {"element": "#filter_minsmartplot_id", "input": "text"}
+      "bind": {"element": "#filter_min-ccnm", "input": "text"}
     },
     {
       "name": "filter_max",
       "value": "1000000",
-      "bind": {"element": "#filter_maxsmartplot_id", "input": "text"}
+      "bind": {"element": "#filter_max-ccnm", "input": "text"}
     },
     {
       "name": "Filter_By_Value",
       "value": "None",
       "bind": {
         "input": "select",
-        "element": "#Filter_By_Valuesmartplot_id",
+        "element": "#Filter_By_Value-ccnm",
         "options": [
           "species",
           "island",
@@ -721,7 +721,7 @@
       "value": "None",
       "bind": {
         "input": "select",
-        "element": "#Filter_Additionalsmartplot_id",
+        "element": "#Filter_Additional-ccnm",
         "options": [
           "species",
           "species",
@@ -745,24 +745,24 @@
     {
       "name": "Violin_",
       "value": true,
-      "bind": {"input": "checkbox", "element": "#Violin_smartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Violin_-ccnm"}
     },
     {
       "name": "LogX_",
       "value": false,
-      "bind": {"input": "checkbox", "element": "#LogX_smartplot_id"}
+      "bind": {"input": "checkbox", "element": "#LogX_-ccnm"}
     },
     {
       "name": "LogY_",
       "value": false,
-      "bind": {"input": "checkbox", "element": "#LogY_smartplot_id"}
+      "bind": {"input": "checkbox", "element": "#LogY_-ccnm"}
     },
     {
       "name": "Palette",
       "value": "Turbo",
       "bind": {
         "input": "select",
-        "element": "#Palettesmartplot_id",
+        "element": "#Palette-ccnm",
         "options": [
           "---Sequential---",
           "Turbo",
@@ -809,30 +809,30 @@
     {
       "name": "Reverse_Color",
       "value": true,
-      "bind": {"input": "checkbox", "element": "#Reverse_Colorsmartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Reverse_Color-ccnm"}
     },
     {
       "name": "Reverse_X",
       "value": false,
-      "bind": {"input": "checkbox", "element": "#Reverse_Xsmartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Reverse_X-ccnm"}
     },
     {
       "name": "Reverse_Y",
       "value": false,
-      "bind": {"input": "checkbox", "element": "#Reverse_Ysmartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Reverse_Y-ccnm"}
     },
     {"name": "points", "value": true},
     {"name": "Show_Titles", "value": true},
     {
       "name": "Reverse_Size",
       "value": false,
-      "bind": {"input": "checkbox", "element": "#Reverse_Sizesmartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Reverse_Size-ccnm"}
     },
     {
       "name": "Opacity_",
       "value": 1,
       "bind": {
-        "element": "#Opacity_smartplot_id",
+        "element": "#Opacity_-ccnm",
         "input": "range",
         "min": 0,
         "max": 1,
@@ -843,7 +843,7 @@
       "name": "Row_Header_Width",
       "value": 100,
       "bind": {
-        "element": "#Row_Header_Widthsmartplot_id",
+        "element": "#Row_Header_Width-ccnm",
         "input": "range",
         "min": 0,
         "max": 200,
@@ -854,7 +854,7 @@
       "name": "Title_Height",
       "value": 40,
       "bind": {
-        "element": "#Title_Heightsmartplot_id",
+        "element": "#Title_Height-ccnm",
         "input": "range",
         "min": 0,
         "max": 200,
@@ -865,7 +865,7 @@
       "name": "Legend_Height",
       "value": 80,
       "bind": {
-        "element": "#Legend_Heightsmartplot_id",
+        "element": "#Legend_Height-ccnm",
         "input": "range",
         "min": 0,
         "max": 200,
@@ -876,7 +876,7 @@
       "name": "Max_Plot_Height",
       "value": 400,
       "bind": {
-        "element": "#Max_Plot_Heightsmartplot_id",
+        "element": "#Max_Plot_Height-ccnm",
         "input": "range",
         "min": 50,
         "max": 3000,
@@ -888,7 +888,7 @@
       "name": "X_Axis_Height",
       "value": 75,
       "bind": {
-        "element": "#X_Axis_Heightsmartplot_id",
+        "element": "#X_Axis_Height-ccnm",
         "input": "range",
         "min": 0,
         "max": 200,
@@ -899,7 +899,7 @@
       "name": "Plot_Padding",
       "value": 8,
       "bind": {
-        "element": "#Plot_Paddingsmartplot_id",
+        "element": "#Plot_Padding-ccnm",
         "input": "range",
         "min": 0,
         "max": 40,
@@ -910,7 +910,7 @@
       "name": "Max_Plot_Width",
       "value": 500,
       "bind": {
-        "element": "#Max_Plot_Widthsmartplot_id",
+        "element": "#Max_Plot_Width-ccnm",
         "input": "range",
         "min": 50,
         "max": 3000,
@@ -920,28 +920,28 @@
     {
       "name": "Row_Height",
       "value": 100,
-      "bind": {"element": "#Row_Heightsmartplot_id", "input": "text"}
+      "bind": {"element": "#Row_Height-ccnm", "input": "text"}
     },
     {
       "name": "Max_Facets",
       "value": 200,
-      "bind": {"element": "#Max_Facetssmartplot_id", "input": "text"}
+      "bind": {"element": "#Max_Facets-ccnm", "input": "text"}
     },
     {
       "name": "Histogram_",
       "value": false,
-      "bind": {"input": "checkbox", "element": "#Histogram_smartplot_id"}
+      "bind": {"input": "checkbox", "element": "#Histogram_-ccnm"}
     },
     {
       "name": "Histogram_Bins_Size",
       "value": 20,
-      "bind": {"element": "#Histogram_Bins_Sizesmartplot_id", "input": "text"}
+      "bind": {"element": "#Histogram_Bins_Size-ccnm", "input": "text"}
     },
     {
       "name": "Violin_Width",
       "value": 0.8,
       "bind": {
-        "element": "#Violin_Widthsmartplot_id",
+        "element": "#Violin_Width-ccnm",
         "input": "range",
         "min": 0,
         "max": 1,
@@ -951,7 +951,7 @@
     {
       "name": "Histogram_Ratio",
       "value": 0.25,
-      "bind": {"element": "#Histogram_Ratiosmartplot_id", "input": "text"}
+      "bind": {"element": "#Histogram_Ratio-ccnm", "input": "text"}
     },
     {
       "name": "Hist_Scatter_Ratio",
@@ -1013,6 +1013,10 @@
       "update": "Xord && !Yord && Y_Axis != 'None' && !fail"
     },
     {
+      "name": "show_covariance",
+      "update": "Xord && !Yord && Y_Axis != 'None' && !fail"
+    },    
+    {
       "name": "show_hzbox_graphs",
       "update": "Yord && X_Axis != 'None' && !Xord && !fail && Y_Axis != 'None'"
     },
@@ -1072,6 +1076,25 @@
     {"name": "down", "value": null}
   ],
   "data": [
+    {
+      "name": "columns",
+      "values": [
+        {"feature": "species", "type": "cat"},
+        {"feature": "island", "type": "cat"},
+        {"feature": "bill_length_mm", "type": "num"},
+        {"feature": "bill_depth_mm", "type": "num"},
+        {"feature": "flipper_length_mm", "type": "num"},
+        {"feature": "body_mass_g", "type": "num"},
+        {"feature": "sex", "type": "cat"},
+        {"feature": "year", "type": "num"}
+      ],
+      "transform": [{"type": "filter", "expr": "show_explorer"}]
+    },
+    {
+      "name": "covariance",
+      "values": [],
+      "transform": [{"type": "filter", "expr": "show_covariance"}]
+    },    
     {
       "name": "mydata",
       "transform": [
@@ -9445,24 +9468,15 @@
       ]
     },
     {
-      "name": "columns",
-      "values": [
-        {"feature": "species", "type": "cat"},
-        {"feature": "island", "type": "cat"},
-        {"feature": "bill_length_mm", "type": "num"},
-        {"feature": "bill_depth_mm", "type": "num"},
-        {"feature": "flipper_length_mm", "type": "num"},
-        {"feature": "body_mass_g", "type": "num"},
-        {"feature": "sex", "type": "cat"},
-        {"feature": "year", "type": "num"}
-      ],
-      "transform": [{"type": "filter", "expr": "show_explorer"}]
-    },
-    {
       "name": "graph_stackplots",
       "values": [1],
       "transform": [{"type": "filter", "expr": "show_stacked_graphs"}]
     },
+    {
+      "name": "graph_covariance",
+      "values": [1],
+      "transform": [{"type": "filter", "expr": "show_covariance"}]
+    },    
     {
       "name": "show_variant_legends",
       "values": [1],
