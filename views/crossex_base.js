@@ -137,7 +137,7 @@ var corrmatrix =  function (df,cols) {
 		cols=Object.keys(df[0])
 	}
 	var colTypes={};
-	var corr={};
+	var corr=[];
 	cols.forEach(function(col) {  
 		var isNum=true;
 		df.forEach(function(row) {
@@ -151,6 +151,7 @@ var corrmatrix =  function (df,cols) {
 			colTypes[col]="cat";
 		}
 	});
+	var ca=0;
 	cols.forEach(function(col1) {  
 		if (!corr[col1]) {
 			corr[col1]={};
@@ -172,16 +173,20 @@ var corrmatrix =  function (df,cols) {
 			}
 			//console.log(col1,col2,pair,icc(pair,'col1','col2'),icc(pair,'col2','col1'),Math.pow(stats.cor.rank(pair,'col1','col2'),2));
 			if(colTypes[col1]=="cat" && colTypes[col2]=="num") {
-				corr[col1][col2]=icc(pair,'col1','col2');
+			//	corr.push({"var1":col1,"var2":col2,"% Variance":icc(pair,'col1','col2')});
+			corr.push({"var1":col1,"var2":col2,"% Variance":Math.pow(stats.cor.rank(pair,'col1','col2'),2)});
 			} else if (colTypes[col2]=="cat" && colTypes[col1]=="num") {
-				corr[col1][col2]=icc(pair,'col2','col1');
+			//	corr.push({"var1":col1,"var2":col2,"% Variance":icc(pair,'col2','col1')});
+			corr.push({"var1":col1,"var2":col2,"% Variance":Math.pow(stats.cor.rank(pair,'col1','col2'),2)});
 			} else {
-				corr[col1][col2]=Math.pow(stats.cor.rank(pair,'col1','col2'),2);
+				corr.push({"var1":col1,"var2":col2,"% Variance":Math.pow(stats.cor.rank(pair,'col1','col2'),2)});
 			}
+			++ca
 			
 			
 		});		
 	});
+	console.log(ca,'ca')
 	return corr;
 };
 
@@ -362,13 +367,7 @@ var crossex = function crossex(element, data, options,widthid) {
 	if (data != null) {
 		spec.data[Index(spec.data, "mydata")].values = JSON.parse(JSON.stringify(data));
 	}
-	var corrdf=corrmatrix(spec.data[Index(spec.data, "mydata")].values,col_names);
-	var i=Index(spec.data, "covariance");
-	col_names.forEach(function(var1) {
-		col_names.forEach(function(var2) {  
-			spec.data[i].values.push({"var1":var1,"var2":var2,"% Variance":corrdf[var1][var2]})
-		})
-	});
+	spec.data[Index(spec.data, "covariance")].values=corrmatrix(spec.data[Index(spec.data, "mydata")].values,col_names);
 	if (add_css) {
 		var css = itgz.decompressFromEncodedURIComponent("<%=cc_css%>"),
 		head = document.head || document.getElementsByTagName('head')[0],
