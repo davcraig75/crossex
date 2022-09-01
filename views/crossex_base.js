@@ -224,7 +224,7 @@ var icc=function icc(df,col1,col2) {
 var crossex = function crossex(element, data, options,widthid) {
 	//legacy
 	var ElementWidth=0;
-	data=JSON.parse(JSON.stringify(data).replace(/\"null\"/gi,"\"\""));
+	data=JSON.parse(JSON.stringify(data).replace(/\"null\"/gi,"\"\"").replace(/\"NA\"/gi,"\"\"").replace(/\"unknown\"/gi,"\"\""));
 	var cur_name=element;
 	var widthNode=document.getElementById(cur_name);	
 	ElementWidth=0;
@@ -290,6 +290,7 @@ var crossex = function crossex(element, data, options,widthid) {
 			var index = Index(spec.signals, repSignalsJson[i].name);
 			var sum_cols=[];
 			var col_names=[];
+			let na_values = ["na", "NA", "null","NULL","Null","unknown","Unknown","N/A","n/a","#N/A"];
 			if (index>=0){
 				spec.signals[index].value = repSignalsJson[i].value;
 				if (repSignalsJson[i].bind != null) {
@@ -298,23 +299,29 @@ var crossex = function crossex(element, data, options,widthid) {
 					}
 					if (repSignalsJson[i].bind.options != null) {
 						var headers = repSignalsJson[i].bind.options;
-						var finalheaders = [];						
+						var finalheaders = [];
+											
 						headers.forEach(function(element) {
 							var distinct = [...new Set(data.map(x => x[element]))];
 							var ln = distinct.length;
 							var isNum=true;
-							data.forEach(function(row) {
-								if (!isNumeric(row[element]) && row[element] != null && row[element] != "NA") {
-									isNum=false;
-								}
-							});
+							for (k=0;k<data.length;++k) {
+								var v=data[k][element];
+								if (na_values.includes(v)) {
+									delete data[k][element];
+								} 
+								if (data[k][element]!=null && data[k][element]!="") {
+									if (!isNumeric(data[k][element])) {
+										isNum=false;
+									}
+								}						
+							}								
 							if (isNum) {
 								sum_cols.push({"feature":element,"type":"num"})
 							} else {
 								sum_cols.push({"feature":element,"type":"cat"})
 							}
 							col_names.push(element);
-
 							if (ln > 0) {							
 								if (repSignalsJson[i].name == "Facet_By" && ln < mymax) {
 									finalheaders.push(element);
@@ -363,7 +370,7 @@ var crossex = function crossex(element, data, options,widthid) {
 
 		}
 	}
-	spec.data[Index(spec.data, "columns")].values = JSON.parse(JSON.stringify(sum_cols));
+	spec.data[Index(spec.data, "mycolumns")].values = JSON.parse(JSON.stringify(sum_cols));
 	if (data != null) {
 		spec.data[Index(spec.data, "mydata")].values = JSON.parse(JSON.stringify(data));
 	}
