@@ -8830,8 +8830,8 @@
                 "update": {
                   "xc": {"band": 0.5, "scale": "gx_scale", "field": "var1"},
                   "yc": {"band": 0.5, "scale": "gy_scale", "field": "var2"},
-                  "width": {"scale": "size_scale", "field": "% Variance"},
-                  "height": {"scale": "size_scale", "field": "% Variance"},
+                  "width": {"scale": "gx_scale", "band":0.8},
+                  "height": {"scale": "gy_scale", "band":0.8},
                   "tooltip": {"signal": "datum"},
                   "cornerRadius": {"signal": "Grid_Radius"},
                   "opacity": [{"signal": "Opacity_"}],
