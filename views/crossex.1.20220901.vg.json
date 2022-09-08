@@ -774,7 +774,7 @@
     },
     {
       "name": "Max_Plot_Height",
-      "value": 400,
+      "value": 600,
       "bind": {
         "element": "#Max_Plot_Height-ccnm",
         "input": "range",
@@ -786,7 +786,7 @@
     {"name": "PlotTitle_Height", "value": 0},
     {
       "name": "X_Axis_Height",
-      "value": 75,
+      "value": 125,
       "bind": {
         "element": "#X_Axis_Height-ccnm",
         "input": "range",
@@ -808,7 +808,7 @@
     },
     {
       "name": "Max_Plot_Width",
-      "value": 500,
+      "value": 800,
       "bind": {
         "element": "#Max_Plot_Width-ccnm",
         "input": "range",
@@ -819,7 +819,7 @@
     },
     {
       "name": "Row_Height",
-      "value": 100,
+      "value": 150,
       "bind": {"element": "#Row_Height-ccnm", "input": "text"}
     },
     {
