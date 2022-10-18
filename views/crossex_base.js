@@ -215,10 +215,7 @@ var icc=function icc(df,col1,col2) {
 		var icc=varComp/avar;	
 		icc=Math.min(1,Math.max(1-icc,0));
 	}
-
-
 	return icc;
-
 }
 
 var crossex = function crossex(element, data, options,widthid) {
@@ -366,8 +363,6 @@ var crossex = function crossex(element, data, options,widthid) {
 					spec.data[dataIndex]['transform']=JSON.parse("[]");
 				}
 			}
-
-
 		}
 	}
 	spec.data[Index(spec.data, "mycolumns")].values = JSON.parse(JSON.stringify(sum_cols));
@@ -480,21 +475,6 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 				}
 				return;
 			});	
-			//introJs().setOptions({
-			//	steps: [{
-			//	  title: 'Welcome',
-			//	  intro: 'Hello World! 👋'
-			//	},
-			//	{
-			//	  element: document.querySelector("#Layer1"),
-			//	  intro: 'This step focuses on an image'
-//				},
-//				{
-//				  title: 'Farewell!',
-//				  element: document.querySelector("#Charts_tablinkssmartplot_id"),
-//				  intro: 'And this is our final step!'
-////				}]
-	//		  }).start();
 		}	
 			
 	}).catch(console.error);
