@@ -992,17 +992,22 @@
     {
       "name": "X_type",
       "source": "mycolumns",
-      "transform": [{"type": "filter", "expr": "datum.feature==X_Axis"}]
+      "transform": [
+        {"type": "filter", "expr": "datum.feature==X_Axis"},
+        {"type":"formula","as":"type","expr": "Datatype_X=='Auto'?datum.type:Datatype_X"}
+      ]
     },
     {
       "name": "Y_type",
       "source": "mycolumns",
-      "transform": [{"type": "filter", "expr": "datum.feature==Y_Axis"}]
+      "transform": [{"type": "filter", "expr": "datum.feature==Y_Axis"},
+      {"type":"formula","as":"type","expr": "Datatype_Y=='Auto'?datum.type:Datatype_Y"}]
     },
     {
       "name": "Color_type",
       "source": "mycolumns",
-      "transform": [{"type": "filter", "expr": "datum.feature==Color_By"}]
+      "transform": [{"type": "filter", "expr": "datum.feature==Color_By"},
+      {"type":"formula","as":"type","expr": "Datatype_Color=='Auto'?datum.type:Datatype_Color"}]
     },
     {
       "name": "covariance",
