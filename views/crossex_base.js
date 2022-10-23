@@ -366,9 +366,13 @@ var crossex = function crossex(element, data, options,widthid) {
 		style.appendChild(document.createTextNode(css));
 		add_css=false;
 	}
-	drawGraph(element,spec,widthNode,hide_panel,editable,exportable);
+	let myview;
+	drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable);
 };
-function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
+function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable) {
+	if (myview) {
+		myview.finalize();
+	 }
 	if (spec.signals[Index(spec.signals, 'Interactive_')]['value']==true) {
 		spec.signals[Index(spec.signals, 'xcur')]['on']=[{"events": "mousedown, touchstart, touchend","update": "slice(xdom)"}];
 		spec.signals[Index(spec.signals, 'ycur')]['on']=[{"events": "mousedown, touchstart, touchend","update": "slice(ydom)"}];
@@ -396,6 +400,7 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 		},
 		defaultStyle: true
 	}).then(function(result) {
+		myview = result.view;
 		window.addEventListener('resize', function(event) {
 			result.view.width(setWidth_smart(element,widthNode)).run();
 		});
@@ -456,7 +461,8 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 					spec.signals[Index(spec.signals, 'xdom')]['on']=[{"events": {"signal": "delta"},"update": "[xcur[0] + span(xcur) * delta[0] / Plot_Width, xcur[1] + span(xcur) * delta[0] / Plot_Width]"},{"events": {"signal": "zoom"},"update": "[anchor[0] + (xdom[0] - anchor[0]) * zoom, anchor[0] + (xdom[1] - anchor[0]) * zoom]"}];
 					spec.signals[Index(spec.signals, 'ydom')]['on']=[{"events": {"signal": "delta"},"update": "[ycur[0] + span(ycur) * delta[1] / Plot_Height, ycur[1] + span(ycur) * delta[1] / Plot_Height]"},{"events": {"signal": "zoom"},"update": "[anchor[1] + (ydom[0] - anchor[1]) * zoom, anchor[1] + (ydom[1] - anchor[1]) * zoom]"}];
 					spec.signals[Index(spec.signals, 'down')]['on']=[{"events": "touchend", "update": "down"},{"events": "mousedown, touchstart","update": "xy()"}];
-					drawGraph(element,spec,widthNode,hide_panel,editable,exportable);
+					myview = result.view;
+					drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable);
 				} else {
 					delete spec.signals[Index(spec.signals, 'xcur')]['on'];
 					spec.signals[Index(spec.signals, 'Interactive_')]['value']=false;
@@ -469,7 +475,8 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 					delete spec.signals[Index(spec.signals, 'xdom')]['on'];
 					delete spec.signals[Index(spec.signals, 'ydom')]['on'];
 					delete spec.signals[Index(spec.signals, 'down')]['on'];
-					drawGraph(element,spec,widthNode,hide_panel,editable,exportable);
+					myview = result.view;
+					drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable);
 				}
 				return;
 			});	
