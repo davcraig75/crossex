@@ -241,6 +241,8 @@ var crossex = function crossex(element, data, options,widthid) {
 	var editable=false;
 	var exportable=true;
 	var new_signalsString = JSON.stringify(options);
+	var col_names=[];
+	var sum_cols=[];
 	if (new_signalsString != null) {
 		repSignalsJson = JSON.parse(new_signalsString.replace(/\-ccnm/g, element));
 		for (i=0;i<repSignalsJson.length;++i) {
@@ -271,9 +273,8 @@ var crossex = function crossex(element, data, options,widthid) {
 				}
 				continue; 
 			}
-			var index = Index(spec.signals, repSignalsJson[i].name);
-			var sum_cols=[];
-			var col_names=[];
+			var index = Index(spec.signals, repSignalsJson[i].name);			
+			
 			let na_values = ["na", "NA", "null","NULL","Null","unknown","Unknown","N/A","n/a","#N/A"];
 			if (index>=0){
 				spec.signals[index].value = repSignalsJson[i].value;
@@ -310,6 +311,8 @@ var crossex = function crossex(element, data, options,widthid) {
 									finalheaders.push(element);
 								} else if (repSignalsJson[i].name == "Filter_Out_From" && ln < mymax) {
 									finalheaders.push(element);
+								} else if (repSignalsJson[i].name == "Filter_By_Value") {
+									finalheaders.push(element);									
 								} else if (repSignalsJson[i].name == "Facet_Rows_By" && ln < mymax) {
 									finalheaders.push(element);
 								} else if (repSignalsJson[i].name == "Facet_Cols_By" && ln < mymax) {
@@ -373,6 +376,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 	if (myview) {
 		myview.finalize();
 	 }
+
 	if (spec.signals[Index(spec.signals, 'Interactive_')]['value']==true) {
 		spec.signals[Index(spec.signals, 'xcur')]['on']=[{"events": "mousedown, touchstart, touchend","update": "slice(xdom)"}];
 		spec.signals[Index(spec.signals, 'ycur')]['on']=[{"events": "mousedown, touchstart, touchend","update": "slice(ydom)"}];
@@ -385,6 +389,23 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 		spec.signals[Index(spec.signals, 'ydom')]['on']=[{"events": {"signal": "delta"},"update": "[ycur[0] + span(ycur) * delta[1] / Plot_Height, ycur[1] + span(ycur) * delta[1] / Plot_Height]"},{"events": {"signal": "zoom"},"update": "[anchor[1] + (ydom[0] - anchor[1]) * zoom, anchor[1] + (ydom[1] - anchor[1]) * zoom]"}];
 		spec.signals[Index(spec.signals, 'down')]['on']=[{"events": "touchend", "update": "down"},{"events": "mousedown, touchstart","update": "xy()"}];
 	}
+	var defaultOpen = document.getElementById('defaultOpen'+element);
+	defaultOpen.addEventListener('click',function(event) {ccOpenCity(event, 'None'+element,element)});
+	var Charts_tablinks = document.getElementById('Charts_tablinks'+element);
+	Charts_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Charts'+element,element)});
+	var Axis_tablinks = document.getElementById('Axis_tablinks'+element);
+	Axis_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Axis'+element,element)});
+	var Marks_tablinks = document.getElementById('Marks_tablinks'+element);
+	Marks_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Marks'+element,element)});
+	var Fonts_tablinks = document.getElementById('Fonts_tablinks'+element);
+	Fonts_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Fonts'+element,element)});
+	var Coloring_tablinks = document.getElementById('Coloring_tablinks'+element);
+	Coloring_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Coloring'+element,element)});
+	var Filtering_tablinks = document.getElementById('Filtering_tablinks'+element);
+	Filtering_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Filtering'+element,element)});
+	var Margins_tablinks = document.getElementById('Margins_tablinks'+element);
+	Margins_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Margins'+element,element)});
+
 	vegaEmbed('#view_crossex' + element, spec, {
 		renderer: 'canvas',
 		width: setWidth_smart(element,widthNode),
@@ -430,12 +451,9 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 			var cross_checkbox=document.querySelector("#Show_Covariance"+element + "> div > label > input[type=checkbox]");
 			cross_checkbox.addEventListener('change', (event) => {
 				var all=document.querySelector('#'+element);
-				console.log(all);
 				all.style.opacity="0.1"
-				if (event.currentTarget.checked) {
-					
-					result.view.change('covariance', vega.changeset().insert(corrmatrix(spec.data[Index(spec.data, "mydata")].values,spec.data[Index(spec.data, "col_names")].values)).remove(function () {return true}));
-					
+				if (event.currentTarget.checked) {					
+					result.view.change('covariance', vega.changeset().insert(corrmatrix(spec.data[Index(spec.data, "mydata")].values,spec.data[Index(spec.data, "col_names")].values)).remove(function () {return true}));					
 				}
 				all.style.opacity="1"
 			});

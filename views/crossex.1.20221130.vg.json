@@ -3,7 +3,7 @@
   "padding": 4,
   "resize": true,
   "width": 600,
-  "height": 600,
+  "height": 400,
   "config": {
     "arc": {"fill": "#000"},
     "area": {"fill": "#333333b5"},
@@ -774,7 +774,7 @@
     },
     {
       "name": "Max_Plot_Height",
-      "value": 600,
+      "value": 400,
       "bind": {
         "element": "#Max_Plot_Height-ccnm",
         "input": "range",
@@ -4792,6 +4792,10 @@
           "type": "filter",
           "expr": "!indata('selectedFilter2', 'value', datum[Filter_Additional])"
         },
+        {
+          "type": "filter",
+          "expr": "if(Filter_By_Value!='None',if(datum[Filter_By_Value]>=toNumber(filter_min)&datum[Filter_By_Value]<=toNumber(filter_max),true,false),true)"
+        },        
         {"type": "extent", "field": "Y_Value", "signal": "Y_maxmin_num"},
         {"type": "extent", "field": "X_Value", "signal": "X_maxmin_num"},
         {"type": "extent", "field": "Color_Value", "signal": "C_maxmin_num"},
@@ -7100,9 +7104,9 @@
                                 {
                                   "test": "LogY_",
                                   "scale": "y_cont_log_scale",
-                                  "field": "median"
+                                  "field": "mean"
                                 },
-                                {"scale": "y_cont_scale", "field": "median"}
+                                {"scale": "y_cont_scale", "field": "mean"}
                               ]
                             }
                           }
@@ -7267,9 +7271,9 @@
                                 {
                                   "test": "LogY_",
                                   "scale": "y_cont_log_scale",
-                                  "field": "median"
+                                  "field": "mean"
                                 },
-                                {"scale": "y_cont_scale", "field": "median"}
+                                {"scale": "y_cont_scale", "field": "mean"}
                               ]
                             }
                           }
