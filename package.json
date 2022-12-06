@@ -1,6 +1,6 @@
 {
   "name": "crossex",
-  "version": "1.20220901",
+  "version": "1.20221130",
   "description": "Data Exploration Tool",
   "main": "app.js",
   "scripts": {

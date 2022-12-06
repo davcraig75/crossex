@@ -171,33 +171,25 @@ var corrmatrix =  function (df,cols) {
 					pair.push({col1:v1,col2:v2})
 				}
 			}
-			//console.log(col1,col2,pair,icc(pair,'col1','col2'),icc(pair,'col2','col1'),Math.pow(stats.cor.rank(pair,'col1','col2'),2));
 			if(colTypes[col1]=="cat" && colTypes[col2]=="num") {
-			//	corr.push({"var1":col1,"var2":col2,"% Variance":icc(pair,'col1','col2')});
 			corr.push({"var1":col1,"var2":col2,"% Variance":Math.pow(stats.cor.rank(pair,'col1','col2'),2)});
 			} else if (colTypes[col2]=="cat" && colTypes[col1]=="num") {
-			//	corr.push({"var1":col1,"var2":col2,"% Variance":icc(pair,'col2','col1')});
 			corr.push({"var1":col1,"var2":col2,"% Variance":Math.pow(stats.cor.rank(pair,'col1','col2'),2)});
 			} else {
 				corr.push({"var1":col1,"var2":col2,"% Variance":Math.pow(stats.cor.rank(pair,'col1','col2'),2)});
 			}
-			++ca
-			
-			
+			++ca;
 		});		
 	});
-	console.log(ca,'ca')
 	return corr;
 };
 
 var icc=function icc(df,col1,col2) {
-	//col1 is categorial
 	var distinct = [...new Set(df.map(x => x[col1]))]; 
 	var catCount=distinct.length;
 	var c=0;
 	var varianceSum=0;
 	var icc=0;
-
 	if(catCount<20 && catCount>1) {		
 		while (catCount--) {
 			var len = df.length;
@@ -231,12 +223,10 @@ var crossex = function crossex(element, data, options,widthid) {
 		widthNode=widthNode.parentElement;
 		ElementWidth=getContentWidth(widthNode);
 	}
-
 	if(widthid) {
 		widthNode=document.getElementById(widthid);	
 		ElementWidth=getContentWidth(widthNode);
 	}
-
 	var loc_crossex_html =  crossex_html;
 	var local_vgspec = JSON.stringify(crossex_spec);
 	var element_node = document.getElementById(element);
@@ -251,6 +241,8 @@ var crossex = function crossex(element, data, options,widthid) {
 	var editable=false;
 	var exportable=true;
 	var new_signalsString = JSON.stringify(options);
+	var col_names=[];
+	var sum_cols=[];
 	if (new_signalsString != null) {
 		repSignalsJson = JSON.parse(new_signalsString.replace(/\-ccnm/g, element));
 		for (i=0;i<repSignalsJson.length;++i) {
@@ -259,18 +251,15 @@ var crossex = function crossex(element, data, options,widthid) {
 				document.querySelector('#cc_panel'+element).style.display = "none";	
 				document.querySelector('#cc_tab'+element).style.display = "none";
 				document.querySelector('#cc_tabscontent'+element).style.display = "none";
-				//document.querySelector('#cc_graph_container'+element).style.border = "none";	
 				continue; 
 			}
-			if (typeof repSignalsJson[i]['Links_Editable'] !== 'undefined') {
-					
-					document.getElementById('#Links_Options' + element).style.display = "block";
+			if (typeof repSignalsJson[i]['Links_Editable'] !== 'undefined') {					
+				document.getElementById('#Links_Options' + element).style.display = "block";
 				continue; 
 			}			
 			if (typeof repSignalsJson[i]['editable'] !== 'undefined') {
 				if (repSignalsJson[i]['editable']==1) {
 					editable=true;
-				
 				} else {
 					editable=false;
 				}
@@ -284,9 +273,8 @@ var crossex = function crossex(element, data, options,widthid) {
 				}
 				continue; 
 			}
-			var index = Index(spec.signals, repSignalsJson[i].name);
-			var sum_cols=[];
-			var col_names=[];
+			var index = Index(spec.signals, repSignalsJson[i].name);			
+			
 			let na_values = ["na", "NA", "null","NULL","Null","unknown","Unknown","N/A","n/a","#N/A"];
 			if (index>=0){
 				spec.signals[index].value = repSignalsJson[i].value;
@@ -296,8 +284,7 @@ var crossex = function crossex(element, data, options,widthid) {
 					}
 					if (repSignalsJson[i].bind.options != null) {
 						var headers = repSignalsJson[i].bind.options;
-						var finalheaders = [];
-											
+						var finalheaders = [];				
 						headers.forEach(function(element) {
 							var distinct = [...new Set(data.map(x => x[element]))];
 							var ln = distinct.length;
@@ -324,6 +311,8 @@ var crossex = function crossex(element, data, options,widthid) {
 									finalheaders.push(element);
 								} else if (repSignalsJson[i].name == "Filter_Out_From" && ln < mymax) {
 									finalheaders.push(element);
+								} else if (repSignalsJson[i].name == "Filter_By_Value") {
+									finalheaders.push(element);									
 								} else if (repSignalsJson[i].name == "Facet_Rows_By" && ln < mymax) {
 									finalheaders.push(element);
 								} else if (repSignalsJson[i].name == "Facet_Cols_By" && ln < mymax) {
@@ -369,7 +358,8 @@ var crossex = function crossex(element, data, options,widthid) {
 	if (data != null) {
 		spec.data[Index(spec.data, "mydata")].values = JSON.parse(JSON.stringify(data));
 	}
-	spec.data[Index(spec.data, "covariance")].values=corrmatrix(spec.data[Index(spec.data, "mydata")].values,col_names);
+	spec.data[Index(spec.data, "col_names")].values = col_names;
+	//spec.data[Index(spec.data, "covariance")].values=corrmatrix(spec.data[Index(spec.data, "mydata")].values,col_names);
 	if (add_css) {
 		var css = itgz.decompressFromEncodedURIComponent("<%=cc_css%>"),
 		head = document.head || document.getElementsByTagName('head')[0],
@@ -379,9 +369,14 @@ var crossex = function crossex(element, data, options,widthid) {
 		style.appendChild(document.createTextNode(css));
 		add_css=false;
 	}
-	drawGraph(element,spec,widthNode,hide_panel,editable,exportable);
+	let myview;
+	drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable);
 };
-function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
+function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable) {
+	if (myview) {
+		myview.finalize();
+	 }
+
 	if (spec.signals[Index(spec.signals, 'Interactive_')]['value']==true) {
 		spec.signals[Index(spec.signals, 'xcur')]['on']=[{"events": "mousedown, touchstart, touchend","update": "slice(xdom)"}];
 		spec.signals[Index(spec.signals, 'ycur')]['on']=[{"events": "mousedown, touchstart, touchend","update": "slice(ydom)"}];
@@ -394,6 +389,23 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 		spec.signals[Index(spec.signals, 'ydom')]['on']=[{"events": {"signal": "delta"},"update": "[ycur[0] + span(ycur) * delta[1] / Plot_Height, ycur[1] + span(ycur) * delta[1] / Plot_Height]"},{"events": {"signal": "zoom"},"update": "[anchor[1] + (ydom[0] - anchor[1]) * zoom, anchor[1] + (ydom[1] - anchor[1]) * zoom]"}];
 		spec.signals[Index(spec.signals, 'down')]['on']=[{"events": "touchend", "update": "down"},{"events": "mousedown, touchstart","update": "xy()"}];
 	}
+	var defaultOpen = document.getElementById('defaultOpen'+element);
+	defaultOpen.addEventListener('click',function(event) {ccOpenCity(event, 'None'+element,element)});
+	var Charts_tablinks = document.getElementById('Charts_tablinks'+element);
+	Charts_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Charts'+element,element)});
+	var Axis_tablinks = document.getElementById('Axis_tablinks'+element);
+	Axis_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Axis'+element,element)});
+	var Marks_tablinks = document.getElementById('Marks_tablinks'+element);
+	Marks_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Marks'+element,element)});
+	var Fonts_tablinks = document.getElementById('Fonts_tablinks'+element);
+	Fonts_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Fonts'+element,element)});
+	var Coloring_tablinks = document.getElementById('Coloring_tablinks'+element);
+	Coloring_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Coloring'+element,element)});
+	var Filtering_tablinks = document.getElementById('Filtering_tablinks'+element);
+	Filtering_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Filtering'+element,element)});
+	var Margins_tablinks = document.getElementById('Margins_tablinks'+element);
+	Margins_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Margins'+element,element)});
+
 	vegaEmbed('#view_crossex' + element, spec, {
 		renderer: 'canvas',
 		width: setWidth_smart(element,widthNode),
@@ -409,11 +421,11 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 		},
 		defaultStyle: true
 	}).then(function(result) {
+		myview = result.view;
 		window.addEventListener('resize', function(event) {
 			result.view.width(setWidth_smart(element,widthNode)).run();
 		});
 		//initialize instance
-
 		var save_icon=document.querySelector("#view_crossex"+ element+" > details > summary");
 		save_icon.innerHTML="<div id='Exporting'>"+itgz.decompressFromEncodedURIComponent("<%=save_icon%>")+"</div>";
 		if (!hide_panel) {
@@ -436,6 +448,15 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 				var ds=result.view.data('mydata');
 				json2csv('crossex.'+element+'.csv',ds)
 			}, false);
+			var cross_checkbox=document.querySelector("#Show_Covariance"+element + "> div > label > input[type=checkbox]");
+			cross_checkbox.addEventListener('change', (event) => {
+				var all=document.querySelector('#'+element);
+				all.style.opacity="0.1"
+				if (event.currentTarget.checked) {					
+					result.view.change('covariance', vega.changeset().insert(corrmatrix(spec.data[Index(spec.data, "mydata")].values,spec.data[Index(spec.data, "col_names")].values)).remove(function () {return true}));					
+				}
+				all.style.opacity="1"
+			});
 			checkbox.addEventListener('change', (event) => {
 				var new_signals_ar=["X_Axis","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","SortX_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","LogY_","Jitter_" ,"Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point","Min_Point","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Include_Only","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Manual_Color","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Plot_Padding","Title_Height","X_Axis_Height","Row_Header_Width","Row_Height","Max_Facets","Legend_Height","Legend_Cols"];			
 				for (i = 0; i < new_signals_ar.length; i++) {
@@ -458,7 +479,8 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 					spec.signals[Index(spec.signals, 'xdom')]['on']=[{"events": {"signal": "delta"},"update": "[xcur[0] + span(xcur) * delta[0] / Plot_Width, xcur[1] + span(xcur) * delta[0] / Plot_Width]"},{"events": {"signal": "zoom"},"update": "[anchor[0] + (xdom[0] - anchor[0]) * zoom, anchor[0] + (xdom[1] - anchor[0]) * zoom]"}];
 					spec.signals[Index(spec.signals, 'ydom')]['on']=[{"events": {"signal": "delta"},"update": "[ycur[0] + span(ycur) * delta[1] / Plot_Height, ycur[1] + span(ycur) * delta[1] / Plot_Height]"},{"events": {"signal": "zoom"},"update": "[anchor[1] + (ydom[0] - anchor[1]) * zoom, anchor[1] + (ydom[1] - anchor[1]) * zoom]"}];
 					spec.signals[Index(spec.signals, 'down')]['on']=[{"events": "touchend", "update": "down"},{"events": "mousedown, touchstart","update": "xy()"}];
-					drawGraph(element,spec,widthNode,hide_panel,editable,exportable);
+					myview = result.view;
+					drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable);
 				} else {
 					delete spec.signals[Index(spec.signals, 'xcur')]['on'];
 					spec.signals[Index(spec.signals, 'Interactive_')]['value']=false;
@@ -471,7 +493,8 @@ function drawGraph(element,spec,widthNode,hide_panel,editable,exportable) {
 					delete spec.signals[Index(spec.signals, 'xdom')]['on'];
 					delete spec.signals[Index(spec.signals, 'ydom')]['on'];
 					delete spec.signals[Index(spec.signals, 'down')]['on'];
-					drawGraph(element,spec,widthNode,hide_panel,editable,exportable);
+					myview = result.view;
+					drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable);
 				}
 				return;
 			});	
