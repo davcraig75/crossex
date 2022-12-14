@@ -6232,7 +6232,7 @@
                     "title": {
                       "update": {
                         "text": {
-                          "signal": "if(Facet_Rows_By=='None',Sum_By=='None'?'Counts':'Σ of '+Color_By+' ','# '+parent.data)"
+                          "signal": "if(Facet_Rows_By=='None',Sum_By=='None'?'Counts':'Σ of '+Sum_By+' ','# '+parent.data)"
                         }
                       }
                     }
