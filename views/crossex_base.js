@@ -311,7 +311,7 @@ var crossex = function crossex(element, data, options,widthid) {
 									finalheaders.push(element);
 								} else if (repSignalsJson[i].name == "Filter_Out_From" && ln < mymax) {
 									finalheaders.push(element);
-								} else if (repSignalsJson[i].name == "Filter_By_Value") {
+								} else if (repSignalsJson[i].name == "Filter_By_Value" && isNum) {
 									finalheaders.push(element);									
 								} else if (repSignalsJson[i].name == "Facet_Rows_By" && ln < mymax) {
 									finalheaders.push(element);
@@ -319,7 +319,7 @@ var crossex = function crossex(element, data, options,widthid) {
 									finalheaders.push(element);
 								} else if (repSignalsJson[i].name == "Filter_Additional" && ln < mymax) {
 									finalheaders.push(element);						
-								} else if (repSignalsJson[i].name == "Sum_By" ) {
+								} else if (repSignalsJson[i].name == "Sum_By" && isNum) {
 									finalheaders.push(element);								
 								} else if (repSignalsJson[i].name == "Size_By" ) {
 									finalheaders.push(element);
@@ -339,6 +339,13 @@ var crossex = function crossex(element, data, options,widthid) {
 						if (!finalheaders.includes.None) {
 							finalheaders.push("None");
 						}
+						if (!finalheaders.includes.Sum && (repSignalsJson[i].name == "X_Axis" || repSignalsJson[i].name == "Y_Axis")) {
+							finalheaders.push("Sum");
+						}
+						if (!finalheaders.includes.Count && (repSignalsJson[i].name == "X_Axis" || repSignalsJson[i].name == "Y_Axis")) {
+							finalheaders.push("Count");
+						}						
+						
 						spec.signals[index].bind.options = JSON.parse(JSON.stringify(finalheaders));
 					}
 				}
