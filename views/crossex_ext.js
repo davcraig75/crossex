@@ -156,6 +156,12 @@ document.getElementById("graph_button").onclick = function clicks() {
 			"options": headers
 		}
 	}, {
+		"name": "Search_By",
+		"value": "None",
+		"bind": {
+			"options": headers
+		}
+	}, {
 		"name": "Facet_Rows_By",
 		"value": "None",
 		"bind": {
