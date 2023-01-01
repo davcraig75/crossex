@@ -75,21 +75,23 @@ function ccOpenCity(evt, cityName,element) {
 	var cc_tabcontent=new Array(6);
 	var tablinks=new Array(6);
 	tablinks[0]=document.getElementById('defaultOpen'+element);
-	tablinks[1]=document.getElementById('Charts_tablinks'+element);
-	tablinks[2]=document.getElementById('Axis_tablinks'+element);
-	tablinks[3]=document.getElementById('Marks_tablinks'+element);
-	tablinks[4]=document.getElementById('Fonts_tablinks'+element);
-	tablinks[5]=document.getElementById('Filtering_tablinks'+element);
-	tablinks[6]=document.getElementById('Coloring_tablinks'+element);
-	tablinks[7]=document.getElementById('Margins_tablinks'+element);	
+	tablinks[1]=document.getElementById('Search_tablinks'+element);
+	tablinks[2]=document.getElementById('Charts_tablinks'+element);
+	tablinks[3]=document.getElementById('Axis_tablinks'+element);
+	tablinks[4]=document.getElementById('Marks_tablinks'+element);
+	tablinks[5]=document.getElementById('Fonts_tablinks'+element);
+	tablinks[6]=document.getElementById('Filtering_tablinks'+element);
+	tablinks[7]=document.getElementById('Coloring_tablinks'+element);
+	tablinks[8]=document.getElementById('Margins_tablinks'+element);	
 	cc_tabcontent[0]=document.getElementById('None'+element);
-	cc_tabcontent[1]=document.getElementById('Charts'+element);
-	cc_tabcontent[2]=document.getElementById('Axis'+element);
-	cc_tabcontent[3]=document.getElementById('Marks'+element);
-	cc_tabcontent[4]=document.getElementById('Fonts'+element);
-	cc_tabcontent[5]=document.getElementById('Filtering'+element);
-	cc_tabcontent[6]=document.getElementById('Coloring'+element);
-	cc_tabcontent[7]=document.getElementById('Margins'+element);
+	cc_tabcontent[1]=document.getElementById('Search'+element);
+	cc_tabcontent[2]=document.getElementById('Charts'+element);
+	cc_tabcontent[3]=document.getElementById('Axis'+element);
+	cc_tabcontent[4]=document.getElementById('Marks'+element);
+	cc_tabcontent[5]=document.getElementById('Fonts'+element);
+	cc_tabcontent[6]=document.getElementById('Filtering'+element);
+	cc_tabcontent[7]=document.getElementById('Coloring'+element);
+	cc_tabcontent[8]=document.getElementById('Margins'+element);
 	for (var i = 0; i < cc_tabcontent.length; i++) {
 		cc_tabcontent[i].style.display = "none";
 	}
@@ -400,6 +402,8 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 	}
 	var defaultOpen = document.getElementById('defaultOpen'+element);
 	defaultOpen.addEventListener('click',function(event) {ccOpenCity(event, 'None'+element,element)});
+	var Search_tablinks = document.getElementById('Search_tablinks'+element);
+	Search_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Search'+element,element)});	
 	var Charts_tablinks = document.getElementById('Charts_tablinks'+element);
 	Charts_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Charts'+element,element)});
 	var Axis_tablinks = document.getElementById('Axis_tablinks'+element);

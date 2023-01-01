@@ -2,8 +2,8 @@
     "autosize": "none",
     "padding": 4,
     "resize": true,
-    "width": 600,
-    "height": 400,
+    "width": 300,
+    "height": 200,
     "config": {
       "arc": {"fill": "#000"},
       "area": {"fill": "#333333b5"},
@@ -576,13 +576,13 @@
           "element": "#Max_Point-ccnm",
           "input": "range",
           "min": 0,
-          "max": 200,
+          "max": 400,
           "step": 1
         }
       },
       {
         "name": "Min_Point",
-        "value": 20,
+        "value": 10,
         "bind": {
           "element": "#Min_Point-ccnm",
           "input": "range",
@@ -603,7 +603,7 @@
       },
       {
         "name": "Search_By",
-        "value": "species",
+        "value": "None",
         "bind": {
           "input": "select",
           "element": "#Search_By-ccnm",
@@ -612,9 +612,9 @@
         }
       },
       {
-        "name": "Search_Value",
-        "value": "Adelie",
-        "bind": {"element": "#Search_Value-ccnm", "input": "text"}
+        "name": "Term",
+        "value": "-",
+        "bind": {"element": "#Term-ccnm", "input": "text"}
       },
       {
         "name": "Filter_If",
@@ -753,7 +753,7 @@
       },
       {
         "name": "Opacity_",
-        "value": 1,
+        "value": 0.8,
         "bind": {
           "element": "#Opacity_-ccnm",
           "input": "range",
@@ -1312,7 +1312,7 @@
             "expr": "Size_By == 'None' || (Size_By != 'None' && !(!isValid(datum[Size_By]) || datum[Size_By]==Filter_If || datum[Size_By] =='NA' || datum[Size_By] =='null' || datum[Size_By] =='NaN' || datum[Size_By] =='N/A'))"
           },
           {"type": "formula", "as": "SortX_Value", "expr": "datum[SortX_By]"},
-          {"type": "formula", "as": "Search_Value", "expr": "datum[Search_By]"},
+          {"type": "formula", "as": "Term", "expr": "datum[Search_By]"},
           {"type": "formula", "as": "Stroke_Value", "expr": "datum[Stroke_By]"},
           {"type": "formula", "as": "Col_Value", "expr": "datum[Facet_Cols_By]"},
           {"type": "formula", "as": "Color_Value", "expr": "datum[Color_By]"},
@@ -9388,7 +9388,7 @@
                             "transform": [
                               {
                                 "type": "filter",
-                                "expr": "datum.Search_Value==Search_Value"
+                                "expr": "datum.Term==Term"
                               }
                             ]
                           }],
@@ -9551,6 +9551,7 @@
                         }
                       } ,
                           {
+                            "name": "scatter_point_mark_search",
                             "type": "symbol",
                             "interactive": true,
                             "zindex": 1,
@@ -9574,8 +9575,7 @@
                                   {"scale": "y_cont_scale2", "field": "Y_Value"}
                                 ],
                                 "shape": {"signal": "Shape"},
-                                "size": { "signal": "Max_Point",
-                              "scale": "size_scale"},
+                                "size": { "signal": "Max_Point*1.2"},
                                 "href": {
                                   "signal": "Link ? LinkURL+datum[LinkField] + LinkTail: false"
                                 },

@@ -142,7 +142,13 @@ document.getElementById("graph_button").onclick = function clicks() {
 		{"exportable":true},
 		{"link":true},		
 		{"corrmatrix":true},
-
+		{
+			"name": "Search_By",
+			"value": axis[0],
+			"bind": {
+				"options": headers
+			}
+		},
 	{
 		"name": "X_Axis",
 		"value": axis[0],
