@@ -37,6 +37,15 @@
     border-top: 0.5px solid #AAA;
     border-right: 2px solid #888;
 }
+input[name="Term"] {
+    width: 80px !important;
+    font-size: x-small;
+	line-height: 1.0em;
+    height: 11px;
+	padding: 0px 1px;
+    float: right;
+    margin: 0px 1px 0px 0px;	
+}
 
 p.cc-emph {
     font-size: x-small;
@@ -479,8 +488,8 @@ div.vega-bind  > label {
 }
 
 div.vega-bind > label > input[type="text"] {
-    width: 26px !important;
-    font-size: x-small !important;
+    width: 26px;
+    font-size: x-small;
 	line-height: 1.0em;
     height: 11px;
 	padding: 0px 1px;

@@ -245,6 +245,8 @@ var crossex = function crossex(element, data, options,widthid) {
 	var new_signalsString = JSON.stringify(options);
 	var col_names=[];
 	var sum_cols=[];
+	var datatyped=false;
+
 	if (new_signalsString != null) {
 		repSignalsJson = JSON.parse(new_signalsString.replace(/\-ccnm/g, element));
 		for (i=0;i<repSignalsJson.length;++i) {
@@ -291,23 +293,25 @@ var crossex = function crossex(element, data, options,widthid) {
 							var distinct = [...new Set(data.map(x => x[element]))];
 							var ln = distinct.length;
 							var isNum=true;
-							for (k=0;k<data.length;++k) {
-								var v=data[k][element];
-								if (na_values.includes(v)) {
-									delete data[k][element];
-								} 
-								if (data[k][element]!=null && data[k][element]!="") {
-									if (!isNumeric(data[k][element])) {
-										isNum=false;
-									}
-								}						
-							}								
-							if (isNum) {
-								sum_cols.push({"feature":element,"type":"num"})
-							} else {
-								sum_cols.push({"feature":element,"type":"cat"})
+							if (!datatyped) {
+								for (k=0;k<data.length;++k) {
+									var v=data[k][element];
+									if (na_values.includes(v)) {
+										delete data[k][element];
+									} 
+									if (data[k][element]!=null && data[k][element]!="") {
+										if (!isNumeric(data[k][element])) {
+											isNum=false;
+										}
+									}						
+								}									
+								if (isNum) {
+									sum_cols.push({"feature":element,"type":"num"})
+								} else {
+									sum_cols.push({"feature":element,"type":"cat"})
+								}
+								col_names.push(element);								
 							}
-							col_names.push(element);
 							if (ln > 0) {							
 								if (repSignalsJson[i].name == "Facet_By" && ln < mymax) {
 									finalheaders.push(element);
@@ -340,6 +344,7 @@ var crossex = function crossex(element, data, options,widthid) {
 								}
 							}
 						});
+						datatyped=true;
 						if (!finalheaders.includes.None) {
 							finalheaders.push("None");
 						}
@@ -348,8 +353,7 @@ var crossex = function crossex(element, data, options,widthid) {
 						}
 						if (!finalheaders.includes.Count && (repSignalsJson[i].name == "X_Axis" || repSignalsJson[i].name == "Y_Axis")) {
 							finalheaders.push("Count");
-						}						
-						
+						}					
 						spec.signals[index].bind.options = JSON.parse(JSON.stringify(finalheaders));
 					}
 				}
@@ -466,7 +470,8 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 				var all=document.querySelector('#'+element);
 				all.style.opacity="0.1"
 				if (event.currentTarget.checked) {					
-					result.view.change('covariance', vega.changeset().insert(corrmatrix(spec.data[Index(spec.data, "mydata")].values,spec.data[Index(spec.data, "col_names")].values)).remove(function () {return true}));					
+					result.view.change('covariance', vega.changeset().insert(corrmatrix(spec.data[Index(spec.data, "mydata")].values,spec.data[Index(spec.data, "col_names")].values)).remove(function () {return true})).run();
+										
 				}
 				all.style.opacity="1"
 			});
