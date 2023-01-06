@@ -934,7 +934,7 @@
     },
     {
       "name": "show_hist_graph",
-      "update": "(!Yord&&!Xord && Hist_Scatter_Ratio2!=0 && Y_Axis!='None') || (Y_Axis=='None' && !Xord)"
+      "update": "(!Yord&&!Xord && Hist_Scatter_Ratio2!=0 && (Y_Axis != 'None' || Y_Axis != 'Count' || Y_Axis != 'Sum')) || ((Y_Axis != 'None' || Y_Axis != 'Count' || Y_Axis != 'Sum') && !Xord)"
     },
     {
       "name": "show_scatter_graph",
