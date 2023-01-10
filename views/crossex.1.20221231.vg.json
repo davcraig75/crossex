@@ -365,7 +365,7 @@
       },
       {
         "name": "Jitter_Radius",
-        "value": 5,
+        "value": 1.25,
         "bind": {"element": "#Jitter_Radius-ccnm", "input": "text"}
       },
       {

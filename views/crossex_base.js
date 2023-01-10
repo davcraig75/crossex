@@ -7,6 +7,23 @@ crossex_html.replace("itgversion","<%-itgversion%>");
 var ccPanel,ccPanelProxy;
 ccPanelProxy={};
 ccPanel={};
+function delay(time) {
+	return new Promise(resolve => setTimeout(resolve, time));
+}
+  
+
+var crossexloader=function crossexloader(element,status) {	
+	if(status) {
+		document.getElementById("cc_loader"+element).style['z-index'] = 999;
+		document.getElementById("cc_loader"+element).style['display'] = 'block';
+	} else {
+		document.getElementById("cc_loader"+element).style['z-index'] = 0;
+		document.getElementById("cc_loader"+element).style['display'] = 'none'
+
+	}
+}
+
+
 var Index = function Index(items, name) {
 	var index = -1;
 	for (var i = 0; i < items.length; ++i) {
@@ -60,6 +77,7 @@ function getContentWidth (elementNode) {
 	if (w<0) {w=0;}
 	return w
 }
+
 function setWidth_smart(element,widthNode) {
 	if (!widthNode) {
 		widthNode=document.getElementById(element);
@@ -213,7 +231,7 @@ var icc=function icc(df,col1,col2) {
 }
 
 var crossex = function crossex(element, data, options,widthid) {
-	//legacy
+	//legacy	
 	var ElementWidth=0;
 	data=JSON.parse(JSON.stringify(data).replace(/\"null\"/gi,"\"\"").replace(/\"NA\"/gi,"\"\"").replace(/\"unknown\"/gi,"\"\""));
 	var cur_name=element;
@@ -245,7 +263,18 @@ var crossex = function crossex(element, data, options,widthid) {
 	var new_signalsString = JSON.stringify(options);
 	var col_names=[];
 	var sum_cols=[];
-	var datatyped=false;
+	var datatyped=false;	
+	if (add_css) {
+		var css = itgz.decompressFromEncodedURIComponent("<%=cc_css%>"),
+		head = document.head || document.getElementsByTagName('head')[0],
+		style = document.createElement('style');
+		head.appendChild(style);
+		style.type = 'text/css';
+		style.appendChild(document.createTextNode(css));
+		add_css=false;
+	}
+	crossexloader(element,true);
+	
 
 	if (new_signalsString != null) {
 		repSignalsJson = JSON.parse(new_signalsString.replace(/\-ccnm/g, element));
@@ -375,23 +404,17 @@ var crossex = function crossex(element, data, options,widthid) {
 	}
 	spec.data[Index(spec.data, "col_names")].values = col_names;
 	//spec.data[Index(spec.data, "covariance")].values=corrmatrix(spec.data[Index(spec.data, "mydata")].values,col_names);
-	if (add_css) {
-		var css = itgz.decompressFromEncodedURIComponent("<%=cc_css%>"),
-		head = document.head || document.getElementsByTagName('head')[0],
-		style = document.createElement('style');
-		head.appendChild(style);
-		style.type = 'text/css';
-		style.appendChild(document.createTextNode(css));
-		add_css=false;
-	}
-	let myview;
-	drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable);
+
+	let amyview;
+	crossexloader(element,true);
+	delay().then(() => drawGraph(amyview,element,spec,widthNode,hide_panel,editable,exportable));
 };
+
+
 function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable) {
 	if (myview) {
 		myview.finalize();
 	 }
-
 	if (spec.signals[Index(spec.signals, 'Interactive_')]['value']==true) {
 		spec.signals[Index(spec.signals, 'xcur')]['on']=[{"events": "mousedown, touchstart, touchend","update": "slice(xdom)"}];
 		spec.signals[Index(spec.signals, 'ycur')]['on']=[{"events": "mousedown, touchstart, touchend","update": "slice(ydom)"}];
@@ -421,8 +444,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 	var Filtering_tablinks = document.getElementById('Filtering_tablinks'+element);
 	Filtering_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Filtering'+element,element)});
 	var Margins_tablinks = document.getElementById('Margins_tablinks'+element);
-	Margins_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Margins'+element,element)});
-
+	Margins_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Margins'+element,element)});	
 	vegaEmbed('#view_crossex' + element, spec, {
 		renderer: 'canvas',
 		width: setWidth_smart(element,widthNode),
@@ -438,7 +460,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 		},
 		defaultStyle: true
 	}).then(function(result) {
-		myview = result.view;
+		myview = result.view.run();
 		window.addEventListener('resize', function(event) {
 			result.view.width(setWidth_smart(element,widthNode)).run();
 		});
@@ -467,18 +489,23 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 			}, false);
 			var cross_checkbox=document.querySelector("#Show_Covariance"+element + "> div > label > input[type=checkbox]");
 			cross_checkbox.addEventListener('change', (event) => {
-				var all=document.querySelector('#'+element);
-				all.style.opacity="0.1"
-				if (event.currentTarget.checked) {					
-					result.view.change('covariance', vega.changeset().insert(corrmatrix(spec.data[Index(spec.data, "mydata")].values,spec.data[Index(spec.data, "col_names")].values)).remove(function () {return true})).run();
-										
+				
+				if (event.currentTarget.checked ) {						
+					document.getElementById("Violin_Options"+element).style['display']='none';
+
+
+					crossexloader(element,true);					
+					delay().then(() => result.view.change('covariance', vega.changeset().insert(corrmatrix(spec.data[Index(spec.data, "mydata")].values,spec.data[Index(spec.data, "col_names")].values)).remove(function () {return true})).runAsync().then(crossexloader(element,false)));						
+				} else {
+					document.getElementById("Violin_Options"+element).style['display']='block';
 				}
-				all.style.opacity="1"
+				
+				myview = result.view;
 			});
 			checkbox.addEventListener('change', (event) => {
 				var new_signals_ar=["X_Axis","Search_By","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","SortX_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","LogY_","Jitter_" ,"Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point","Min_Point","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Include_Only","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Manual_Color","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Plot_Padding","Title_Height","X_Axis_Height","Row_Header_Width","Row_Height","Max_Facets","Legend_Height","Legend_Cols"];			
 				for (i = 0; i < new_signals_ar.length; i++) {
-					spec.signals[Index(spec.signals, new_signals_ar[i])]['value']=result.view.signal(new_signals_ar[i])
+					spec.signals[Index(spec.signals, new_signals_ar[i])]['value']=result.view.signal(new_signals_ar[i]);
 				}
 				result.finalize();
 				delete result.view;
@@ -498,7 +525,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 					spec.signals[Index(spec.signals, 'ydom')]['on']=[{"events": {"signal": "delta"},"update": "[ycur[0] + span(ycur) * delta[1] / Plot_Height, ycur[1] + span(ycur) * delta[1] / Plot_Height]"},{"events": {"signal": "zoom"},"update": "[anchor[1] + (ydom[0] - anchor[1]) * zoom, anchor[1] + (ydom[1] - anchor[1]) * zoom]"}];
 					spec.signals[Index(spec.signals, 'down')]['on']=[{"events": "touchend", "update": "down"},{"events": "mousedown, touchstart","update": "xy()"}];
 					myview = result.view;
-					drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable);
+					delay().then(() =>drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable));
 				} else {
 					delete spec.signals[Index(spec.signals, 'xcur')]['on'];
 					spec.signals[Index(spec.signals, 'Interactive_')]['value']=false;
@@ -511,12 +538,12 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 					delete spec.signals[Index(spec.signals, 'xdom')]['on'];
 					delete spec.signals[Index(spec.signals, 'ydom')]['on'];
 					delete spec.signals[Index(spec.signals, 'down')]['on'];
-					myview = result.view;
-					drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable);
+					myview = result.view;;
+					delay().then(() => drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable));
 				}
 				return;
 			});	
-		}	
-			
+		}
+		crossexloader(element,false);			
 	}).catch(console.error);
 }
