@@ -192,6 +192,12 @@ document.getElementById("graph_button").onclick = function clicks() {
 			"options": headers
 		}
 	}, {
+		"name": "SortX_By",
+		"value":  "None",
+		"bind": {
+			"options": headers
+		}
+	}, {
 		"name": "Size_By",
 		"value":  "None",
 		"bind": {
