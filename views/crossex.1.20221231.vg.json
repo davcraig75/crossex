@@ -1325,10 +1325,10 @@
         "reverse": {"signal": "Reverse_Color"},
         "domain": [
           {
-            "signal": "Min_Color!=''&Max_Color!=''?toNumber(Min_Color):C_maxmin_num[0]"
+            "signal": "Min_Color!=''?toNumber(Min_Color):C_maxmin_num[0]"
           },
           {
-            "signal": "Min_Color!=''&Max_Color!=''?toNumber(Max_Color):C_maxmin_num[1]"
+            "signal": "Max_Color!=''?toNumber(Max_Color):C_maxmin_num[1]"
           }
         ]
       },
