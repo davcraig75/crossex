@@ -233,7 +233,7 @@ var icc=function icc(df,col1,col2) {
 var crossex = function crossex(element, data, options,widthid) {
 	//legacy	
 	var ElementWidth=0;
-	data=JSON.parse(JSON.stringify(data).replace(/\"null\"/gi,"\"\"").replace(/\"NA\"/gi,"\"\"").replace(/\"unknown\"/gi,"\"\""));
+	//data=JSON.parse(JSON.stringify(data).replace(/\"null\"/gi,"\"\"").replace(/\"NA\"/gi,"\"\"").replace(/\"unknown\"/gi,"\"\""));
 	var cur_name=element;
 	var widthNode=document.getElementById(cur_name);	
 	ElementWidth=0;
@@ -488,18 +488,14 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 				json2csv('crossex.'+element+'.csv',ds)
 			}, false);
 			var cross_checkbox=document.querySelector("#Show_Covariance"+element + "> div > label > input[type=checkbox]");
-			cross_checkbox.addEventListener('change', (event) => {
-				
+			cross_checkbox.addEventListener('change', (event) => {				
 				if (event.currentTarget.checked ) {						
 					document.getElementById("Violin_Options"+element).style['display']='none';
-
-
 					crossexloader(element,true);					
 					delay().then(() => result.view.change('covariance', vega.changeset().insert(corrmatrix(spec.data[Index(spec.data, "mydata")].values,spec.data[Index(spec.data, "col_names")].values)).remove(function () {return true})).runAsync().then(crossexloader(element,false)));						
 				} else {
 					document.getElementById("Violin_Options"+element).style['display']='block';
-				}
-				
+				}				
 				myview = result.view;
 			});
 			checkbox.addEventListener('change', (event) => {
