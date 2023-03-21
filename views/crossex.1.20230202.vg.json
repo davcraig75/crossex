@@ -44,7 +44,7 @@
   "signals": [
     {
       "name": "X_Axis",
-      "value": "species",
+      "value": "island",
       "bind": {
         "input": "select",
         "element": "#X_Axis-ccnm",
@@ -105,7 +105,7 @@
     },
     {
       "name": "Facet_Cols_By",
-      "value": "island",
+      "value": "sex",
       "bind": {
         "input": "select",
         "element": "#Facet_Cols_By-ccnm",
@@ -123,7 +123,7 @@
     },
     {
       "name": "Facet_Rows_By",
-      "value": "None",
+      "value": "species",
       "bind": {
         "input": "select",
         "element": "#Facet_Rows_By-ccnm",
@@ -849,8 +849,30 @@
       }
     },
     {
+      "name": "XPlot_Padding",
+      "value": 4,
+      "bind": {
+        "element": "#XPlot_Padding-ccnm",
+        "input": "range",
+        "min": 0,
+        "max": 40,
+        "step": 1
+      }
+    },
+    {
+      "name": "YPlot_Padding",
+      "value": 4,
+      "bind": {
+        "element": "#YPlot_Padding-ccnm",
+        "input": "range",
+        "min": 0,
+        "max": 200,
+        "step": 1
+      }
+    },
+    {
       "name": "Plot_Padding",
-      "value": 8,
+      "value": 4,
       "bind": {
         "element": "#Plot_Padding-ccnm",
         "input": "range",
@@ -914,16 +936,16 @@
       "name": "Column_Width",
       "update": "if((width-Row_Header_Width)/cols_count>Max_Plot_Width,Max_Plot_Width,(width-Row_Header_Width)/cols_count)"
     },
-    {"name": "Plot_Width", "update": "Column_Width-Plot_Padding*2"},
+    {"name": "Plot_Width", "update": "Column_Width-XPlot_Padding*2"},
     {
       "name": "margin_hz",
       "update": "max(0,(width-Column_Width*cols_count-Row_Header_Width)/2)"
     },
     {
       "name": "Plot_Height",
-      "update": "if(rows_count>1,Row_Height-Plot_Padding,max(Max_Plot_Height-Plot_Padding,20))"
+      "update": "if(rows_count>1,Row_Height-YPlot_Padding,max(Max_Plot_Height-YPlot_Padding,20))"
     },
-    {"name": "row_ht", "update": "Plot_Height+Plot_Padding"},
+    {"name": "row_ht", "update": "Plot_Height+YPlot_Padding"},
     {
       "name": "legend_variable_height",
       "update": "if(!show_stacked_graphs&&!show_box_graphs&&!show_hzbox_graphs&&!show_grid_graphs&&!show_hist_graph&&!show_scatter_graph,data('columns').length*100,0)"
@@ -1700,7 +1722,7 @@
                   "height": {"signal": "X_Axis_Height"},
                   "x": {"signal": "datum.data", "scale": "col_scale"},
                   "y": {
-                    "signal": "row_ht*rows_count-Plot_Padding+4+PlotTitle_Height"
+                    "signal": "row_ht*rows_count-YPlot_Padding+4+PlotTitle_Height"
                   }
                 }
               },
@@ -2757,7 +2779,7 @@
                   "height": {"signal": "X_Axis_Height"},
                   "x": {"signal": "datum.data", "scale": "col_scale"},
                   "y": {
-                    "signal": "row_ht*rows_count-Plot_Padding+4+PlotTitle_Height"
+                    "signal": "row_ht*rows_count-YPlot_Padding+4+PlotTitle_Height"
                   }
                 }
               },
@@ -2887,6 +2909,50 @@
                   "type": "rect",
                   "style": "cell",
                   "from": {"data": "mystackfacet"},
+                  "axes": [
+                    {
+                      "scale": "non_uniform_x_scale",
+                      "gridScale": "stacked_scale",
+                      "domain": true,
+                      "zindex": 1,
+                      "tickCount": {"signal": "TickCount"},
+                      "title": "title",
+                      "offset": {"signal": "0"},
+                      "encode": {
+                        "title": {
+                          "update": {
+                            "text": {
+                              "signal": "if(!Uniform_XLim,if(Facet_Cols_By=='None',datum.Col_Value,parent.Col_Value),'')"
+                            },
+                            "align": {"value": "center"}
+                          }
+                        },
+                        "grid": {
+                          "update": {
+                            "strokeOpacity": {
+                              "signal": "if(!Uniform_XLim,if(Grids_,Grid_Opacity,0),0)"
+                            }
+                          }
+                        },
+                        "labels": {
+                          "update": {
+                            "angle": {"signal": "X_Axis_Angle"},
+                            "align": {"value": "right"},
+                            "text": {
+                              "signal": "if(!Uniform_XLim,datum.value,'')"
+                            }
+                          }
+                        },
+                        "ticks": {
+                          "update": {
+                            "strokeOpacity": {"signal": "if(Uniform_XLim,0,1)"}
+                          }
+                        }
+                      },
+                      "orient": "bottom",
+                      "labels": true
+                    }
+                  ],
                   "encode": {
                     "update": {
                       "fill": [
@@ -3950,7 +4016,7 @@
                   "height": {"signal": "X_Axis_Height"},
                   "x": {"signal": "datum.data", "scale": "col_scale"},
                   "y": {
-                    "signal": "row_ht*rows_count-Plot_Padding+4+PlotTitle_Height"
+                    "signal": "row_ht*rows_count-YPlot_Padding+4+PlotTitle_Height"
                   }
                 }
               },
@@ -4131,7 +4197,7 @@
                   "height": {"signal": "X_Axis_Height"},
                   "x": {"signal": "datum.data", "scale": "col_scale"},
                   "y": {
-                    "signal": "row_ht*rows_count-Plot_Padding+4+PlotTitle_Height"
+                    "signal": "row_ht*rows_count-YPlot_Padding+4+PlotTitle_Height"
                   }
                 }
               },
@@ -5004,7 +5070,7 @@
                   "height": {"signal": "X_Axis_Height"},
                   "x": {"signal": "datum.data", "scale": "col_scale"},
                   "y": {
-                    "signal": "row_ht*rows_count-Plot_Padding+4+PlotTitle_Height"
+                    "signal": "row_ht*rows_count-YPlot_Padding+4+PlotTitle_Height"
                   }
                 }
               },
