@@ -445,6 +445,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 	Filtering_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Filtering'+element,element)});
 	var Margins_tablinks = document.getElementById('Margins_tablinks'+element);
 	Margins_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Margins'+element,element)});	
+	console.log(JSON.stringify(spec));
 	vegaEmbed('#view_crossex' + element, spec, {
 		renderer: 'canvas',
 		width: setWidth_smart(element,widthNode),

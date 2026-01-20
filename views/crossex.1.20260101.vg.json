@@ -557,7 +557,7 @@
     },
     {
       "name": "Grids_",
-      "value": true,
+      "value": false,
       "bind": {"input": "checkbox", "element": "#Grids-ccnm"}
     },
     {
@@ -3536,7 +3536,7 @@
                                 },
                                 {"test": "!Boxplot_", "value": "transparent"}
                               ],
-                              "width": {"signal": "6"},
+                              "width": {"signal": 1},
                               "xc": {"signal": "viol_width / 2"},
                               "opacity": [
                                 {
@@ -3629,7 +3629,7 @@
                                 },
                                 {"test": "!Boxplot_", "value": "transparent"}
                               ],
-                              "width": {"signal": "6"},
+                              "width": {"signal": 1},
                               "xc": {"signal": "viol_width / 2"},
                               "opacity": [
                                 {
@@ -3682,7 +3682,7 @@
                               "tooltip": {
                                 "signal": "{'X':datum['X_Value'],'Col':datum['Col_Value'],'Row':datum['Row_Value'],'Median': format(datum['median'],''),'Max': format(datum['max'],''),'Min': format(datum['min'],''),'q1': format(datum['q1'],'0.3f'),'q3': format(datum['q3'],'0.3f'),'σ': format(datum['stdev'],'0.3f'),'μ': format(datum['mean'],'.3f'),'Count':datum['count'],'varp':format(datum['varp'],'.2f')}"
                               },
-                              "co`rn`erRadius": {"value": 3},
+                              "cornerRadius": {"value": 4},
                               "opacity": [
                                 {
                                   "test": "Boxplot_",
