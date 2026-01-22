@@ -265,7 +265,6 @@
         ]
       }
     },
-    {"name": "Export_CSV", "value": true},
     {"name": "graph_title", "value": ""},
     {
       "name": "AxisTitle_Font",
@@ -276,7 +275,9 @@
       "name": "Grid_Radius",
       "value": 1,
       "bind": {"element": "#Grid_Radius-ccnm", "input": "text"}
-    },
+    },    
+    
+
     {
       "name": "Datatype_X",
       "value": "Auto",
@@ -525,6 +526,11 @@
       "value": false,
       "bind": {"input": "checkbox", "element": "#Jitter_-ccnm"}
     },
+    {
+      "name": "Tips_",
+      "value": false,
+      "bind": {"input": "checkbox", "element": "#Tips_-ccnm"}
+    },    
     {
       "name": "Regression_",
       "value": false,
@@ -1028,6 +1034,7 @@
       "name": "show_grid_graphs",
       "update": "Xord && Yord && (Y_Axis != 'None' && Y_Axis != 'Count' && Y_Axis != 'Sum') && !fail && Map_XY_Cat_"
     },
+    {"name": "Export_CSV", "value": true},
     {"name": "bandwidth", "value": -1},
     {"name": "resolve", "value": "independent"},
     {"name": "TitleText", "value": ""},
@@ -2204,7 +2211,7 @@
                             "signal": "Link ? LinkURL+datum[LinkField] + LinkTail: false"
                           },
                           "fillOpacity": {"signal": "Opacity_"},
-                          "tooltip": {"signal": "datum"},
+                          "tooltip": {"signal": "Tips && isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"},
                           "fill": [
                             {"test": "!Points_", "value": "transparent"},
                             {
@@ -2269,7 +2276,7 @@
                           "href": {
                             "signal": "Link ? LinkURL+datum[LinkField] + LinkTail: false"
                           },
-                          "tooltip": {"signal": "datum"},
+                          "tooltip": {"signal": "Tips && isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"},
                           "fill": {"value": "gold"},
                           "stroke": {"value": "red"},
                           "strokeOpacity": {"value": 1},
@@ -2406,7 +2413,7 @@
                         "update": {
                           "strokeWidth": {"signal": "Stroke_Width"},
                           "strokeOpacity": {"signal": "Cnt_St_Opacity"},
-                          "tooltip": {"signal": "datum"},
+                          "tooltip": {"signal": "Tips && isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"},
                           "stroke": {
                             "scale": "color_scale_cat",
                             "field": "Color_Value"
@@ -2508,7 +2515,7 @@
                           "strokeWidth": {"signal": "Stroke_Width"},
                           "strokeOpacity": {"signal": "Contour_Opacity"},
                           "stroke": {"value": "#ccc"},
-                          "tooltip": {"signal": "datum"},
+                          "tooltip": {"signal": "Tips && isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"},
                           "fill": {
                             "scale": "colorscale_contour_cont",
                             "signal": "datum.contour.value"
@@ -2591,7 +2598,7 @@
                           "y": {
                             "signal": "min(scatter_graph_height-10,max(5,scale('y_cont_scale2',X_maxmin_num[0]*datum.coef[1]+datum.coef[0]-X_maxmin_num[0])/2+X_maxmin_num[0]))"
                           },
-                          "tooltip": {"signal": "datum"},
+                          "tooltip": {"signal": "Tips && isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"},
                           "opacity": {"value": 0.5}
                         }
                       }
@@ -2968,7 +2975,7 @@
                       ],
                       "opacity": {"signal": "Opacity_"},
                       "tooltip": {
-                        "signal": "isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"
+                        "signal": "Tips_ && isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"
                       },
                       "stroke": [
                         {
@@ -3809,7 +3816,7 @@
                               "cornerRadius": {"signal": "Dash_Radius"},
                               "width": {"signal": "viol_width*Dash_Width"},
                               "tooltip": {
-                                "signal": "isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"
+                                "signal": "Tips_ && isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"
                               }
                             }
                           }
@@ -3893,7 +3900,7 @@
                                   "stroke": {"value": "transparent"},
                                   "shape": {"signal": "Shape"},
                                   "tooltip": {
-                                    "signal": "isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"
+                                    "signal": "Tips && isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"
                                   },
                                   "opacity": [
                                     {"test": "Jitter_", "signal": "Opacity_"},
@@ -4001,7 +4008,7 @@
                                   ],
                                   "fill": {"value": "firebrick"},
                                   "tooltip": {
-                                    "signal": "isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"
+                                    "signal": "Tips_ && isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"
                                   },
                                   "opacity": [
                                     {"test": "Outliers_", "value": 0.5},
@@ -4566,7 +4573,7 @@
                           ],
                           "cornerRadius": {"value": 3},
                           "tooltip": {
-                            "signal": "isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"
+                            "signal": "Tips && isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"
                           },
                           "x": [
                             {
@@ -4792,7 +4799,7 @@
                               "stroke": {"value": "transparent"},
                               "height": {"signal": "viol_ht*0.3"},
                               "shape": {"signal": "Shape"},
-                              "tooltip": {"signal": "datum"},
+                              "tooltip": {"signal": "Tips_ && isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"},
                               "opacity": [
                                 {"test": "Dashes_", "signal": "Opacity_"},
                                 {"value": 0}
@@ -4896,7 +4903,7 @@
                               ],
                               "fill": {"value": "firebrick"},
                               "tooltip": {
-                                "signal": "isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"
+                                "signal": "Tips && isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"
                               },
                               "opacity": [
                                 {"test": "Outliers_", "value": 0.5},
@@ -5507,7 +5514,7 @@
                   "width": {"scale": "gx_scale", "band": 0.8},
                   "height": {"scale": "gy_scale", "band": 0.8},
                   "tooltip": {
-                    "signal": "isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"
+                    "signal": "Tips && isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"
                   },
                   "cornerRadius": {"signal": "Grid_Radius"},
                   "opacity": [{"signal": "Opacity_"}],

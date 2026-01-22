@@ -10,7 +10,6 @@ ccPanel={};
 function delay(time) {
 	return new Promise(resolve => setTimeout(resolve, time));
 }
-  
 
 var crossexloader=function crossexloader(element,status) {	
 	if(status) {
@@ -21,6 +20,44 @@ var crossexloader=function crossexloader(element,status) {
 		document.getElementById("cc_loader"+element).style['display'] = 'none'
 
 	}
+}
+
+function setCookie(name, value, days = 365) {
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie =
+    name + "=" + encodeURIComponent(value) +
+    "; expires=" + expires + "; path=/; SameSite=Lax";
+}
+
+function saveSignalsToCookie(signalsArray, cookieName) {
+    const signalState = {};
+    signalsArray.forEach(signal => {
+        if (signal.value !== undefined) {
+            signalState[signal.name] = signal.value;
+        }
+    });
+    // Save to cookie (expires in 365 days)
+    const expires = new Date();
+    expires.setTime(expires.getTime() + (365 * 24 * 60 * 60 * 1000));
+    document.cookie = cookieName + '=' + JSON.stringify(signalState) + ';expires=' + expires.toUTCString() + ';path=/';
+    return signalState;
+}
+
+// Helper function to load signals from cookie
+function loadSignalsFromCookie(cookieName) {
+    const name = cookieName + "=";
+    const decodedCookie = decodeURIComponent(document.cookie);
+    const cookieArray = decodedCookie.split(';');
+    for(let i = 0; i < cookieArray.length; i++) {
+        let c = cookieArray[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return JSON.parse(c.substring(name.length, c.length));
+        }
+    }
+    return null;
 }
 
 
@@ -445,7 +482,20 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 	Filtering_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Filtering'+element,element)});
 	var Margins_tablinks = document.getElementById('Margins_tablinks'+element);
 	Margins_tablinks.addEventListener('click',function(event) {ccOpenCity(event, 'Margins'+element,element)});	
-	console.log(JSON.stringify(spec));
+	const cookieName = 'vegaSignals_' + element;
+	const savedSignals = loadSignalsFromCookie(cookieName);
+	if (savedSignals) {
+		console.log('Restoring signal values from cookie:', cookieName);
+		// Update spec.signals with saved values
+		spec.signals.forEach(function(signal) {
+			if (signal.name && savedSignals.hasOwnProperty(signal.name)) {
+				signal.value = savedSignals[signal.name];
+				console.log('Restored signal:', signal.name, '=', savedSignals[signal.name]);
+			}
+		});
+	}
+	//console.log(JSON.stringify(spec));
+
 	vegaEmbed('#view_crossex' + element, spec, {
 		renderer: 'canvas',
 		width: setWidth_smart(element,widthNode),
@@ -462,6 +512,30 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 		defaultStyle: true
 	}).then(function(result) {
 		myview = result.view.run();
+		// Save initial signal state to cookie if it doesn't exist
+		const cookieName = 'vegaSignals_' + element;
+		const savedSignals = loadSignalsFromCookie(cookieName);
+		if (!savedSignals) {
+			saveSignalsToCookie(spec.signals, cookieName);
+			console.log('Initial signal state saved to cookie:', cookieName);
+		}
+		
+		// Add listeners to update cookie when any signal changes
+		spec.signals.forEach(function(signal) {
+			if (signal.value !== undefined && signal.name) {
+				result.view.addSignalListener(signal.name, function(name, value) {
+					// Load current cookie state
+					let currentState = loadSignalsFromCookie(cookieName) || {};
+					// Update the changed signal
+					currentState[name] = value;
+					// Save back to cookie
+					const expires = new Date();
+					expires.setTime(expires.getTime() + (365 * 24 * 60 * 60 * 1000));
+					document.cookie = cookieName + '=' + JSON.stringify(currentState) + ';expires=' + expires.toUTCString() + ';path=/';
+					console.log('Signal updated in cookie:', name, '=', value);
+				});
+			}
+		});
 		window.addEventListener('resize', function(event) {
 			result.view.width(setWidth_smart(element,widthNode)).run();
 		});
