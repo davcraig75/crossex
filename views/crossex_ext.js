@@ -119,6 +119,7 @@ function optimize_axis(headers, struct) {
 	return [x_axis_name, y_axis_name, split_to_panels1_by_name, split_to_panels1_by_name, color_by_name];
 }
 document.getElementById("default_data").onclick = function fun() {
+	clearAllCookies();
 	document.getElementById("myccinput").innerHTML = itg_decomp("<%=demo%>");
 };
 
@@ -236,36 +237,5 @@ document.getElementById("graph_button").onclick = function clicks() {
 		}
 	],"About");
 }
-/*
-	toggle("myccinput");
-	string = document.getElementById("myccinput").value;
-	var n = string.search(/\t/);
-	var struct;
-	if (n > 0) {
-		struct = d3.tsvParse(string, d3.autoType);
-	} else {
-		struct = d3.csvParse(string, d3.autoType);
-	}
-	var headers = struct.columns;
-	var axis = optimize_axis(headers, struct);
-	var init_val=headers[1];
-	if (headers.length<4) {init_val="None"} 
 
-
-	
-	    // When using the 'TSV Export' Renderer, you can
-    // copy from this textarea straight into Excel.
-//
-    $(function(){
-        var renderers = $.extend($.pivotUtilities.renderers,
-		$.pivotUtilities.export_renderers);
-		$("#pivot_id").pivotUI(struct, {
-			renderers: renderers,
-			cols: [], rows: [],
-			rendererName: "Crossex"
-		});
-		
-    });
-};
-*/
 

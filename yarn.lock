@@ -320,6 +320,11 @@ ansi-styles@^6.1.0:
   resolved "https://registry.npmjs.org/ansi-styles/-/ansi-styles-6.2.3.tgz"
   integrity sha512-4Dj6M28JB+oAH8kFkTLUo+a2jwOFkuqb3yucU0CANcRRUbxS0cP0nZYCGjcc3BNXwRIsUVmDGgzawme7zvJHvg==
 
+anthropic@^0.0.0:
+  version "0.0.0"
+  resolved "https://registry.yarnpkg.com/anthropic/-/anthropic-0.0.0.tgz#fe76553387cb033e2cdb8f123faca824668c700b"
+  integrity sha512-f5q/E0ZTR079xtkh58gFQ5chyLiRYgSoVDGA/hWacvU1DzVt+anoN8tEtTwWbmav6/+w/fFMNMj7r/KAMdOIYw==
+
 app-builder-bin@5.0.0-alpha.12:
   version "5.0.0-alpha.12"
   resolved "https://registry.npmjs.org/app-builder-bin/-/app-builder-bin-5.0.0-alpha.12.tgz"
@@ -589,6 +594,11 @@ ci-info@4.3.1, ci-info@^4.2.0:
   version "4.3.1"
   resolved "https://registry.npmjs.org/ci-info/-/ci-info-4.3.1.tgz"
   integrity sha512-Wdy2Igu8OcBpI2pZePZ5oWjPC38tmDVx5WKUXKwlLYkA0ozo85sLsLvkBbBn/sZaSCMFOGZJ14fvW9t5/d7kdA==
+
+claude-code@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/claude-code/-/claude-code-1.0.0.tgz#ae955a27b6ebbdf77a3666e4da5ee3106f1c3345"
+  integrity sha512-x5z3ZlQBRcd3fX5MtiC19kzVxonaY6/Ligbjedp21TlQ/m7FuiQHNsegiZVmOoY6a5BmqdMYTUI3dRj3RtnlGQ==
 
 cli-cursor@^3.1.0:
   version "3.1.0"

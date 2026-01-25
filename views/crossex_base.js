@@ -22,13 +22,6 @@ var crossexloader=function crossexloader(element,status) {
 	}
 }
 
-function setCookie(name, value, days = 365) {
-  const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  document.cookie =
-    name + "=" + encodeURIComponent(value) +
-    "; expires=" + expires + "; path=/; SameSite=Lax";
-}
-
 function saveSignalsToCookie(signalsArray, cookieName) {
     const signalState = {};
     signalsArray.forEach(signal => {
@@ -60,6 +53,17 @@ function loadSignalsFromCookie(cookieName) {
     return null;
 }
 
+// Helper function to clear all cookies
+function clearAllCookies() {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i];
+        const eqPos = cookie.indexOf('=');
+        const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
+        document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    }
+}
+
 
 var Index = function Index(items, name) {
 	var index = -1;
@@ -70,6 +74,17 @@ var Index = function Index(items, name) {
 		}
 	}
 	return index;
+};
+
+// Create index map for O(1) lookups instead of O(n) searches
+var createIndexMap = function(items) {
+	var map = {};
+	for (var i = 0; i < items.length; ++i) {
+		if (items[i].name) {
+			map[items[i].name] = i;
+		}
+	}
+	return map;
 };
 
 function isNumeric(n) {
@@ -177,17 +192,6 @@ function initAndListen(listener, id, result) {
 		}
 	});
 }
-var getKeys = function (arr) {
-	var key, keys = [];
-	for (i = 0; i < arr.length; i++) {
-		for (key in arr[i]) {
-			if (arr[i].hasOwnProperty(key)) {
-				keys[key]=1;
-			}
-		}
-	}
-	return Object.keys(keys);
-};
 
 var corrmatrix =  function (df,cols) {
 	if (!cols) {
@@ -241,32 +245,6 @@ var corrmatrix =  function (df,cols) {
 	return corr;
 };
 
-var icc=function icc(df,col1,col2) {
-	var distinct = [...new Set(df.map(x => x[col1]))]; 
-	var catCount=distinct.length;
-	var c=0;
-	var varianceSum=0;
-	var icc=0;
-	if(catCount<20 && catCount>1) {		
-		while (catCount--) {
-			var len = df.length;
-			var td=[];
-			while (len--) {
-				if(df[len][col1]==distinct[catCount]) {
-					td.push({'c':df[len][col2]});
-				}
-			}
-			varianceSum=varianceSum+stats.variance(td,'c');
-			c++;
-		}
-		var varComp=varianceSum/c;
-		var avar=stats.variance(df,col2);
-		var icc=varComp/avar;	
-		icc=Math.min(1,Math.max(1-icc,0));
-	}
-	return icc;
-}
-
 var crossex = function crossex(element, data, options,widthid) {
 	//legacy	
 	var ElementWidth=0;
@@ -300,7 +278,10 @@ var crossex = function crossex(element, data, options,widthid) {
 	var new_signalsString = JSON.stringify(options);
 	var col_names=[];
 	var sum_cols=[];
-	var datatyped=false;	
+	var datatyped=false;
+	// Create index maps for O(1) lookups
+	var signalMap = createIndexMap(spec.signals);
+	var dataMap = createIndexMap(spec.data);
 	if (add_css) {
 		var css = itgz.decompressFromEncodedURIComponent("<%=cc_css%>"),
 		head = document.head || document.getElementsByTagName('head')[0],
@@ -315,25 +296,25 @@ var crossex = function crossex(element, data, options,widthid) {
 
 	if (new_signalsString != null) {
 		repSignalsJson = JSON.parse(new_signalsString.replace(/\-ccnm/g, element));
-		for (i=0;i<repSignalsJson.length;++i) {
+		for (var i=0;i<repSignalsJson.length;++i) {
 			if (typeof repSignalsJson[i]['hide_panel'] !== 'undefined') {
 				hide_panel=true;
-				document.querySelector('#cc_panel'+element).style.display = "none";	
+				document.querySelector('#cc_panel'+element).style.display = "none";
 				document.querySelector('#cc_tab'+element).style.display = "none";
 				document.querySelector('#cc_tabscontent'+element).style.display = "none";
-				continue; 
+				continue;
 			}
-			if (typeof repSignalsJson[i]['Links_Editable'] !== 'undefined') {					
+			if (typeof repSignalsJson[i]['Links_Editable'] !== 'undefined') {
 				document.getElementById('#Links_Options' + element).style.display = "block";
-				continue; 
-			}			
+				continue;
+			}
 			if (typeof repSignalsJson[i]['editable'] !== 'undefined') {
 				if (repSignalsJson[i]['editable']==1) {
 					editable=true;
 				} else {
 					editable=false;
 				}
-				continue; 
+				continue;
 			}
 			if (typeof repSignalsJson[i]['exportable'] !== 'undefined') {
 				if (repSignalsJson[i]['exportable']==1) {
@@ -341,12 +322,12 @@ var crossex = function crossex(element, data, options,widthid) {
 				} else {
 					exportable=false;
 				}
-				continue; 
+				continue;
 			}
-			var index = Index(spec.signals, repSignalsJson[i].name);			
-			
+			var index = signalMap[repSignalsJson[i].name];
+
 			let na_values = ["na", "NA", "null","NULL","Null","unknown","Unknown","N/A","n/a","#N/A"];
-			if (index>=0){
+			if (index !== undefined){
 				spec.signals[index].value = repSignalsJson[i].value;
 				if (repSignalsJson[i].bind != null) {
 					if (repSignalsJson[i].bind.element != null) {
@@ -354,13 +335,13 @@ var crossex = function crossex(element, data, options,widthid) {
 					}
 					if (repSignalsJson[i].bind.options != null) {
 						var headers = repSignalsJson[i].bind.options;
-						var finalheaders = [];				
+						var finalheaders = [];
 						headers.forEach(function(element) {
 							var distinct = [...new Set(data.map(x => x[element]))];
 							var ln = distinct.length;
 							var isNum=true;
 							if (!datatyped) {
-								for (k=0;k<data.length;++k) {
+								for (var k=0;k<data.length;++k) {
 									var v=data[k][element];
 									if (na_values.includes(v)) {
 										delete data[k][element];
@@ -427,19 +408,19 @@ var crossex = function crossex(element, data, options,widthid) {
 					spec.signals[index].value = repSignalsJson[i].value;
 				}
 			} else {
-				var dataIndex = Index(spec.data, repSignalsJson[i].name);
-				if (dataIndex>=0){
+				var dataIndex = dataMap[repSignalsJson[i].name];
+				if (dataIndex !== undefined){
 					if ('values' in repSignalsJson[i]) {spec.data[dataIndex]['values'] = JSON.stringify(repSignalsJson[i].values);}
 					spec.data[dataIndex]['transform']=JSON.parse("[]");
 				}
 			}
 		}
 	}
-	spec.data[Index(spec.data, "mycolumns")].values = JSON.parse(JSON.stringify(sum_cols));
+	spec.data[dataMap["mycolumns"]].values = JSON.parse(JSON.stringify(sum_cols));
 	if (data != null) {
-		spec.data[Index(spec.data, "mydata")].values = JSON.parse(JSON.stringify(data));
+		spec.data[dataMap["mydata"]].values = JSON.parse(JSON.stringify(data));
 	}
-	spec.data[Index(spec.data, "col_names")].values = col_names;
+	spec.data[dataMap["col_names"]].values = col_names;
 	//spec.data[Index(spec.data, "covariance")].values=corrmatrix(spec.data[Index(spec.data, "mydata")].values,col_names);
 
 	let amyview;
@@ -452,7 +433,10 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 	if (myview) {
 		myview.finalize();
 	 }
-	if (spec.signals[Index(spec.signals, 'Interactive_')]['value']==true) {
+	// Create index maps for O(1) lookups
+	var signalMap = createIndexMap(spec.signals);
+	var dataMap = createIndexMap(spec.data);
+	if (spec.signals[signalMap['Interactive_']]['value']==true) {
 		spec.signals[Index(spec.signals, 'xcur')]['on']=[{"events": "mousedown, touchstart, touchend","update": "slice(xdom)"}];
 		spec.signals[Index(spec.signals, 'ycur')]['on']=[{"events": "mousedown, touchstart, touchend","update": "slice(ydom)"}];
 		spec.signals[Index(spec.signals, 'delta')]['on']=[{"events": [{"source": "scope","type": "mousemove","consume": true,"between": [{"type": "mousedown"},{"source": "scope", "type": "mouseup"}]},{"type": "touchmove","consume": true,"filter": "event.touches.length === 1"}],"update":  "down ? [x()-down[0], y()-down[1]] : [0,0]"}];
