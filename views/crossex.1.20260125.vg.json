@@ -1046,7 +1046,13 @@
         "element": "#ContourLevels-ccnm",
         "input": "text"
         }
-    },    
+    },  
+        {
+      "name": "Weight_Contour",
+      "value": true,
+      "bind": {"input": "checkbox", "element": "#Weight_Contour-ccnm"}
+    },  
+    
         {"name": "CellSize_", "value": 1,
           "bind": {
         "element": "#CellSize_-ccnm",
@@ -2387,6 +2393,9 @@
                           "y": {
                             "expr": "scale('y_cont_scale2', datum.Y_Value)"
                           },
+                          "weight": {
+                            "expr": "if(Weight_Contour,datum.Size_Value/S_maxmin_num[1],1)"
+                          },
                           "cellSize": {"signal": "CellSize_"},
                           "bandwidth": {"signal": "[bandwidth, bandwidth]"},
                           "counts": {"signal": "ContourCounts"}
@@ -2406,7 +2415,7 @@
                           "field": "grid",
                           "resolve": {"signal": "resolve"},
                           "smooth": true,
-                          "levels": {"signal": "ContourLevels"}
+                          "levels": {"signal": "toString(ContourLevels)"}
                         },
                         {"type": "filter", "expr": "isValid(datum.Color_Value)"}
                       ]
@@ -2522,6 +2531,9 @@
                           "y": {
                             "expr": "scale('y_cont_scale2', datum.Y_Value)"
                           },
+                          "weight": {
+                            "expr": "if(Weight_Contour,datum.Size_Value/S_maxmin_num[1],1)"
+                          },
                           "cellSize": {"signal": "CellSize_"},
                           "bandwidth": {"signal": "[bandwidth, bandwidth]"},
                           "counts": {"signal": "ContourCounts"}
@@ -2541,7 +2553,7 @@
                           "field": "grid",
                           "smooth": true,
                           "resolve": {"signal": "resolve"},
-                          "levels": {"signal": "ContourLevels"}
+                          "levels": {"signal": "toString(ContourLevels)"}
                         }
                       ]
                     }
@@ -2587,7 +2599,7 @@
                             "signal": "if(Contours_,Contour_Opacity,0)"
                           },
                           "smooth": {"value": true},
-                          "aspect": {"value": false}
+                          "aspect": {"value": true}
                         }
                       },
                       "transform": [
