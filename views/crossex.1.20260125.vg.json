@@ -1035,8 +1035,29 @@
       "update": "Xord && Yord && (Y_Axis != 'None' && Y_Axis != 'Count' && Y_Axis != 'Sum') && !fail && Map_XY_Cat_"
     },
     {"name": "Export_CSV", "value": true},
-    {"name": "bandwidth", "value": -1},
-    {"name": "resolve", "value": "independent"},
+    {"name": "bandwidth", "value": -1,
+          "bind": {
+        "element": "#Bandwidth-ccnm",
+        "input": "range",
+        "min": -1,
+        "max": 100 ,
+        "step": 0.1
+        }
+    },
+    {"name": "resolve", "value": "independent",
+      "bind": {
+        "input": "select",
+        "element": "#Resolve-ccnm",
+        "options": [
+          "independent",
+          "shared"
+        ]
+      }},
+          {
+      "name": "ContourCounts",
+      "value": true,
+      "bind": {"input": "checkbox", "element": "#ContourCounts-ccnm"}
+    },
     {"name": "TitleText", "value": ""},
     {"name": "graph_sum_vars", "value": 0},
     {
@@ -2489,7 +2510,7 @@
                             "expr": "scale('y_cont_scale2', datum.Y_Value)"
                           },
                           "bandwidth": {"signal": "[bandwidth, bandwidth]"},
-                          "counts": true
+                          "counts": {"signal": "ContourCounts"}
                         }
                       ]
                     },
@@ -5854,19 +5875,19 @@
           "fill": "color_scale_cont",
           "type": "gradient",
           "strokeColor": {
-            "signal": "if(!Cord&!Show_Covariance,'#ccc','transparent')"
+            "signal": "if(!Cord& !(Color_By=='None'),'#ccc','transparent')"
           },
-          "gradientThickness": {"signal": "if(!Cord&!Show_Covariance,10,0)"},
-          "gradientLength": {"signal": "if(!Cord&!Show_Covariance,200,0)"},
-          "labelLimit": {"signal": "if(!Cord&!Show_Covariance,26,0)"},
+          "gradientThickness": {"signal": "if(!Cord& !(Color_By=='None'),10,0)"},
+          "gradientLength": {"signal": "if(!Cord& !(Color_By=='None'),200,0)"},
+          "labelLimit": {"signal": "if(!Cord& !(Color_By=='None'),26,0)"},
           "labelSeparation": 10,
           "direction": "horizontal",
           "orient": "bottom",
           "title": {
-            "signal": "if((Show_Titles&!Cord&!Show_Covariance),'Color By '+Color_By,'')"
+            "signal": "if((Show_Titles&!Cord& !(Color_By=='None')),'Color By '+Color_By,'')"
           },
           "tickCount": 2,
-          "labelOpacity": {"signal": "if(!Cord&!Show_Covariance,1,0)"},
+          "labelOpacity": {"signal": "if(!Cord& !(Color_By=='None'),1,0)"},
           "titleOrient": "top"
         },
         {

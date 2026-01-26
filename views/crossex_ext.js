@@ -119,8 +119,11 @@ function optimize_axis(headers, struct) {
 	return [x_axis_name, y_axis_name, split_to_panels1_by_name, split_to_panels1_by_name, color_by_name];
 }
 document.getElementById("default_data").onclick = function fun() {
-	clearAllCookies();
 	document.getElementById("myccinput").innerHTML = itg_decomp("<%=demo%>");
+};
+
+document.getElementById("clear_cookies").onclick = function fun() {
+	clearAllCookies();
 };
 
 document.getElementById("graph_button").onclick = function clicks() {

@@ -469,16 +469,16 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 	const cookieName = 'vegaSignals_' + element;
 	const savedSignals = loadSignalsFromCookie(cookieName);
 	if (savedSignals) {
-		console.log('Restoring signal values from cookie:', cookieName);
+		// console.log('Restoring signal values from cookie:', cookieName);
 		// Update spec.signals with saved values
 		spec.signals.forEach(function(signal) {
 			if (signal.name && savedSignals.hasOwnProperty(signal.name)) {
 				signal.value = savedSignals[signal.name];
-				console.log('Restored signal:', signal.name, '=', savedSignals[signal.name]);
+				// console.log('Restored signal:', signal.name, '=', savedSignals[signal.name]);
 			}
 		});
 	}
-	//console.log(JSON.stringify(spec));
+	//// console.log(JSON.stringify(spec));
 
 	vegaEmbed('#view_crossex' + element, spec, {
 		renderer: 'canvas',
@@ -501,7 +501,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 		const savedSignals = loadSignalsFromCookie(cookieName);
 		if (!savedSignals) {
 			saveSignalsToCookie(spec.signals, cookieName);
-			console.log('Initial signal state saved to cookie:', cookieName);
+			// console.log('Initial signal state saved to cookie:', cookieName);
 		}
 		
 		// Add listeners to update cookie when any signal changes
@@ -516,7 +516,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 					const expires = new Date();
 					expires.setTime(expires.getTime() + (365 * 24 * 60 * 60 * 1000));
 					document.cookie = cookieName + '=' + JSON.stringify(currentState) + ';expires=' + expires.toUTCString() + ';path=/';
-					console.log('Signal updated in cookie:', name, '=', value);
+					// console.log('Signal updated in cookie:', name, '=', value);
 				});
 			}
 		});
@@ -558,7 +558,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 				myview = result.view;
 			});
 			checkbox.addEventListener('change', (event) => {
-				var new_signals_ar=["X_Axis","Search_By","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","SortX_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","LogY_","Jitter_" ,"Tips_","Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point","Min_Point","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Include_Only","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Manual_Color","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Plot_Padding","Title_Height","X_Axis_Height","Row_Header_Width","Row_Height","Max_Facets","Legend_Height","Legend_Cols"];			
+				var new_signals_ar=["X_Axis","Search_By","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","SortX_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","LogY_","Jitter_" ,"Tips_","Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point","Min_Point","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Include_Only","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Manual_Color","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Plot_Padding","Title_Height","X_Axis_Height","Row_Header_Width","Row_Height","Max_Facets","Legend_Height","Legend_Cols","CountourCounts","Resolve"];			
 				for (i = 0; i < new_signals_ar.length; i++) {
 					spec.signals[Index(spec.signals, new_signals_ar[i])]['value']=result.view.signal(new_signals_ar[i]);
 				}
