@@ -1038,12 +1038,22 @@
     {"name": "bandwidth", "value": -1,
           "bind": {
         "element": "#Bandwidth-ccnm",
-        "input": "range",
-        "min": -1,
-        "max": 100 ,
-        "step": 0.1
+        "input": "text"
         }
     },
+    {"name": "ContourLevels", "value": 3,
+          "bind": {
+        "element": "#ContourLevels-ccnm",
+        "input": "text"
+        }
+    },    
+        {"name": "CellSize_", "value": 1,
+          "bind": {
+        "element": "#CellSize_-ccnm",
+        "input": "text"
+        }
+    },   
+    
     {"name": "resolve", "value": "independent",
       "bind": {
         "input": "select",
@@ -2377,8 +2387,9 @@
                           "y": {
                             "expr": "scale('y_cont_scale2', datum.Y_Value)"
                           },
+                          "cellSize": {"signal": "CellSize_"},
                           "bandwidth": {"signal": "[bandwidth, bandwidth]"},
-                          "counts": {"signal": "true"}
+                          "counts": {"signal": "ContourCounts"}
                         }
                       ]
                     },
@@ -2394,7 +2405,8 @@
                           "type": "isocontour",
                           "field": "grid",
                           "resolve": {"signal": "resolve"},
-                          "levels": 3
+                          "smooth": true,
+                          "levels": {"signal": "ContourLevels"}
                         },
                         {"type": "filter", "expr": "isValid(datum.Color_Value)"}
                       ]
@@ -2418,6 +2430,7 @@
                           "opacity": {
                             "signal": "if(Contours_,Contour_Opacity,0)"
                           },
+                          "smooth": {"value": true},
                           "aspect": {"value": false}
                         }
                       },
@@ -2509,6 +2522,7 @@
                           "y": {
                             "expr": "scale('y_cont_scale2', datum.Y_Value)"
                           },
+                          "cellSize": {"signal": "CellSize_"},
                           "bandwidth": {"signal": "[bandwidth, bandwidth]"},
                           "counts": {"signal": "ContourCounts"}
                         }
@@ -2526,7 +2540,8 @@
                           "type": "isocontour",
                           "field": "grid",
                           "smooth": true,
-                          "levels": 5
+                          "resolve": {"signal": "resolve"},
+                          "levels": {"signal": "ContourLevels"}
                         }
                       ]
                     }
@@ -2552,6 +2567,38 @@
                       },
                       "transform": [
                         {"type": "geopath", "field": "datum.contour"}
+                      ]
+                    }
+                    ,                    {
+                      "type": "image",
+                      "from": {"data": "density"},
+                      "clip": true,
+                      "encode": {
+                        "update": {
+                          "x": {"signal": "0"},
+                          "y": {"signal": "0"},
+                          "width": {
+                            "signal": "if(Contours_ & show_scatter_graph,Plot_Width,0)"
+                          },
+                          "height": {
+                            "signal": "if(Contours_ & show_scatter_graph,scatter_graph_height,0)"
+                          },
+                          "opacity": {
+                            "signal": "if(Contours_,Contour_Opacity,0)"
+                          },
+                          "smooth": {"value": true},
+                          "aspect": {"value": false}
+                        }
+                      },
+                      "transform": [
+                        {
+                          "type": "heatmap",
+                          "field": "datum.grid",
+                          "resolve": {"signal": "resolve"},
+                          "color": {
+                            "expr": "if(Contours_ & show_scatter_graph,scale('color_scale_cont', datum.datum.Color_Value),'')"
+                          }
+                        }
                       ]
                     }
                   ]
