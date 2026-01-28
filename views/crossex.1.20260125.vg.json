@@ -1259,7 +1259,9 @@
         },
         {"type": "extent", "field": "Y_Value", "signal": "Y_maxmin_num"},
         {"type": "extent", "field": "X_Value", "signal": "X_maxmin_num"},
-        {"type": "extent", "field": "Color_Value", "signal": "C_maxmin_num"}
+        {"type": "extent", "field": "Color_Value", "signal": "C_maxmin_num"},
+
+        {"type": "extent", "field": "Size_Value", "signal": "S_maxmin_num"}
       ]
     },
     {
@@ -1512,6 +1514,23 @@
       "domain": {"data": "cols_domain", "field": "data", "sort": true}
     },
     {
+      "name": "size_scale",
+      "type": "pow",
+      "exponent": 2,
+      "round": true,
+      "nice": true,
+      "zero": false,
+      "reverse": {"signal": "Reverse_Size"},
+      "domain": [
+        {"signal": "S_maxmin_num[0]"},
+        {"signal": "S_maxmin_num[1]+(S_maxmin_num[1]-S_maxmin_num[0])*0.05"}
+      ],
+      "range": [
+        {"signal": "Min_Point"},
+        {"signal": "if(Size_By!='None',Max_Point,Min_Point)"}
+      ]
+    },
+    {
       "name": "cat_color_scale",
       "type": "ordinal",
       "domain": {"field": "data", "data": "cols_domain"},
@@ -1570,14 +1589,7 @@
           "data": [
             {
               "name": "filtered_instance",
-              "source": "tdata",
-              "transform": [
-                {
-                  "type": "extent",
-                  "field": "Size_Value",
-                  "signal": "S_maxmin_num"
-                }
-              ]
+              "source": "tdata"
             },
             {
               "name": "row_instance",
@@ -1651,25 +1663,6 @@
               "domain": {"signal": "ydom"},
               "zero": false,
               "range": [{"signal": "0"}, {"signal": "scatter_graph_height"}]
-            },
-            {
-              "name": "size_scale",
-              "type": "pow",
-              "exponent": 2,
-              "round": true,
-              "nice": true,
-              "zero": false,
-              "reverse": {"signal": "Reverse_Size"},
-              "domain": [
-                {"signal": "S_maxmin_num[0]"},
-                {
-                  "signal": "S_maxmin_num[1]+(S_maxmin_num[1]-S_maxmin_num[0])*0.05"
-                }
-              ],
-              "range": [
-                {"signal": "Min_Point"},
-                {"signal": "if(Size_By!='None',Max_Point,Min_Point)"}
-              ]
             }
           ],
           "marks": [
