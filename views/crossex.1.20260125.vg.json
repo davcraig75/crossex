@@ -2247,7 +2247,7 @@
                             "signal": "Link ? LinkURL+datum[LinkField] + LinkTail: false"
                           },
                           "fillOpacity": {"signal": "Opacity_"},
-                          "tooltip": {"signal": "Tips_ && isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"},
+                          "tooltip": {"signal": "Tips_ && isValid(datum.X_Value) ? datum : null"},
                           "fill": [
                             {"test": "!Points_", "value": "transparent"},
                             {
