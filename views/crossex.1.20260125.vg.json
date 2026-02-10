@@ -2091,7 +2091,7 @@
                               },
                               "fillOpacity": {"signal": "0.7"},
                               "tooltip": {
-                                "signal": "{'count':datum.count,'bin':format(datum['bin0'],'0.2f')+'-'+format(datum['bin1'],'0.2f'),'Sub-group': ''+datum['Color_Value']}"
+                                "signal": "{'count':datum.count,'bin':format(datum['bin0'],'0.4f')+'-'+format(datum['bin1'],'0.4f'),'Sub-group': ''+datum['Color_Value']}"
                               },
                               "fill": [
                                 {
