@@ -1,33 +1,38 @@
 
+var _dragState = {};
+
 function initDrag(e) {
-	startX = e.clientX;
-	startY = e.clientY;
-	startWidth = parseInt(document.defaultView.getComputedStyle(p).width, 10);
-	startHeight = parseInt(document.defaultView.getComputedStyle(p).height, 10);
+	_dragState.startX = e.clientX;
+	_dragState.startY = e.clientY;
+	_dragState.startWidth = parseInt(document.defaultView.getComputedStyle(_dragState.el).width, 10);
+	_dragState.startHeight = parseInt(document.defaultView.getComputedStyle(_dragState.el).height, 10);
 	document.documentElement.addEventListener('mousemove', doDrag, false);
 	document.documentElement.addEventListener('mouseup', stopDrag, false);
 }
 
 function doDrag(e) {
-	p.style.width = (startWidth + e.clientX - startX) + 'px';
-	p.style.height = (startHeight + e.clientY - startY) + 'px';
+	_dragState.el.style.width = (_dragState.startWidth + e.clientX - _dragState.startX) + 'px';
+	_dragState.el.style.height = (_dragState.startHeight + e.clientY - _dragState.startY) + 'px';
 }
 
 function stopDrag(e) {
 	document.documentElement.removeEventListener('mousemove', doDrag, false);
 	document.documentElement.removeEventListener('mouseup', stopDrag, false);
-	var elmnt = document.getElementById(myid);
-	myresult.view.width(setWidth_smart(myid)).signal('chart_height_min', elmnt.offsetHeight - 200).run();
+	var elmnt = document.getElementById(_dragState.id);
+	_dragState.result.view.width(setWidth_smart(_dragState.id)).signal('chart_height_min', elmnt.offsetHeight - 200).run();
 }
 
-function draggable(myid) {
-	p = document.getElementById(myid);
+function draggable(id, result) {
+	var p = document.getElementById(id);
 	p.addEventListener('click', function init() {
 		p.removeEventListener('click', init, false);
 		p.className = p.className + ' resizable';
 		var resizer = document.createElement('div');
 		resizer.className = 'resizer';
 		p.appendChild(resizer);
+		_dragState.el = p;
+		_dragState.id = id;
+		_dragState.result = result;
 		resizer.addEventListener('mousedown', initDrag, false);
 	}, false);
 }
@@ -71,18 +76,18 @@ function optimize_axis(headers, struct) {
 				my_low_cat = ln;
 				max_cat_name = element;
 
-			}		
+			}
 			if (ln < max_cat && ln < my_high_cat ) {
 				my_low_cat = ln;
 				min_cat_name = element;
-			}					
-			if (ln >= 1 & ln <= min_cat & alt_cat_name == "None" & min_cat_name != "None") {
+			}
+			if (ln >= 1 && ln <= min_cat && alt_cat_name == "None" && min_cat_name != "None") {
 				min_cat = ln;
 				min_cat_name = element;
-			} else if (ln >= 1 & ln <= min_cat) {
+			} else if (ln >= 1 && ln <= min_cat) {
 				min_cat = ln;
 				min_cat_name = element;
-			} else if (ln >= 1 & ln <= alt_cat) {
+			} else if (ln >= 1 && ln <= alt_cat) {
 				alt_cat = ln;
 				alt_cat_name = element;
 			}
@@ -116,7 +121,7 @@ function optimize_axis(headers, struct) {
 	} else if (min_cat_name != "None") {
 		color_by_name = max_cat_name;
 	}
-	return [x_axis_name, y_axis_name, split_to_panels1_by_name, split_to_panels1_by_name, color_by_name];
+	return [x_axis_name, y_axis_name, split_to_panels1_by_name, split_to_panels2_by_name, color_by_name];
 }
 document.getElementById("default_data").onclick = function fun() {
 	document.getElementById("myccinput").innerHTML = itg_decomp("<%=demo%>");
@@ -128,7 +133,7 @@ document.getElementById("clear_cookies").onclick = function fun() {
 
 document.getElementById("graph_button").onclick = function clicks() {
 	toggle("myccinput");
-	string = document.getElementById("myccinput").value;
+	var string = document.getElementById("myccinput").value;
 	var n = string.search(/\t/);
 	var struct;
 	if (n > 0) {
@@ -162,12 +167,6 @@ document.getElementById("graph_button").onclick = function clicks() {
 		}, {
 			"name": "Y_Axis",
 			"value": axis[1],
-			"bind": {
-				"options": headers
-			}
-		}, {
-			"name": "Search_By",
-			"value": "None",
 			"bind": {
 				"options": headers
 			}

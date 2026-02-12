@@ -1,55 +1,471 @@
 # Crossex
-Data Visualization of Dataframes and Tables
-**Version: 1.10210426**
 
-## To do
+**Interactive data exploration and visualization for tables and dataframes.**
 
-1. Add summary preview
-2. Add correlation view
-3. Add chromosome/type
-4. Add BED support
-5. Add Kaplan Meyer
-6. Add Pie
-7. Distribution
-## Installation
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-1.20260125-green.svg)](https://github.com/davcraig75/crossex)
 
-This page provides for building and installation of crosscorrelate.  There are typically **2** to **3** lines of HTML required.
+Crossex lets users paste or load tabular data and instantly explore it through dynamically configurable charts. Drop a CSV into the tool and start dragging variables onto axes, facets, colors, and filters -- no code required. Embed it on any web page with a single `<script>` tag, or run the full interactive designer locally.
 
-* Add `<div>` element with the `id` that will hold the graph. Style parameters may be added here.
-* Source the `crosscorrelate.js` script either in header or in the `<body>`. 
-* Call the `crosscorrelate` function, adding in optional parameters.
+Built on [Vega](https://vega.github.io/vega/), a declarative visualization grammar.
 
-### Unit Test 1
+---
 
-Paste `HTML` into an existing page.
+## Table of Contents
 
-``` 
-<!-- element where graph is pasted-->
-<div id="crosscorrelate_el" style="max-width:1000px"></div>
+- [Why Crossex](#why-crossex)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Embedding on a Web Page](#embedding-on-a-web-page)
+- [API Reference](#api-reference)
+- [User Guide](#user-guide)
+- [Chart Types](#chart-types)
+- [Control Panel Reference](#control-panel-reference)
+- [Project Structure](#project-structure)
+- [Building the Library](#building-the-library)
+- [Browser Support](#browser-support)
+- [License](#license)
 
-<!-- Script Loading in Data-->
-<script type="text/javascript">
-var myjson=fetch('https://raw.githubusercontent.com/davcraig75/crosscorrelate/main/public/iris.json')
-.then(res => res.json()).then((out) => {
-     console.log('loaded sample JSON! ', out);
-});
-</script>
+---
 
-<!-- Calling CrossCorrelate Function-->
-<script type="text/javascript" src="https://raw.githubusercontent.com/davcraig75/crosscorrelate/main/crosscorrelate.js">
-   var choices=["sepalLength","sepalWidth","species","petalLength","petalWidth"];
-	CrossCorrelate("crosscorrelate_el", myjson, [
-		{"name": "X_Axis","value":"sepalLength","bind": {"options": choices},
-		{"name": "Y_Axis","value":"sepalLength","bind": {"options": choices},
-		{"name": "Facet_Rows_By","value": "None","bind": {"options": choices},
-		{"name": "Facet_Cols_By","value": "None","bind": {"options": choices},
-		{"name": "Size_By","value": "None","bind": {"options": choices},
-		{"name": "Filter_Additional","value": "None","bind": {"options": choices}
-	]);	
-</script>
+## Why Crossex
+
+Most charting libraries require you to decide your chart type and axis mappings upfront. Crossex takes a different approach: give it a table, and it builds a complete exploration environment where users can:
+
+- **Switch axes, colors, facets, and filters on the fly** using dropdown menus
+- **Automatically detect** whether columns are numeric or categorical and adjust chart types accordingly
+- **Facet data into subplot grids** by any categorical variable
+- **Filter, search, and drill down** without writing code
+- **Export** the current view as PNG or download filtered data as CSV
+
+It is designed for scenarios where you want to hand someone a dataset and let them explore it themselves -- dashboards, reports, research tools, or internal apps.
+
+---
+
+## Quick Start
+
+### Try it instantly
+
+```bash
+git clone https://github.com/davcraig75/crossex.git
+cd crossex
+npm install
+npm start
 ```
 
+Open `http://localhost:8080`. Paste any CSV or TSV data into the text area and click **Graph Data**.
+
+### Embed on any page in 3 lines
+
+```html
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<div id="my_graph"></div>
+<script src="crossex.js"></script>
+```
+
+Then call `crossex()` with your data (see [Embedding](#embedding-on-a-web-page) below).
+
+---
+
+## Installation
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (v14+)
+
+### Install
+
+```bash
+git clone https://github.com/davcraig75/crossex.git
+cd crossex
+npm install
+```
+
+### Run the local server
+
+```bash
+npm start
+```
+
+Starts an Express server on port **8080** (configurable via `API_PORT` environment variable).
+
+| Route | Description |
+|-------|-------------|
+| `http://localhost:8080/` | Standalone graph designer with data input |
+| `http://localhost:8080/template` | Bootstrap dashboard template |
+
+### Run in development mode
+
+```bash
+npm run dev
+```
+
+Uses [nodemon](https://nodemon.io/) for auto-reload on file changes.
+
+---
+
+## Embedding on a Web Page
+
+Crossex can be embedded on any HTML page. The `crossex.js` library bundles the Vega engine -- the only external dependency is D3 (for CSV/TSV parsing).
+
+### Minimal Example
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Crossex Example</title>
+</head>
+<body>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <!-- Container element -->
+    <div id="my_graph" style="max-width:1200px"></div>
+
+    <!-- Crossex library (Vega is bundled) -->
+    <script src="crossex.js"></script>
+
+    <script>
+        fetch('data.json')
+            .then(res => res.json())
+            .then(function(data) {
+                var columns = Object.keys(data[0]);
+
+                crossex("my_graph", data, [
+                    {"editable": true},
+                    {"exportable": true},
+                    {"name": "X_Axis",    "value": columns[0], "bind": {"options": columns}},
+                    {"name": "Y_Axis",    "value": columns[1], "bind": {"options": columns}},
+                    {"name": "Color_By",  "value": "None",     "bind": {"options": columns}},
+                    {"name": "Size_By",   "value": "None",     "bind": {"options": columns}},
+                    {"name": "Facet_Rows_By", "value": "None", "bind": {"options": columns}},
+                    {"name": "Facet_Cols_By", "value": "None", "bind": {"options": columns}}
+                ]);
+            });
+    </script>
+</body>
+</html>
+```
+
+### Loading CSV/TSV Directly
+
+```js
+// D3 auto-detects numeric vs string columns
+var data = d3.csvParse(csvString, d3.autoType);
+var columns = data.columns;
+
+crossex("my_graph", data, [
+    {"editable": true},
+    {"exportable": true},
+    {"name": "X_Axis", "value": columns[0], "bind": {"options": columns}},
+    {"name": "Y_Axis", "value": columns[1], "bind": {"options": columns}}
+]);
+```
+
+### Pre-configured Dashboard
+
+You can lock specific axes and hide the control panel to create a focused view:
+
+```js
+crossex("dashboard_chart", data, [
+    {"exportable": true},
+    {"hide_panel": true},
+    {"name": "X_Axis",         "value": "date"},
+    {"name": "Y_Axis",         "value": "revenue"},
+    {"name": "Color_By",       "value": "region"},
+    {"name": "Facet_Cols_By",  "value": "product"}
+]);
+```
+
+---
+
+## API Reference
+
+### `crossex(element, data, options, widthid)`
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `element` | string | Yes | ID of the container `<div>` (without `#`) |
+| `data` | array | Yes | Array of row objects `[{col1: val, col2: val}, ...]` |
+| `options` | array | Yes | Array of config flags and signal bindings |
+| `widthid` | string | No | ID of an element to use for width calculation |
+
+### Config Flags
+
+These are simple key-value objects mixed into the options array:
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `{"editable": true}` | boolean | `false` | Show the settings/control panel |
+| `{"exportable": true}` | boolean | `true` | Enable PNG/CSV export buttons |
+| `{"hide_panel": true}` | boolean | `false` | Completely hide the control panel |
+| `{"corrmatrix": true}` | boolean | `false` | Enable correlation matrix toggle |
+
+### Signal Bindings
+
+Signal bindings control which data columns are mapped to visual encodings. Each has this form:
+
+```json
+{
+    "name": "X_Axis",
+    "value": "column_name",
+    "bind": {"options": ["col1", "col2", "col3"]}
+}
+```
+
+- **`name`** -- The signal to set (see table below)
+- **`value`** -- Initial column selection, or `"None"` to disable
+- **`bind.options`** -- Array of column names to show in the dropdown
+
+| Signal | Description | Dropdown Filter |
+|--------|-------------|-----------------|
+| `X_Axis` | X axis variable | All columns |
+| `Y_Axis` | Y axis variable | All columns |
+| `Color_By` | Color encoding | All columns |
+| `Size_By` | Point size encoding | All columns |
+| `Opacity_By` | Opacity encoding | All columns |
+| `Stroke_By` | Stroke/outline encoding | All columns |
+| `Search_By` | Column for text search | All columns |
+| `SortX_By` | Sort X categories by this column | All columns |
+| `Sum_By` | Aggregate by sum | Numeric only |
+| `Facet_Rows_By` | Split into row subplots | Max 150 distinct values |
+| `Facet_Cols_By` | Split into column subplots | Max 150 distinct values |
+| `Filter_Out_From` | Column to exclude values from | Max 150 distinct values |
+| `Filter_Additional` | Additional filter column | Max 150 distinct values |
+| `Filter_By_Value` | Numeric range filter | Numeric only |
+
+You can also set non-dropdown signals directly by omitting `bind`:
+
+```js
+{"name": "Palette",             "value": "tableau20"},
+{"name": "Max_Plot_Height",     "value": 400},
+{"name": "Dashes_",             "value": false},
+{"name": "Histogram_Bins_Size", "value": 50}
+```
+
+### Data Format
+
+Crossex accepts an array of plain objects. Each object is a row; keys are column names.
+
+```json
+[
+    {"species": "setosa", "sepal_length": 5.1, "sepal_width": 3.5},
+    {"species": "versicolor", "sepal_length": 7.0, "sepal_width": 3.2}
+]
+```
+
+Missing values (`"NA"`, `"null"`, `"N/A"`, `"unknown"`, `""`) are automatically detected and excluded from calculations.
+
+---
+
+## User Guide
+
+### Getting Data In
+
+**In the standalone app** (`http://localhost:8080/`):
+
+1. Paste CSV or TSV data into the text area
+2. Click **Graph Data**
+3. The tool auto-detects delimiters (tab vs comma) and column types (numeric vs categorical)
+
+Or click **Load Demo Data** to load a sample dataset.
+
+**Embedded on a page**: pass data directly via the `crossex()` function (see [API](#api-reference)).
+
+### Exploring Your Data
+
+Once data is loaded, use the **control panel tabs** on the left to configure the visualization:
+
+1. **Select axes** -- Use the Charts tab to pick X and Y columns
+2. **Add color** -- Use the Coloring tab to map a column to color
+3. **Facet** -- Split data into a grid of subplots by one or two categorical variables
+4. **Filter** -- Narrow down to specific subsets using the Filtering tab
+5. **Search** -- Highlight specific values with the Search tab
+
+The chart type is chosen automatically based on your data types:
+- **Two numeric columns** -> scatter plot
+- **One categorical + one numeric** -> box/violin plot
+- **Two categorical columns** -> grid/heatmap
+- **One variable (Y = "None")** -> histogram
+
+### Interactivity
+
+Toggle **Interactive mode** (checkbox in the control panel) to enable:
+- **Pan** -- Click and drag to move the view
+- **Zoom** -- Scroll wheel or pinch gesture
+- **Tooltips** -- Hover over points to see values
+
+### Exporting
+
+Click the export icon (top-right of the chart) to:
+- **Download PNG** -- High-resolution (2x) image
+- **Download CSV** -- Current filtered data as CSV
+- **Open in Vega Editor** -- Edit the raw Vega spec for advanced customization
+
+### Settings Persistence
+
+All settings (axis selections, filters, palettes, etc.) are saved to browser cookies and restored automatically on your next visit.
+
+Click **Clear Settings** to reset everything to defaults.
+
+---
+
+## Chart Types
+
+| Type | When Used | Key Options |
+|------|-----------|-------------|
+| **Scatter Plot** | Two numeric axes | Points, Regression, Contours, Jitter |
+| **Histogram** | One numeric axis (Y = "None") | Bin size, Ratio |
+| **Box Plot** | Categorical X + Numeric Y | Outliers toggle |
+| **Violin Plot** | Categorical X + Numeric Y | Violin width, Dashes |
+| **Stacked Bar** | Categorical axes with Sum_By | Sum column selection |
+| **Grid / Heatmap** | Two categorical axes | Grid radius, Cell size |
+| **Correlation Matrix** | All numeric columns | Show Covariance toggle |
+
+---
+
+## Control Panel Reference
+
+### Search Tab
+Search and highlight data points by text matching against any column.
+
+### Charts Tab
+Set X and Y axis columns. Shows chart-type-specific sub-panels:
+- **Scatter options** -- Contour density overlay, histogram margins, regression
+- **Violin/Box options** -- Box plot, violin, dashes, bar plot toggles
+- **Grid options** -- Grid spacing, radius, categorical mapping
+- **Stacked options** -- Sum aggregation column
+
+### Axis Tab
+- **Log scale** for X and/or Y
+- **Reverse** axis direction
+- **Sort** X categories by another column
+- **Manual limits** -- Set min/max for X and Y axes
+- **Uniform limits** -- Share axis ranges across facets
+
+### Marks Tab
+- **Points** -- Show/hide data points
+- **Regression** -- Overlay fitted line
+- **Outliers** -- Highlight statistical outliers
+- **Jitter** -- Add random offset to overlapping points (configurable radius)
+- **Point size** -- Min/max point size range
+- **Stroke** -- Map a column to point outline color
+- **Tooltips** -- Enable hover info
+- **Contour levels** -- Number and weighting of density contours
+- **Dash/violin dimensions** -- Height, width, radius of marks
+
+### Fonts Tab
+- Font sizes for axis titles, tick labels, chart title, and legend
+- Label rotation angles for X and Y axes
+- Tick count control
+
+### Coloring Tab
+- **40+ color palettes** including:
+  - Categorical: `category10`, `category20`, `tableau10`, `tableau20`, `accent`, `paired`, `pastel1`, `dark2`
+  - Sequential: `viridis`, `magma`, `plasma`, `inferno`, `turbo`, `cividis`, `blues`, `reds`, `oranges`
+  - Diverging: `spectral`, `blueorange`, `redblue`, `purplegreen`, `redyellowblue`
+- **Reverse** color direction
+- **Manual colors** -- Pick min/max colors with a color picker
+- **Background color** control
+- **Per-element opacity** -- Independent opacity for points, boxes, violins, contours, grid cells, and dashes
+
+### Filtering Tab
+- **Exclude values** from a specific column
+- **Additional filter** on a second column
+- **Numeric range filter** -- Set min/max on any numeric column
+- **Include only** -- Text-match to keep specific values
+- **Data type overrides** -- Force a column to be treated as numeric or categorical
+
+### Margins Tab
+- Plot width, height, and padding
+- Title, axis label, and legend area sizing
+- Row/column facet header dimensions
+- Maximum number of facets to display
+- Legend column count
+
+---
+
+## Project Structure
+
+```
+crossex/
+├── app.js                    # Express server, routes, and build system
+├── package.json              # Dependencies and npm scripts
+├── LICENSE                   # MIT License
+├── crossex.js                # Built library (embeddable, Vega bundled)
+├── crossex_site.js           # Built site wrapper (full UI + styles)
+│
+├── views/
+│   ├── crossex_base.js       # Core: data loading, signal wiring, Vega handoff
+│   ├── crossex_ext.js        # Extensions: drag resize, axis optimizer, data input
+│   ├── crossex_base.ejs      # EJS template that produces crossex.js
+│   ├── wrapper.ejs           # EJS template that produces crossex_site.js
+│   ├── stand_alone.ejs       # Full HTML page served at /
+│   ├── template.ejs          # Bootstrap dashboard template at /template
+│   ├── crossex_html.ejs      # UI component: tabs, panels, controls
+│   ├── body.ejs              # Data input: textarea, buttons
+│   ├── stats.js              # Statistics: correlation, z-tests, formatting
+│   └── *.vg.json             # Vega specification
+│
+├── src/
+│   ├── inc/                  # Vega engine, vega-embed, core styles, icons
+│   ├── lz-string.js          # LZ compression for asset bundling
+│   ├── d3-dsv.v1.min.js      # D3 CSV/TSV parser (server-side)
+│   ├── d3.v7.min.js          # D3 (included in template builds)
+│   └── *.css, *.js           # jQuery UI, Bootstrap, pivot table
+│
+├── public/                   # Static files served by Express
+│   ├── crossex.js            # Built library copy
+│   ├── crossex_site.js       # Built site copy
+│   └── crossex.html          # Example standalone page
+│
+└── electron/                 # Electron desktop app
+    ├── main.js               # Main process
+    ├── index.html            # Desktop entry point
+    └── dist/                 # Built desktop binaries
+```
+
+### How the build works
+
+Crossex uses **EJS templates as a build system** -- no Webpack or Rollup required. The Node server renders EJS templates that `<%- include %>` source files, concatenating them into single output files:
+
+```
+crossex_base.ejs  ──renders──>  crossex.js      (Vega + stats + core logic)
+wrapper.ejs       ──renders──>  crossex_site.js  (above + lz-string + UI + styles + extensions)
+```
+
+Large assets (CSS, HTML, SVG, Vega specs) are compressed with [lz-string](https://pieroxy.net/blog/pages/lz-string/index.html) at build time and decompressed in the browser.
+
+---
+
+## Building the Library
+
+Build **`crossex.js`** (embeddable library with Vega bundled):
+
+```bash
+npm run build
+```
+
+Build **`crossex_site.js`** (full standalone site with UI, styles, and data input):
+
+```bash
+npm run build:site
+```
+
+Both commands write output to `./` and `./public/`.
+
+---
 
 ## Browser Support
 
-Browser supported include all Browsers supporting ES6, or typically 2016 version or later for Chrome, Firefox, Opera, Safari, Edge.
+All browsers supporting ES6: Chrome, Firefox, Safari, Edge, and Opera (2016+).
+
+Touch support is included for mobile devices (pan, pinch-to-zoom).
+
+---
+
+## License
+
+[MIT](LICENSE) -- Copyright (c) 2021 David Craig

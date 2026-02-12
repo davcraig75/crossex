@@ -10,14 +10,23 @@ const http = require("http");
 const dotenv = require("dotenv");
 var debug = require("debug")("ripple:server");
 const fs = require("fs");
+
+dotenv.config();
+
 const app = express();
-require("dotenv").config();
 var port = normalizePort(process.env.API_PORT || "8080");
-var version = process.env.VERSION;
 app.set("port", port);
+
+// View engine
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
+// Middleware - compression first for best effect
+app.use(compression());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app_name = "crossex";
+
+var app_name = "crossex";
 
 // ALLOW CORS (Modify as appropriate)
 app.use(function(req, res, next) {
@@ -28,7 +37,14 @@ app.use(function(req, res, next) {
   );
   next();
 });
-itgz = require("./src/lz-string.js");
+
+// Static files
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/src', express.static(path.join(__dirname, 'src')));
+
+// Compression utilities
+var itgz = require("./src/lz-string.js");
 var itg_comp = function(file) {
   return itgz.compressToEncodedURIComponent(fs.readFileSync(file, "utf8"));
 };
@@ -36,92 +52,72 @@ var itg_engz = function(data) {
   return itgz.compressToEncodedURIComponent(JSON.stringify(data)).toString();
 };
 
-d3 = require("./src/d3-dsv.v1.min.js");
+var d3 = require("./src/d3-dsv.v1.min.js");
 
 /////////////////////////////////////////////////////////////////////////////////
-// Convert csv to json
+// Template data
 //////////////////////////////////////////////////////////////////////////////////
-
-
-
 var data = {
   min_smartplot: [],
   demo: itg_comp("src/penguins.csv"),
   cc_css: itg_comp("src/inc/cc_styles.css"),
   pvt_css: itg_comp("src/lib/pivot.css"),
-  ext_styles:itg_comp("src/ext_styles.css"),
+  ext_styles: itg_comp("src/ext_styles.css"),
   save_icon: itg_comp("src/inc/file-download-solid.svg"),
   body: itg_comp("views/body.ejs"),
   crossex_html: itg_comp("views/crossex_html.ejs"),
-  crossex_spec: itg_comp("views/crossex."+pjson.version+".vg.json"),
+  crossex_spec: itg_comp("views/crossex." + pjson.version + ".vg.json"),
   itgversion: pjson.version
 };
 
-var file_str=fs.readFileSync("src/penguins.csv", "utf8");
-dat_json = d3.csvParse(file_str, d3.autoType);
-var template_data = {
-  min_smartplot: [],
-  cc_css: itg_comp("src/inc/cc_styles.css"),
-  bootstrap_css:itg_comp("src/bootstrap.min.css"),
-  jqueryui_css:itg_comp("src/jquery-ui.css"),
-  save_icon: itg_comp("src/inc/file-download-solid.svg"),
-  body: itg_comp("views/body.ejs"),
-  crossex_html: itg_comp("views/crossex_html.ejs"),
-  crossex_spec: itg_comp("views/crossex."+pjson.version+".vg.json"),
-  itgversion: pjson.version
-};
-/////////////////////////////////////////////////////////////////////////////////
-// Start server & Paths
-/////////////////////////////////////////////////////////////////////////////////
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/public',express.static(path.join(__dirname, 'public')));
+var file_str = fs.readFileSync("src/penguins.csv", "utf8");
+var dat_json = d3.csvParse(file_str, d3.autoType);
 
 
 /////////////////////////////////////////////////////////////////////////////////
 // Webpage From Node
 //////////////////////////////////////////////////////////////////////////////////
 app.get("/", function(req, res) {
-  res.render("stand_alone.ejs", data);
+  res.render("stand_alone", data);
 });
 
-app.get("/template", function(req, res) {
-  res.render("template.ejs", template_data);
-});
+
 //////////////////////////////////////////////////////////////////////////////////
 // Compile Javascript
 //////////////////////////////////////////////////////////////////////////////////
 if (process.argv[2] == "build_site") {
-  app.render("wrapper.ejs", data, function(err, javascript) {
+  app.render("wrapper", data, function(err, javascript) {
+    if (err) { console.error(err); process.exit(1); }
     fs.writeFile("public/" + app_name + "_site.js", javascript, function(err) {
       if (err) console.error(err);
-      console.log("Built javascript");
-      fs.writeFile(app_name  + "_site.js", javascript, function(err) {
+      console.log("Built crossex_site.js -> public/");
+      fs.writeFile(app_name + "_site.js", javascript, function(err) {
         if (err) console.error(err);
-        console.log("Built javascript");
+        console.log("Built crossex_site.js -> root");
         process.exit();
-      });   
+      });
     });
- 
   });
 }
 
 if (process.argv[2] == "build") {
-  app.render("crossex_base.ejs", data, function(err, javascript) {
+  app.render("crossex_base", data, function(err, javascript) {
+    if (err) { console.error(err); process.exit(1); }
     fs.writeFile(app_name + ".js", javascript, function(err) {
       if (err) console.error(err);
-      console.log("Built javascript");
-      fs.writeFile("public/" + app_name  + ".js", javascript, function(err) {
+      console.log("Built crossex.js -> root");
+      fs.writeFile("public/" + app_name + ".js", javascript, function(err) {
         if (err) console.error(err);
-        console.log("Built javascript in public");
+        console.log("Built crossex.js -> public/");
         process.exit();
-      });   
+      });
     });
   });
 }
 
 //////////////////////////////////////////////////////////////////////////////////
 // Server
-/** Event listeners for HTTP  */
+//////////////////////////////////////////////////////////////////////////////////
 function onError(error) {
   if (error.syscall !== "listen") {
     throw error;
@@ -157,11 +153,7 @@ function onListening() {
   var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
   debug("Listening on " + bind);
 }
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/public',express.static(path.join(__dirname, 'public')));
-app.use('/src',express.static(path.join(__dirname, 'src')));
-app.use(compression());
-app.set("port", port);
+
 var server = http.createServer(app);
 server.listen(port);
 server.on("error", onError);
