@@ -1193,27 +1193,7 @@
         },
         {
           "type": "filter",
-          "expr": "X_Axis=='None'|| ((X_Axis != 'None' && X_Axis != 'Count' && X_Axis != 'Sum') && !(!isValid(datum[X_Axis]) || datum[X_Axis]==Filter_If || datum[X_Axis] =='NA' || datum[X_Axis] =='null' || datum[X_Axis] =='NaN' || datum[X_Axis] =='N/A'))"
-        },
-        {
-          "type": "filter",
-          "expr": "(Y_Axis == 'None' || Y_Axis == 'Count' || Y_Axis == 'Sum') || (Y_Axis != 'None' && !(!isValid(datum[Y_Axis]) || datum[Y_Axis]==Filter_If || datum[Y_Axis] =='NA' || datum[Y_Axis] =='null' || datum[Y_Axis] =='NaN' || datum[Y_Axis] =='N/A'))"
-        },
-        {
-          "type": "filter",
-          "expr": "Facet_Rows_By == 'None' || (Facet_Rows_By != 'None' && !(!isValid(datum[Facet_Rows_By]) || datum[Facet_Rows_By]==Filter_If || datum[Facet_Rows_By] =='NA' || datum[Facet_Rows_By] =='null' || datum[Facet_Rows_By] =='NaN' || datum[Facet_Rows_By] =='N/A'))"
-        },
-        {
-          "type": "filter",
-          "expr": "Facet_Cols_By == 'None' || (Facet_Cols_By != 'None' && !(!isValid(datum[Facet_Cols_By]) || datum[Facet_Cols_By]==Filter_If || datum[Facet_Cols_By] =='NA' || datum[Facet_Cols_By] =='null' || datum[Facet_Cols_By] =='NaN' || datum[Facet_Cols_By] =='N/A'))"
-        },
-        {
-          "type": "filter",
-          "expr": "Color_By == 'None' || (Color_By != 'None' && !(!isValid(datum[Color_By]) || datum[Color_By]==Filter_If || datum[Color_By] =='NA' || datum[Color_By] =='null' || datum[Color_By] =='NaN' || datum[Color_By] =='N/A'))"
-        },
-        {
-          "type": "filter",
-          "expr": "Size_By == 'None' || (Size_By != 'None' && !(!isValid(datum[Size_By]) || datum[Size_By]==Filter_If || datum[Size_By] =='NA' || datum[Size_By] =='null' || datum[Size_By] =='NaN' || datum[Size_By] =='N/A'))"
+          "expr": "(X_Axis=='None' || X_Axis=='Count' || X_Axis=='Sum' || (isValid(datum[X_Axis]) && datum[X_Axis]!=Filter_If)) && (Y_Axis=='None' || Y_Axis=='Count' || Y_Axis=='Sum' || (isValid(datum[Y_Axis]) && datum[Y_Axis]!=Filter_If)) && (Facet_Rows_By=='None' || (isValid(datum[Facet_Rows_By]) && datum[Facet_Rows_By]!=Filter_If)) && (Facet_Cols_By=='None' || (isValid(datum[Facet_Cols_By]) && datum[Facet_Cols_By]!=Filter_If)) && (Color_By=='None' || (isValid(datum[Color_By]) && datum[Color_By]!=Filter_If)) && (Size_By=='None' || (isValid(datum[Size_By]) && datum[Size_By]!=Filter_If))"
         },
         {"type": "formula", "as": "SortX_Value", "expr": "datum[SortX_By]"},
         {"type": "formula", "as": "Term", "expr": "datum[Search_By]"},
