@@ -94,7 +94,14 @@ if (process.argv[2] == "build_site") {
       fs.writeFile(app_name + "_site.js", javascript, function(err) {
         if (err) console.error(err);
         console.log("Built crossex_site.js -> root");
-        process.exit();
+        app.render("stand_alone", data, function(err, html) {
+          if (err) { console.error(err); process.exit(1); }
+          fs.writeFile("electron/index.html", html, function(err) {
+            if (err) console.error(err);
+            console.log("Built index.html -> electron/");
+            process.exit();
+          });
+        });
       });
     });
   });
