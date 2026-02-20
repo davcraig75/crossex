@@ -7,7 +7,7 @@ crossex_html = crossex_html.replace("itgversion","<%-itgversion%>");
 var ccPanel,ccPanelProxy;
 ccPanelProxy={};
 ccPanel={};
-var NA_VALUES = ["na", "NA", "null", "NULL", "Null", "unknown", "Unknown", "N/A", "n/a", "#N/A"];
+var NA_VALUES_SET = new Set(["na", "NA", "null", "NULL", "Null", "unknown", "Unknown", "N/A", "n/a", "#N/A"]);
 
 var SIGNAL_HEADER_FILTERS = {
 	"Facet_By":        { maxDistinct: 150 },
@@ -154,14 +154,19 @@ function isNumeric(n) {
 var json2csv = function json2csv(filename,json) {
     var fields = [];
 	var filtered = ["Y_Value", "Col_Value", "X_Value", "Row_Value", "Count","None","O_Value","Color_Value","Cstr","Xstr","Ystr","Size_Value"];
-    for (var j=0;j<json.length;j++) {
-        Object.keys(json[j]).forEach(function(key){
-            if(fields.indexOf(key) == -1 && !(filtered.includes(key))) 
-            {
+    var filteredSet = {};
+    for (var f = 0; f < filtered.length; ++f) filteredSet[filtered[f]] = 1;
+    var seen = {};
+    for (var j = 0; j < json.length; j++) {
+        var keys = Object.keys(json[j]);
+        for (var k = 0; k < keys.length; k++) {
+            var key = keys[k];
+            if (!seen[key] && !filteredSet[key]) {
+                seen[key] = 1;
                 fields.push(key);
             }
-        });
-    }	
+        }
+    }
     var replacer = function(key, value) { return value === null ? '' : value } 
     var csv = json.map(function(row){
         return fields.map(function(fieldName){
@@ -234,64 +239,148 @@ function initAndListen(listener, id, result) {
 	});
 }
 
-var corrmatrix =  function (df,cols) {
+var corrmatrix = function(df, cols) {
 	if (!cols) {
-		cols=Object.keys(df[0])
+		cols = Object.keys(df[0]);
 	}
-	var colTypes={};
-	var corr=[];
-	cols.forEach(function(col) {  
-		var isNum=true;
-		df.forEach(function(row) {
-			if (!isNumeric(row[col]) && row[col] != null && row[col] != "NA") {
-				isNum=false;
+	var colTypes = {};
+	cols.forEach(function(col) {
+		var isNum = true;
+		for (var i = 0; i < df.length; ++i) {
+			var v = df[i][col];
+			if (v != null && v !== "NA" && !isNumeric(v)) {
+				isNum = false;
+				break;
 			}
-		});
-		if (isNum) {
-			colTypes[col]="num";
-		} else {
-			colTypes[col]="cat";
 		}
+		colTypes[col] = isNum ? "num" : "cat";
 	});
-	var ca=0;
-	cols.forEach(function(col1) {  
-		if (!corr[col1]) {
-			corr[col1]={};
-		}
-		cols.forEach(function(col2) { 
-			var pair=[];
-			for(var i=0;i<df.length;++i) {
-				var v1=df[i][col1];
-				var v2=df[i][col2];
-				if(colTypes[col1]=="num") {
-					v1=Number(v1);
-				}
-				if(colTypes[col2]=="num") {
-					v2=Number(v2);
-				}				
-				if((df[i][col1]!='NA' && df[i][col1]!='')  && (df[i][col2]!='NA' && df[i][col2]!='')) {
-					pair.push({col1:v1,col2:v2})
-				}
-			}
-			if(colTypes[col1]=="cat" && colTypes[col2]=="num") {
-			corr.push({"var1":col1,"var2":col2,"% Variance":Math.pow(stats.cor.rank(pair,'col1','col2'),2)});
-			} else if (colTypes[col2]=="cat" && colTypes[col1]=="num") {
-			corr.push({"var1":col1,"var2":col2,"% Variance":Math.pow(stats.cor.rank(pair,'col1','col2'),2)});
+	var corr = [];
+	var cache = {};
+	for (var ci = 0; ci < cols.length; ++ci) {
+		for (var cj = 0; cj < cols.length; ++cj) {
+			var col1 = cols[ci], col2 = cols[cj];
+			var cacheKey = ci < cj ? ci + ',' + cj : cj + ',' + ci;
+			var variance;
+			if (cache[cacheKey] !== undefined) {
+				variance = cache[cacheKey];
 			} else {
-				corr.push({"var1":col1,"var2":col2,"% Variance":Math.pow(stats.cor.rank(pair,'col1','col2'),2)});
+				var pair = [];
+				var isNum1 = colTypes[col1] === "num";
+				var isNum2 = colTypes[col2] === "num";
+				for (var i = 0; i < df.length; ++i) {
+					var v1 = df[i][col1];
+					var v2 = df[i][col2];
+					if ((v1 !== 'NA' && v1 !== '') && (v2 !== 'NA' && v2 !== '')) {
+						pair.push({col1: isNum1 ? Number(v1) : v1, col2: isNum2 ? Number(v2) : v2});
+					}
+				}
+				var r = stats.cor.rank(pair, 'col1', 'col2');
+				variance = r * r;
+				cache[cacheKey] = variance;
 			}
-			++ca;
-		});		
-	});
+			corr.push({"var1": col1, "var2": col2, "% Variance": variance});
+		}
+	}
 	return corr;
 };
 
+// Deep clone Vega spec, replacing -ccnm placeholders with element name
+function cloneSpecWithElement(obj, element) {
+	if (typeof obj === 'string') {
+		return obj.indexOf('-ccnm') !== -1 ? obj.replace(/-ccnm/g, element) : obj;
+	}
+	if (obj === null || typeof obj !== 'object') {
+		return obj;
+	}
+	if (Array.isArray(obj)) {
+		var arr = new Array(obj.length);
+		for (var i = 0; i < obj.length; ++i) {
+			arr[i] = cloneSpecWithElement(obj[i], element);
+		}
+		return arr;
+	}
+	var clone = {};
+	for (var key in obj) {
+		if (obj.hasOwnProperty(key)) {
+			clone[key] = cloneSpecWithElement(obj[key], element);
+		}
+	}
+	return clone;
+}
+
+// Single-pass data preprocessing: NA cleaning, type detection, distinct counts
+// Async with chunked yielding to prevent Chrome timeouts on large datasets
+var PREPROCESS_CHUNK_SIZE = 5000;
+
+function preprocessData(data, headers) {
+	var columnInfo = {};
+	var sum_cols = [];
+	var col_names = [];
+	for (var h = 0; h < headers.length; ++h) {
+		columnInfo[headers[h]] = { isNum: true, distinctSet: {} };
+	}
+
+	function processChunk(startRow, endRow) {
+		for (var k = startRow; k < endRow; ++k) {
+			for (var h = 0; h < headers.length; ++h) {
+				var header = headers[h];
+				var v = data[k][header];
+				if (typeof v === 'string' && NA_VALUES_SET.has(v)) {
+					delete data[k][header];
+					v = undefined;
+				}
+				if (v !== undefined && v !== null) {
+					columnInfo[header].distinctSet[v] = 1;
+				}
+				if (v != null && v !== "" && columnInfo[header].isNum) {
+					if (!isNumeric(v)) {
+						columnInfo[header].isNum = false;
+					}
+				}
+			}
+		}
+	}
+
+	function finalize() {
+		for (var h = 0; h < headers.length; ++h) {
+			var header = headers[h];
+			var info = columnInfo[header];
+			info.distinctCount = Object.keys(info.distinctSet).length;
+			delete info.distinctSet;
+			sum_cols.push({ "feature": header, "type": info.isNum ? "num" : "cat" });
+			col_names.push(header);
+		}
+		return { columnInfo: columnInfo, sum_cols: sum_cols, col_names: col_names };
+	}
+
+	// For small datasets, process synchronously and return a resolved promise
+	if (data.length <= PREPROCESS_CHUNK_SIZE) {
+		processChunk(0, data.length);
+		return Promise.resolve(finalize());
+	}
+
+	// For large datasets, yield to the browser between chunks
+	return new Promise(function(resolve) {
+		var offset = 0;
+		function nextChunk() {
+			var end = Math.min(offset + PREPROCESS_CHUNK_SIZE, data.length);
+			processChunk(offset, end);
+			offset = end;
+			if (offset < data.length) {
+				setTimeout(nextChunk, 0);
+			} else {
+				resolve(finalize());
+			}
+		}
+		nextChunk();
+	});
+}
+
 var crossex = function crossex(element, data, options,widthid) {
-	//legacy	
 	var ElementWidth=0;
-	//data=JSON.parse(JSON.stringify(data).replace(/\"null\"/gi,"\"\"").replace(/\"NA\"/gi,"\"\"").replace(/\"unknown\"/gi,"\"\""));
 	var cur_name=element;
-	var widthNode=document.getElementById(cur_name);	
+	var widthNode=document.getElementById(cur_name);
 	ElementWidth=0;
 	var d=0;
 	while (ElementWidth==0 && d <8) {
@@ -300,26 +389,20 @@ var crossex = function crossex(element, data, options,widthid) {
 		ElementWidth=getContentWidth(widthNode);
 	}
 	if(widthid) {
-		widthNode=document.getElementById(widthid);	
+		widthNode=document.getElementById(widthid);
 		ElementWidth=getContentWidth(widthNode);
 	}
-	var loc_crossex_html =  crossex_html;
-	var local_vgspec = JSON.stringify(crossex_spec);
+	var loc_crossex_html = crossex_html;
 	var element_node = document.getElementById(element);
 	var mymax = 150;
 	var loc_crossex_htmlRes = loc_crossex_html.replace(/\-ccnm/g, element);
 	element_node.innerHTML = loc_crossex_htmlRes;
 	ccPanel={};
 	ccPanelProxy[element]={};
-	var res = local_vgspec.replace(/\-ccnm/g, element);
-	var spec = JSON.parse(res);
+	var spec = cloneSpecWithElement(crossex_spec, element);
 	var hide_panel=false;
 	var editable=false;
 	var exportable=true;
-	var new_signalsString = JSON.stringify(options);
-	var col_names=[];
-	var sum_cols=[];
-	var datatyped=false;
 	// Create index maps for O(1) lookups
 	var signalMap = createIndexMap(spec.signals);
 	var dataMap = createIndexMap(spec.data);
@@ -333,126 +416,119 @@ var crossex = function crossex(element, data, options,widthid) {
 		add_css=false;
 	}
 	crossexloader(element,true);
-	
 
-	if (new_signalsString != null) {
-		repSignalsJson = JSON.parse(new_signalsString.replace(/\-ccnm/g, element));
-		for (var i=0;i<repSignalsJson.length;++i) {
-			if (typeof repSignalsJson[i]['hide_panel'] !== 'undefined') {
-				hide_panel=true;
-				document.querySelector('#cc_panel'+element).style.display = "none";
-				document.querySelector('#cc_tab'+element).style.display = "none";
-				document.querySelector('#cc_tabscontent'+element).style.display = "none";
-				continue;
-			}
-			if (typeof repSignalsJson[i]['Links_Editable'] !== 'undefined') {
-				document.getElementById('#Links_Options' + element).style.display = "block";
-				continue;
-			}
-			if (typeof repSignalsJson[i]['editable'] !== 'undefined') {
-				if (repSignalsJson[i]['editable']==1) {
-					editable=true;
-				} else {
-					editable=false;
-				}
-				continue;
-			}
-			if (typeof repSignalsJson[i]['exportable'] !== 'undefined') {
-				if (repSignalsJson[i]['exportable']==1) {
-					exportable=true;
-				} else {
-					exportable=false;
-				}
-				continue;
-			}
-			var index = signalMap[repSignalsJson[i].name];
-
-			if (index !== undefined){
-				spec.signals[index].value = repSignalsJson[i].value;
-				if (repSignalsJson[i].bind != null) {
-					if (repSignalsJson[i].bind.element != null) {
-						spec.signals[index].bind.element = repSignalsJson[i].bind.element;
-					}
-					if (repSignalsJson[i].bind.options != null) {
-						var headers = repSignalsJson[i].bind.options;
-						var finalheaders = [];
-						var signalName = repSignalsJson[i].name;
-						var signalFilter = SIGNAL_HEADER_FILTERS[signalName];
-						headers.forEach(function(element) {
-							var distinct = [...new Set(data.map(x => x[element]))];
-							var ln = distinct.length;
-							var isNum=true;
-							if (!datatyped) {
-								for (var k=0;k<data.length;++k) {
-									var v=data[k][element];
-									if (NA_VALUES.includes(v)) {
-										delete data[k][element];
-									}
-									if (data[k][element]!=null && data[k][element]!="") {
-										if (!isNumeric(data[k][element])) {
-											isNum=false;
-										}
-									}
-								}
-								if (isNum) {
-									sum_cols.push({"feature":element,"type":"num"})
-								} else {
-									sum_cols.push({"feature":element,"type":"cat"})
-								}
-								col_names.push(element);
-							}
-							if (ln > 0 && signalFilter) {
-								if ((!signalFilter.maxDistinct || ln < signalFilter.maxDistinct) &&
-									(!signalFilter.numericOnly || isNum)) {
-									finalheaders.push(element);
-								}
-							}
-						});
-						datatyped=true;
-						if (!finalheaders.includes("None")) {
-							finalheaders.push("None");
-						}
-						if (!finalheaders.includes("Sum") && (repSignalsJson[i].name == "X_Axis" || repSignalsJson[i].name == "Y_Axis")) {
-							finalheaders.push("Sum");
-						}
-						if (!finalheaders.includes("Count") && (repSignalsJson[i].name == "X_Axis" || repSignalsJson[i].name == "Y_Axis")) {
-							finalheaders.push("Count");
-						}					
-						spec.signals[index].bind.options = JSON.parse(JSON.stringify(finalheaders));
-					}
-				}
-				if (repSignalsJson[i].value != null) {
-					spec.signals[index].value = repSignalsJson[i].value;
-				}
-			} else {
-				var dataIndex = dataMap[repSignalsJson[i].name];
-				if (dataIndex !== undefined){
-					if ('values' in repSignalsJson[i]) {spec.data[dataIndex]['values'] = JSON.stringify(repSignalsJson[i].values);}
-					spec.data[dataIndex]['transform']=JSON.parse("[]");
-				}
+	// Preprocess data: extract headers, run single-pass NA cleaning + type detection
+	var allHeaders = null;
+	if (options) {
+		for (var i = 0; i < options.length; ++i) {
+			if (options[i].bind && options[i].bind.options) {
+				allHeaders = options[i].bind.options;
+				break;
 			}
 		}
 	}
-	spec.data[dataMap["mycolumns"]].values = JSON.parse(JSON.stringify(sum_cols));
-	if (data != null) {
-		spec.data[dataMap["mydata"]].values = JSON.parse(JSON.stringify(data));
+	if (!allHeaders && data && data.length > 0) {
+		allHeaders = Object.keys(data[0]);
 	}
-	spec.data[dataMap["col_names"]].values = col_names;
-	//spec.data[Index(spec.data, "covariance")].values=corrmatrix(spec.data[Index(spec.data, "mydata")].values,col_names);
+	var preprocessPromise = allHeaders ? preprocessData(data, allHeaders) : Promise.resolve({ columnInfo: {}, sum_cols: [], col_names: [] });
 
-	let amyview;
-	crossexloader(element,true);
-	delay().then(() => drawGraph(amyview,element,spec,widthNode,hide_panel,editable,exportable));
+	preprocessPromise.then(function(preprocessed) {
+		if (options != null) {
+			var repSignalsJson = JSON.parse(JSON.stringify(options).replace(/\-ccnm/g, element));
+			for (var i=0;i<repSignalsJson.length;++i) {
+				if (typeof repSignalsJson[i]['hide_panel'] !== 'undefined') {
+					hide_panel=true;
+					document.querySelector('#cc_panel'+element).style.display = "none";
+					document.querySelector('#cc_tab'+element).style.display = "none";
+					document.querySelector('#cc_tabscontent'+element).style.display = "none";
+					continue;
+				}
+				if (typeof repSignalsJson[i]['Links_Editable'] !== 'undefined') {
+					document.getElementById('#Links_Options' + element).style.display = "block";
+					continue;
+				}
+				if (typeof repSignalsJson[i]['editable'] !== 'undefined') {
+					if (repSignalsJson[i]['editable']==1) {
+						editable=true;
+					} else {
+						editable=false;
+					}
+					continue;
+				}
+				if (typeof repSignalsJson[i]['exportable'] !== 'undefined') {
+					if (repSignalsJson[i]['exportable']==1) {
+						exportable=true;
+					} else {
+						exportable=false;
+					}
+					continue;
+				}
+				var index = signalMap[repSignalsJson[i].name];
+
+				if (index !== undefined){
+					spec.signals[index].value = repSignalsJson[i].value;
+					if (repSignalsJson[i].bind != null) {
+						if (repSignalsJson[i].bind.element != null) {
+							spec.signals[index].bind.element = repSignalsJson[i].bind.element;
+						}
+						if (repSignalsJson[i].bind.options != null) {
+							var headers = repSignalsJson[i].bind.options;
+							var finalheaders = [];
+							var signalName = repSignalsJson[i].name;
+							var signalFilter = SIGNAL_HEADER_FILTERS[signalName];
+							headers.forEach(function(col) {
+								var info = preprocessed.columnInfo[col];
+								var ln = info ? info.distinctCount : 0;
+								var isNum = info ? info.isNum : true;
+								if (ln > 0 && signalFilter) {
+									if ((!signalFilter.maxDistinct || ln < signalFilter.maxDistinct) &&
+										(!signalFilter.numericOnly || isNum)) {
+										finalheaders.push(col);
+									}
+								}
+							});
+							if (!finalheaders.includes("None")) {
+								finalheaders.push("None");
+							}
+							if (!finalheaders.includes("Sum") && (repSignalsJson[i].name == "X_Axis" || repSignalsJson[i].name == "Y_Axis")) {
+								finalheaders.push("Sum");
+							}
+							if (!finalheaders.includes("Count") && (repSignalsJson[i].name == "X_Axis" || repSignalsJson[i].name == "Y_Axis")) {
+								finalheaders.push("Count");
+							}
+							spec.signals[index].bind.options = finalheaders;
+						}
+					}
+					if (repSignalsJson[i].value != null) {
+						spec.signals[index].value = repSignalsJson[i].value;
+					}
+				} else {
+					var dataIndex = dataMap[repSignalsJson[i].name];
+					if (dataIndex !== undefined){
+						if ('values' in repSignalsJson[i]) {spec.data[dataIndex]['values'] = JSON.stringify(repSignalsJson[i].values);}
+						spec.data[dataIndex]['transform']=[];
+					}
+				}
+			}
+		}
+		spec.data[dataMap["mycolumns"]].values = preprocessed.sum_cols;
+		if (data != null) {
+			spec.data[dataMap["mydata"]].values = data;
+		}
+		spec.data[dataMap["col_names"]].values = preprocessed.col_names;
+		var amyview;
+		crossexloader(element,true);
+		delay().then(function() { drawGraph(amyview,element,spec,widthNode,hide_panel,editable,exportable,signalMap,dataMap,data,preprocessed.col_names); });
+	});
 };
 
 
-function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable) {
+function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable,signalMap,dataMap,originalData,colNames) {
 	if (myview) {
 		myview.finalize();
 	}
-	// Create index maps for O(1) lookups
-	var signalMap = createIndexMap(spec.signals);
-	var dataMap = createIndexMap(spec.data);
+	if (!signalMap) { signalMap = createIndexMap(spec.signals); }
+	if (!dataMap) { dataMap = createIndexMap(spec.data); }
 	if (spec.signals[signalMap['Interactive_']]['value']==true) {
 		setInteractiveSignals(spec, signalMap, true);
 	}
@@ -543,7 +619,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 				if (event.currentTarget.checked ) {
 					document.getElementById("Violin_Options"+element).style['display']='none';
 					crossexloader(element,true);
-					delay().then(() => result.view.change('covariance', vega.changeset().insert(corrmatrix(spec.data[dataMap["mydata"]].values,spec.data[dataMap["col_names"]].values)).remove(function () {return true})).runAsync().then(crossexloader(element,false)));
+					delay().then(() => result.view.change('covariance', vega.changeset().insert(corrmatrix(originalData || data,colNames || spec.data[dataMap["col_names"]].values)).remove(function () {return true})).runAsync().then(crossexloader(element,false)));
 				} else {
 					document.getElementById("Violin_Options"+element).style['display']='block';
 				}
@@ -561,7 +637,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 				delete result.finalize;
 				setInteractiveSignals(spec, signalMap, event.currentTarget.checked);
 				myview = result.view;
-				delay().then(() => drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable));
+				delay().then(() => drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable,signalMap,dataMap,originalData,colNames));
 				return;
 			});
 		}
