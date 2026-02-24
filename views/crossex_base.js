@@ -7,7 +7,7 @@ crossex_html = crossex_html.replace("itgversion","<%-itgversion%>");
 var ccPanel,ccPanelProxy;
 ccPanelProxy={};
 ccPanel={};
-var NA_VALUES = ["na", "NA", "null", "NULL", "Null", "unknown", "Unknown", "N/A", "n/a", "#N/A"];
+var NA_VALUES = new Set(["na", "NA", "null", "NULL", "Null", "unknown", "Unknown", "N/A", "n/a", "#N/A"]);
 
 var SIGNAL_HEADER_FILTERS = {
 	"Facet_By":        { maxDistinct: 150 },
@@ -234,56 +234,91 @@ function initAndListen(listener, id, result) {
 	});
 }
 
-var corrmatrix =  function (df,cols) {
+var corrmatrix = function (df, cols) {
 	if (!cols) {
-		cols=Object.keys(df[0])
+		cols = Object.keys(df[0]);
 	}
-	var colTypes={};
-	var corr=[];
-	cols.forEach(function(col) {  
-		var isNum=true;
-		df.forEach(function(row) {
-			if (!isNumeric(row[col]) && row[col] != null && row[col] != "NA") {
-				isNum=false;
+	var colTypes = {};
+	cols.forEach(function(col) {
+		var isNum = true;
+		for (var r = 0; r < df.length; ++r) {
+			if (!isNumeric(df[r][col]) && df[r][col] != null && df[r][col] != "NA") {
+				isNum = false;
+				break;
 			}
-		});
-		if (isNum) {
-			colTypes[col]="num";
-		} else {
-			colTypes[col]="cat";
 		}
+		colTypes[col] = isNum ? "num" : "cat";
 	});
-	var ca=0;
-	cols.forEach(function(col1) {  
-		if (!corr[col1]) {
-			corr[col1]={};
-		}
-		cols.forEach(function(col2) { 
-			var pair=[];
-			for(var i=0;i<df.length;++i) {
-				var v1=df[i][col1];
-				var v2=df[i][col2];
-				if(colTypes[col1]=="num") {
-					v1=Number(v1);
-				}
-				if(colTypes[col2]=="num") {
-					v2=Number(v2);
-				}				
-				if((df[i][col1]!='NA' && df[i][col1]!='')  && (df[i][col2]!='NA' && df[i][col2]!='')) {
-					pair.push({col1:v1,col2:v2})
+	var corr = [];
+	for (var ci = 0; ci < cols.length; ++ci) {
+		var col1 = cols[ci];
+		var isNum1 = colTypes[col1] === "num";
+		for (var cj = 0; cj < cols.length; ++cj) {
+			var col2 = cols[cj];
+			var isNum2 = colTypes[col2] === "num";
+			var pair = [];
+			for (var i = 0; i < df.length; ++i) {
+				var v1 = isNum1 ? Number(df[i][col1]) : df[i][col1];
+				var v2 = isNum2 ? Number(df[i][col2]) : df[i][col2];
+				if (df[i][col1] != 'NA' && df[i][col1] != '' && df[i][col2] != 'NA' && df[i][col2] != '') {
+					pair.push({col1: v1, col2: v2});
 				}
 			}
-			if(colTypes[col1]=="cat" && colTypes[col2]=="num") {
-			corr.push({"var1":col1,"var2":col2,"% Variance":Math.pow(stats.cor.rank(pair,'col1','col2'),2)});
-			} else if (colTypes[col2]=="cat" && colTypes[col1]=="num") {
-			corr.push({"var1":col1,"var2":col2,"% Variance":Math.pow(stats.cor.rank(pair,'col1','col2'),2)});
-			} else {
-				corr.push({"var1":col1,"var2":col2,"% Variance":Math.pow(stats.cor.rank(pair,'col1','col2'),2)});
-			}
-			++ca;
-		});		
-	});
+			corr.push({"var1": col1, "var2": col2, "% Variance": Math.pow(stats.cor.rank(pair, 'col1', 'col2'), 2)});
+		}
+	}
 	return corr;
+};
+
+// Async version - processes column pairs in chunks to avoid UI freeze
+var corrmatrixAsync = function (df, cols, callback) {
+	if (!cols) {
+		cols = Object.keys(df[0]);
+	}
+	var colTypes = {};
+	cols.forEach(function(col) {
+		var isNum = true;
+		for (var r = 0; r < df.length; ++r) {
+			if (!isNumeric(df[r][col]) && df[r][col] != null && df[r][col] != "NA") {
+				isNum = false;
+				break;
+			}
+		}
+		colTypes[col] = isNum ? "num" : "cat";
+	});
+	// Build list of all column pairs to process
+	var pairs = [];
+	for (var ci = 0; ci < cols.length; ++ci) {
+		for (var cj = 0; cj < cols.length; ++cj) {
+			pairs.push([cols[ci], cols[cj]]);
+		}
+	}
+	var corr = [];
+	var idx = 0;
+	var CHUNK_SIZE = Math.max(1, Math.ceil(pairs.length / 20)); // ~20 frames
+	function processChunk() {
+		var end = Math.min(idx + CHUNK_SIZE, pairs.length);
+		for (; idx < end; idx++) {
+			var col1 = pairs[idx][0], col2 = pairs[idx][1];
+			var isNum1 = colTypes[col1] === "num";
+			var isNum2 = colTypes[col2] === "num";
+			var pair = [];
+			for (var i = 0; i < df.length; ++i) {
+				var v1 = isNum1 ? Number(df[i][col1]) : df[i][col1];
+				var v2 = isNum2 ? Number(df[i][col2]) : df[i][col2];
+				if (df[i][col1] != 'NA' && df[i][col1] != '' && df[i][col2] != 'NA' && df[i][col2] != '') {
+					pair.push({col1: v1, col2: v2});
+				}
+			}
+			corr.push({"var1": col1, "var2": col2, "% Variance": Math.pow(stats.cor.rank(pair, 'col1', 'col2'), 2)});
+		}
+		if (idx < pairs.length) {
+			requestAnimationFrame(processChunk);
+		} else {
+			callback(corr);
+		}
+	}
+	requestAnimationFrame(processChunk);
 };
 
 var crossex = function crossex(element, data, options,widthid) {
@@ -378,29 +413,38 @@ var crossex = function crossex(element, data, options,widthid) {
 						var finalheaders = [];
 						var signalName = repSignalsJson[i].name;
 						var signalFilter = SIGNAL_HEADER_FILTERS[signalName];
-						headers.forEach(function(element) {
-							var distinct = [...new Set(data.map(x => x[element]))];
-							var ln = distinct.length;
-							var isNum=true;
-							if (!datatyped) {
-								for (var k=0;k<data.length;++k) {
-									var v=data[k][element];
-									if (NA_VALUES.includes(v)) {
-										delete data[k][element];
+						// Single-pass: detect types, clean NAs, count distinct for all columns at once
+						if (!datatyped) {
+							var colInfo = {};
+							for (var h = 0; h < headers.length; ++h) {
+								colInfo[headers[h]] = { isNum: true, distinct: new Set() };
+							}
+							for (var k = 0; k < data.length; ++k) {
+								for (var h = 0; h < headers.length; ++h) {
+									var col = headers[h];
+									var v = data[k][col];
+									if (NA_VALUES.has(v)) {
+										delete data[k][col];
+										continue;
 									}
-									if (data[k][element]!=null && data[k][element]!="") {
-										if (!isNumeric(data[k][element])) {
-											isNum=false;
+									if (v != null && v !== "") {
+										colInfo[col].distinct.add(v);
+										if (colInfo[col].isNum && !isNumeric(v)) {
+											colInfo[col].isNum = false;
 										}
 									}
 								}
-								if (isNum) {
-									sum_cols.push({"feature":element,"type":"num"})
-								} else {
-									sum_cols.push({"feature":element,"type":"cat"})
-								}
-								col_names.push(element);
 							}
+							for (var h = 0; h < headers.length; ++h) {
+								var col = headers[h];
+								sum_cols.push({"feature": col, "type": colInfo[col].isNum ? "num" : "cat"});
+								col_names.push(col);
+							}
+							datatyped = true;
+						}
+						headers.forEach(function(element) {
+							var ln = colInfo ? colInfo[element].distinct.size : new Set(data.map(function(x) { return x[element]; })).size;
+							var isNum = colInfo ? colInfo[element].isNum : true;
 							if (ln > 0 && signalFilter) {
 								if ((!signalFilter.maxDistinct || ln < signalFilter.maxDistinct) &&
 									(!signalFilter.numericOnly || isNum)) {
@@ -408,7 +452,6 @@ var crossex = function crossex(element, data, options,widthid) {
 								}
 							}
 						});
-						datatyped=true;
 						if (!finalheaders.includes("None")) {
 							finalheaders.push("None");
 						}
@@ -418,7 +461,7 @@ var crossex = function crossex(element, data, options,widthid) {
 						if (!finalheaders.includes("Count") && (repSignalsJson[i].name == "X_Axis" || repSignalsJson[i].name == "Y_Axis")) {
 							finalheaders.push("Count");
 						}					
-						spec.signals[index].bind.options = JSON.parse(JSON.stringify(finalheaders));
+						spec.signals[index].bind.options = finalheaders;
 					}
 				}
 				if (repSignalsJson[i].value != null) {
@@ -433,9 +476,9 @@ var crossex = function crossex(element, data, options,widthid) {
 			}
 		}
 	}
-	spec.data[dataMap["mycolumns"]].values = JSON.parse(JSON.stringify(sum_cols));
+	spec.data[dataMap["mycolumns"]].values = sum_cols;
 	if (data != null) {
-		spec.data[dataMap["mydata"]].values = JSON.parse(JSON.stringify(data));
+		spec.data[dataMap["mydata"]].values = data;
 	}
 	spec.data[dataMap["col_names"]].values = col_names;
 	//spec.data[Index(spec.data, "covariance")].values=corrmatrix(spec.data[Index(spec.data, "mydata")].values,col_names);
