@@ -1,4 +1,4 @@
-<%-  include ../src/lz-string.js  %>
+<%- include('../src/lz-string.js') %>
 
 var add_css=true;
 var crossex_spec = JSON.parse(itgz.decompressFromEncodedURIComponent("<%-crossex_spec%>"));
