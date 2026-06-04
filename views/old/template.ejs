@@ -12,7 +12,7 @@
 <body>
     <div id="crossex_css" class="container"></div>
     <script type="text/javascript" settings="{}">
-        <%-  include ../src/lz-string.js  %>
+        <%- include('../src/lz-string.js') %>
         document.getElementById("crossex_css").innerHTML= "<style type='text/css'>"+itg_decomp("<%=bootstrap_css%>")+"</style><style type='text/css'>"+itg_decomp("<%=jqueryui_css%>")+"</style>";
     </script>
     
@@ -55,16 +55,16 @@
     <script type="text/javascript" settings="{}">
 
 var crossex_editor=false;
-<%-  include ../src/jquery-3.6.0.min.js %>
-<%-  include ../src/bootstrap.bundle.min.js %>
-<%-  include ../src/d3.v7.min.js  %>
+<%- include('../src/jquery-3.6.0.min.js') %>
+<%- include('../src/bootstrap.bundle.min.js') %>
+<%- include('../src/d3.v7.min.js') %>
 
-<%-  include ../src/inc/vega.min.js  %>
-<%-  include ../src/inc/vega-embed-cc.5.21.js  %>
-<%-  include ../src/jquery-ui.min.js %>
-<%-  include ../src/jquery.ui.touch-punch.min.js  %>
-<%-  include ../src/pivottable.js %>
-<%-  include crossex_base.js  %>
+<%- include('../src/inc/vega.min.js') %>
+<%- include('../src/inc/vega-embed-cc.5.21.js') %>
+<%- include('../src/jquery-ui.min.js') %>
+<%- include('../src/jquery.ui.touch-punch.min.js') %>
+<%- include('../src/pivottable.js') %>
+<%- include('crossex_base.js') %>
 var struct = JSON.parse(itg_decomp("<%=orien%>"));
 console.log(struct);
 var columns = Object.keys(struct[0]);

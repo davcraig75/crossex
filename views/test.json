@@ -1053,7 +1053,7 @@
       "bind": {"input": "checkbox", "element": "#Weight_Contour-ccnm"}
     },  
     
-        {"name": "CellSize_", "value": 1,
+        {"name": "CellSize_", "value": 10,
           "bind": {
         "element": "#CellSize_-ccnm",
         "input": "text"
@@ -1248,12 +1248,12 @@
       "name": "stacked_data",
       "source": "tdata",
       "transform": [
+        {"type": "filter", "expr": "show_stacked_graphs"},
         {"type": "filter", "expr": "!fail"},
         {
           "type": "filter",
           "expr": "if(Filter_By_Value!='None',if(datum[Filter_By_Value]>=toNumber(filter_min)&datum[Filter_By_Value]<=toNumber(filter_max),true,false),true)"
         },
-        {"type": "filter", "expr": "show_stacked_graphs"},
         {
           "type": "collect",
           "sort": {"field": ["Row_Value", "Col_Value", "Color_Value"]}
@@ -1300,17 +1300,17 @@
       "name": "colors_domain",
       "source": "tdata",
       "transform": [
-        {"type": "collect", "sort": {"field": "Color_Value"}},
-        {"type": "aggregate", "groupby": ["Color_Value"]}
+        {"type": "aggregate", "groupby": ["Color_Value"]},
+        {"type": "collect", "sort": {"field": "Color_Value"}}
       ]
     },
     {
       "name": "stroke_domain",
       "source": "tdata",
       "transform": [
-        {"type": "collect", "sort": {"field": "Stroke_Value"}},
         {"type": "aggregate", "groupby": ["Stroke_Value"]},
-        {"type": "filter", "expr": "isValid(datum.Stroke_Value)"}
+        {"type": "filter", "expr": "isValid(datum.Stroke_Value)"},
+        {"type": "collect", "sort": {"field": "Stroke_Value"}}
       ]
     },
     {
@@ -2705,12 +2705,12 @@
               "name": "stacked_data",
               "source": "tdata",
               "transform": [
+                {"type": "filter", "expr": "show_stacked_graphs"},
                 {"type": "filter", "expr": "!fail"},
                 {
                   "type": "filter",
                   "expr": "if(Filter_By_Value!='None',if(datum[Filter_By_Value]>=toNumber(filter_min)&datum[Filter_By_Value]<=toNumber(filter_max),true,false),true)"
                 },
-                {"type": "filter", "expr": "show_stacked_graphs"},
                 {
                   "type": "collect",
                   "sort": {"field": ["Row_Value", "Col_Value", "Color_Value"]}
