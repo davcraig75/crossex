@@ -5,6 +5,7 @@
                 <div class='crossexloader' id='loadercircle-ccnm'></div>
             </div>
         </div>
+        <div id="cc_sample_notice-ccnm" class="cc_sample_notice" style="display:none"></div>
         <div class="cc_panel" id="cc_panel-ccnm">        
             <div class="cc_tab" id="cc_tab-ccnm" >
                 <button aria-label="Customize This Graph" data-crossextip-position="right" role="tooltip" class="cc_tablinks active" id="defaultOpen-ccnm">
@@ -173,9 +174,20 @@
                 <div id="Filter_By_Value-ccnm"></div>            
                 <div id="filter_min-ccnm"></div>
                 <div id="filter_max-ccnm"></div> 
-                <div id="Include_Only-ccnm"></div> 
-                
-                                
+                <div id="Include_Only-ccnm"></div>
+                <p class="cc-emph">Large Data</p>
+                <div id="Render_Sample-ccnm" class="cc_sample_control">
+                    <label>Render sample
+                        <select id="Render_Sample_Select-ccnm">
+                            <option value="0">All rows</option>
+                            <option value="200000">200,000</option>
+                            <option value="100000">100,000</option>
+                            <option value="50000">50,000</option>
+                            <option value="20000">20,000</option>
+                            <option value="5000">5,000</option>
+                        </select>
+                    </label>
+                </div>
             </div>
             <div class="cc_tabcontent" id="Coloring-ccnm" style="display: none;">
                 <p class="cc-emph">Coloring</p>

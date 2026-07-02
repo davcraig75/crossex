@@ -68,9 +68,15 @@ function optimize_axis(headers, struct) {
 	var y_axis_name = "None";
 	var split_to_panels1_by_name = "None";
 	var split_to_panels2_by_name = "None";
+	// Distinct counting stops at 1001 (every threshold below compares against
+	// at most 200, so ID-like columns exit after ~1k rows) and scans at most
+	// 50k rows — this only picks default axes, where a prefix estimate of
+	// cardinality makes the same choices as an exact count.
+	var OPTIMIZE_DISTINCT_CAP = 1001;
+	var scanRows = Math.min(struct.length, 50000);
 	headers.forEach(function(element) {
 		var distinct = new Set();
-		for (var r = 0; r < struct.length; ++r) {
+		for (var r = 0; r < scanRows && distinct.size < OPTIMIZE_DISTINCT_CAP; ++r) {
 			distinct.add(struct[r][element]);
 		}
 		var ln = distinct.size;
@@ -158,11 +164,26 @@ function parseInputData(string) {
 	return d3.csvParse(string, d3.autoType);
 }
 
+// Files above this size skip the textarea (a preview is shown instead):
+// a 50MB string in a DOM textarea costs seconds of layout time and doubles
+// the memory held. Editing the textarea discards the loaded file.
+var LARGE_FILE_BYTES = 4 * 1024 * 1024;
+var _loadedFile = null;
+
 function loadFileIntoInput(file) {
 	var reader = new FileReader();
 	reader.onload = function(e) {
 		var input = document.getElementById("myccinput");
-		input.value = e.target.result;
+		var text = e.target.result;
+		if (file.size > LARGE_FILE_BYTES) {
+			_loadedFile = { name: file.name, text: text };
+			var preview = text.slice(0, 4000).split('\n').slice(0, 25).join('\n');
+			input.value = preview + '\n…\n[Large file "' + file.name + '" (' +
+				(file.size / 1048576).toFixed(1) + ' MB) loaded — preview only, the full file will be graphed. Editing this box discards it.]';
+		} else {
+			_loadedFile = null;
+			input.value = text;
+		}
 		// normalize toggle state so the graph click always hides the input
 		input.style.display = "block";
 		document.getElementById("graph_button").innerHTML = "Graph Data";
@@ -170,6 +191,10 @@ function loadFileIntoInput(file) {
 	};
 	reader.readAsText(file);
 }
+
+document.getElementById("myccinput").addEventListener('input', function() {
+	_loadedFile = null;
+});
 
 document.getElementById("load_file").onclick = function fun() {
 	document.getElementById("ccfileinput").click();
@@ -209,9 +234,21 @@ document.getElementById("clear_cookies").onclick = function fun() {
 };
 
 document.getElementById("graph_button").onclick = function clicks() {
-	var string = document.getElementById("myccinput").value;
+	var btn = document.getElementById("graph_button");
+	var string = _loadedFile ? _loadedFile.text : document.getElementById("myccinput").value;
+	if (!string || !string.trim()) {
+		return;
+	}
+	var prevLabel = btn.innerHTML;
+	btn.innerHTML = "Working…";
+	// let the label paint before the synchronous parse blocks the main thread
+	setTimeout(function() { graphParsedInput(string, btn, prevLabel); }, 30);
+};
+
+function graphParsedInput(string, btn, prevLabel) {
 	var struct = parseInputData(string);
 	if (!struct || !struct.length) {
+		btn.innerHTML = prevLabel;
 		return;
 	}
 	toggle("myccinput");

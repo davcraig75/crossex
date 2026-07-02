@@ -68,6 +68,41 @@ var TAB_CONFIG = [
 var _resizeHandlers = {};
 var _cookieDebounceTimers = {};
 
+// Full datasets and call arguments per element, so the render-sample
+// control can re-run crossex without re-parsing. Charts and the
+// correlation matrix use the (possibly sampled) render data; the
+// Summary tab always uses the full data.
+var _fullData = {};
+var _crossexOpts = {};
+// Type/NA/distinct results per dataset, so re-rendering the same data
+// (e.g. changing the render sample) skips the full-table scan
+var _typeCache = new WeakMap();
+var SAMPLE_AUTO_THRESHOLD = 150000;
+var SAMPLE_AUTO_DEFAULT = 100000;
+
+function getSampleSetting(element, nrows) {
+	var stored = null;
+	try { stored = window.localStorage.getItem('crossexSampleN_' + element); } catch (e) {}
+	if (stored != null) { return parseInt(stored, 10) || 0; }
+	return nrows > SAMPLE_AUTO_THRESHOLD ? SAMPLE_AUTO_DEFAULT : 0;
+}
+
+// Uniform sample without replacement (partial Fisher-Yates on indices),
+// returned in original row order
+function sampleRows(data, n) {
+	var len = data.length;
+	var idx = new Array(len);
+	for (var i = 0; i < len; i++) { idx[i] = i; }
+	for (var s = 0; s < n; s++) {
+		var j = s + Math.floor(Math.random() * (len - s));
+		var tmp = idx[s]; idx[s] = idx[j]; idx[j] = tmp;
+	}
+	var chosen = idx.slice(0, n).sort(function(a, b) { return a - b; });
+	var out = new Array(n);
+	for (var o = 0; o < n; o++) { out[o] = data[chosen[o]]; }
+	return out;
+}
+
 function delay(time) {
 	return new Promise(resolve => setTimeout(resolve, time));
 }
@@ -127,7 +162,7 @@ function loadSignalsFromCookie(storageName) {
 function clearAllCookies() {
     try {
         Object.keys(window.localStorage).forEach(function(key) {
-            if (key.indexOf('vegaSignals_') == 0) {
+            if (key.indexOf('vegaSignals_') == 0 || key.indexOf('crossexSampleN_') == 0) {
                 window.localStorage.removeItem(key);
             }
         });
@@ -267,6 +302,37 @@ function corrColTypes(df, cols) {
 	return colTypes;
 }
 
+// Tie-averaged ranks via index sort — same semantics as stats.rank but
+// without allocating an {idx, val} object per row
+function rankArray(vals) {
+	var n = vals.length;
+	var order = new Array(n);
+	for (var i = 0; i < n; ++i) { order[i] = i; }
+	order.sort(function(a, b) {
+		var x = vals[a], y = vals[b];
+		return x < y ? -1 : x > y ? 1 : a - b;
+	});
+	var r = new Float64Array(n);
+	var tie = -1, p, mu;
+	for (var j = 0; j < n; ++j) {
+		var v = vals[order[j]];
+		if (tie < 0 && p === v) {
+			tie = j - 1;
+		} else if (tie > -1 && p !== v) {
+			mu = 1 + (j - 1 + tie) / 2;
+			for (; tie < j; ++tie) { r[order[tie]] = mu; }
+			tie = -1;
+		}
+		r[order[j]] = j + 1;
+		p = v;
+	}
+	if (tie > -1) {
+		mu = 1 + (n - 1 + tie) / 2;
+		for (; tie < n; ++tie) { r[order[tie]] = mu; }
+	}
+	return r;
+}
+
 // Spearman r^2 for one column pair; aligned arrays avoid per-row object allocation
 function corrPairR2(df, col1, col2, isNum1, isNum2) {
 	var v1s = [], v2s = [];
@@ -277,14 +343,29 @@ function corrPairR2(df, col1, col2, isNum1, isNum2) {
 			v2s.push(isNum2 ? Number(raw2) : raw2);
 		}
 	}
-	return Math.pow(stats.cor.rank(v1s, v2s), 2);
+	var n = v1s.length;
+	var ra = rankArray(v1s), rb = rankArray(v2s);
+	var s = 0;
+	for (var k = 0; k < n; ++k) {
+		var d = ra[k] - rb[k];
+		s += d * d;
+	}
+	var rho = 1 - 6 * s / (n * (n * n - 1));
+	return rho * rho;
 }
+
+// Rank correlation stabilizes well below this row count (SE ≈ 1/sqrt(n) ≈ 0.007
+// at 20k) — one consistent subsample keeps the matrix fast on huge tables.
+var CORR_MAX_ROWS = 20000;
 
 // The matrix is symmetric with a constant diagonal (rank corr of a column with
 // itself is always 1), so only the upper triangle is computed and then mirrored.
 var corrmatrix = function (df, cols) {
 	if (!cols) {
 		cols = Object.keys(df[0]);
+	}
+	if (df.length > CORR_MAX_ROWS) {
+		df = sampleRows(df, CORR_MAX_ROWS);
 	}
 	var colTypes = corrColTypes(df, cols);
 	var corr = [];
@@ -305,6 +386,9 @@ var corrmatrix = function (df, cols) {
 var corrmatrixAsync = function (df, cols, callback) {
 	if (!cols) {
 		cols = Object.keys(df[0]);
+	}
+	if (df.length > CORR_MAX_ROWS) {
+		df = sampleRows(df, CORR_MAX_ROWS);
 	}
 	var colTypes = corrColTypes(df, cols);
 	var corr = [];
@@ -348,19 +432,24 @@ function fmtStat(v) {
 
 // One pass over the data per column: count/missing/distinct for everything,
 // Welford mean/sd plus min/max/median for numeric, mode for categorical.
+// Numeric distinct comes free from the sorted array; categorical value
+// tracking is capped so an ID-like column can't allocate a 300k-key map.
+var SUMMARY_MAX_TRACKED = 10000;
 function summarizeColumn(data, col, isNum) {
 	var n = 0, missing = 0, mean = 0, M2 = 0, min = Infinity, max = -Infinity;
-	var counts = {};
-	var nums = isNum ? [] : null;
+	var counts = isNum ? null : Object.create(null);
+	var trackedKeys = 0, sawUntracked = false;
+	// typed array + native numeric sort is several times faster than a
+	// growing JS array with a comparator on large columns
+	var nums = isNum ? new Float64Array(data.length) : null;
 	for (var i = 0; i < data.length; ++i) {
 		var v = data[i][col];
-		if (v == null || v === '' || NA_VALUES.has(v)) { missing++; continue; }
-		counts[v] = (counts[v] || 0) + 1;
+		if (v == null || v === '' || (typeof v !== 'number' && NA_VALUES.has(v))) { missing++; continue; }
 		if (isNum) {
-			var x = Number(v);
+			var x = typeof v === 'number' ? v : Number(v);
 			if (x !== x) { missing++; continue; }
+			nums[n] = x;
 			n++;
-			nums.push(x);
 			var delta = x - mean;
 			mean += delta / n;
 			M2 += delta * (x - mean);
@@ -368,22 +457,40 @@ function summarizeColumn(data, col, isNum) {
 			if (x > max) { max = x; }
 		} else {
 			n++;
+			if (counts[v] !== undefined) {
+				counts[v]++;
+			} else if (trackedKeys < SUMMARY_MAX_TRACKED) {
+				counts[v] = 1;
+				trackedKeys++;
+			} else {
+				sawUntracked = true;
+			}
 		}
 	}
-	var row = {col: col, type: isNum ? 'num' : 'cat', n: n, missing: missing, distinct: Object.keys(counts).length};
-	if (isNum && n > 0) {
-		nums.sort(function(a, b) { return a - b; });
-		row.min = min;
-		row.max = max;
-		row.mean = mean;
-		row.sd = n > 1 ? Math.sqrt(M2 / (n - 1)) : 0;
-		row.median = stats.quantile(nums, 0.5);
-	} else if (!isNum) {
+	var row = {col: col, type: isNum ? 'num' : 'cat', n: n, missing: missing};
+	if (isNum) {
+		var distinct = 0;
+		if (n > 0) {
+			nums = nums.subarray(0, n);
+			nums.sort();
+			distinct = 1;
+			for (var d = 1; d < n; ++d) {
+				if (nums[d] !== nums[d - 1]) { distinct++; }
+			}
+			row.min = min;
+			row.max = max;
+			row.mean = mean;
+			row.sd = n > 1 ? Math.sqrt(M2 / (n - 1)) : 0;
+			row.median = stats.quantile(nums, 0.5);
+		}
+		row.distinct = distinct;
+	} else {
+		row.distinct = sawUntracked ? '≥' + SUMMARY_MAX_TRACKED : trackedKeys;
 		var top = null, topCount = -1;
 		for (var k in counts) {
 			if (counts[k] > topCount) { topCount = counts[k]; top = k; }
 		}
-		if (top !== null) { row.top = top + ' (' + topCount + ')'; }
+		if (top !== null) { row.top = top + ' (' + topCount + (sawUntracked ? '+' : '') + ')'; }
 	}
 	return row;
 }
@@ -425,7 +532,8 @@ function renderSummary(element, data, mycolumns) {
 }
 
 var crossex = function crossex(element, data, options,widthid) {
-	//legacy	
+	_crossexOpts[element] = {options: options, widthid: widthid};
+	//legacy
 	var ElementWidth=0;
 	//data=JSON.parse(JSON.stringify(data).replace(/\"null\"/gi,"\"\"").replace(/\"NA\"/gi,"\"\"").replace(/\"unknown\"/gi,"\"\""));
 	var cur_name=element;
@@ -516,33 +624,53 @@ var crossex = function crossex(element, data, options,widthid) {
 						var finalheaders = [];
 						var signalName = repSignalsJson[i].name;
 						var signalFilter = SIGNAL_HEADER_FILTERS[signalName];
-						// Single-pass: detect types, clean NAs, count distinct for all columns at once
+						// Single pass per column: detect types, clean NAs, count distinct.
+						// Distinct sets are capped just above the largest dropdown
+						// threshold (150) — high-cardinality columns (IDs) would
+						// otherwise hold every value in memory for no benefit.
+						// NAs become null rather than `delete`: the Vega spec uses
+						// isValid(), which treats null and undefined the same, and
+						// deleting keys pushes V8 objects into slow dictionary mode.
+						if (!datatyped) {
+							var cached = _typeCache.get(data);
+							if (cached) {
+								colInfo = cached.colInfo;
+								sum_cols = cached.sum_cols;
+								col_names = cached.col_names;
+								datatyped = true;
+							}
+						}
 						if (!datatyped) {
 							var colInfo = {};
-							for (var h = 0; h < headers.length; ++h) {
-								colInfo[headers[h]] = { isNum: true, distinct: new Set() };
-							}
-							for (var k = 0; k < data.length; ++k) {
-								for (var h = 0; h < headers.length; ++h) {
-									var col = headers[h];
-									var v = data[k][col];
-									if (NA_VALUES.has(v)) {
-										delete data[k][col];
-										continue;
-									}
-									if (v != null && v !== "") {
-										colInfo[col].distinct.add(v);
-										if (colInfo[col].isNum && !isNumeric(v)) {
-											colInfo[col].isNum = false;
-										}
-									}
-								}
-							}
+							var DISTINCT_CAP = 151;
+							var nrows = data.length;
 							for (var h = 0; h < headers.length; ++h) {
 								var col = headers[h];
-								sum_cols.push({"feature": col, "type": colInfo[col].isNum ? "num" : "cat"});
+								var ci = { isNum: true, distinct: new Set() };
+								colInfo[col] = ci;
+								var dset = ci.distinct;
+								for (var k = 0; k < nrows; ++k) {
+									var v = data[k][col];
+									if (v == null || v === "") { continue; }
+									// numbers can't be NA strings and are trivially numeric —
+									// skipping those checks avoids ~2 hash/parse calls per cell
+									if (typeof v !== 'number') {
+										if (NA_VALUES.has(v)) {
+											data[k][col] = null;
+											continue;
+										}
+										if (ci.isNum && !isNumeric(v)) {
+											ci.isNum = false;
+										}
+									}
+									if (dset.size < DISTINCT_CAP) {
+										dset.add(v);
+									}
+								}
+								sum_cols.push({"feature": col, "type": ci.isNum ? "num" : "cat"});
 								col_names.push(col);
 							}
+							_typeCache.set(data, {colInfo: colInfo, sum_cols: sum_cols, col_names: col_names});
 							datatyped = true;
 						}
 						headers.forEach(function(element) {
@@ -581,7 +709,31 @@ var crossex = function crossex(element, data, options,widthid) {
 	}
 	spec.data[dataMap["mycolumns"]].values = sum_cols;
 	if (data != null) {
-		spec.data[dataMap["mydata"]].values = data;
+		_fullData[element] = data;
+		var renderData = data;
+		var sampleN = getSampleSetting(element, data.length);
+		var noticeEl = document.getElementById('cc_sample_notice' + element);
+		if (sampleN > 0 && data.length > sampleN) {
+			renderData = sampleRows(data, sampleN);
+			if (noticeEl) {
+				noticeEl.textContent = 'Rendering ' + sampleN.toLocaleString() + ' of ' + data.length.toLocaleString() +
+					' rows (uniform sample). Summary tab uses all rows. Change under Filtering ▸ Render sample.';
+				noticeEl.style.display = 'block';
+			}
+		} else if (noticeEl) {
+			noticeEl.style.display = 'none';
+		}
+		spec.data[dataMap["mydata"]].values = renderData;
+		var sampleSel = document.getElementById('Render_Sample_Select' + element);
+		if (sampleSel) {
+			sampleSel.value = String(sampleN);
+			sampleSel.onchange = function() {
+				try { window.localStorage.setItem('crossexSampleN_' + element, this.value); } catch (e) {}
+				var opts = _crossexOpts[element];
+				crossexloader(element, true);
+				delay(30).then(function() { crossex(element, _fullData[element], opts.options, opts.widthid); });
+			};
+		}
 	}
 	spec.data[dataMap["col_names"]].values = col_names;
 	//spec.data[Index(spec.data, "covariance")].values=corrmatrix(spec.data[Index(spec.data, "mydata")].values,col_names);
@@ -607,9 +759,10 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 		var el = document.getElementById(tab.id + element);
 		el.addEventListener('click', function(event) { ccOpenCity(event, tab.panel + element, element); });
 	});
-	// Summary table is computed on first open, not up front
+	// Summary table is computed on first open, not up front; it always
+	// summarizes the full dataset even when the chart renders a sample
 	document.getElementById('Summary_tablinks' + element).addEventListener('click', function() {
-		renderSummary(element, spec.data[dataMap['mydata']].values, spec.data[dataMap['mycolumns']].values);
+		renderSummary(element, _fullData[element] || spec.data[dataMap['mydata']].values, spec.data[dataMap['mycolumns']].values);
 	});
 	var cookieName = 'vegaSignals_' + element;
 	var savedSignals = loadSignalsFromCookie(cookieName);

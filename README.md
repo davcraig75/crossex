@@ -266,11 +266,13 @@ Missing values (`"NA"`, `"null"`, `"N/A"`, `"unknown"`, `""`) are automatically 
 
 **In the standalone app** (`http://localhost:8080/`):
 
-1. Paste CSV or TSV data into the text area
+1. Paste CSV, TSV, or a JSON array of row objects into the text area — or click **Load File**, or drag and drop a file onto the text area
 2. Click **Graph Data**
 3. The tool auto-detects delimiters (tab vs comma) and column types (numeric vs categorical)
 
 Or click **Load Demo Data** to load a sample dataset.
+
+Files larger than a few MB are held in memory and only previewed in the text area. Datasets over 150,000 rows are rendered from a uniform 100,000-row sample by default (a banner shows exactly what is displayed); change or disable this under **Filtering ▸ Render sample**. The Summary tab and exports always use the full dataset.
 
 **Embedded on a page**: pass data directly via the `crossex()` function (see [API](#api-reference)).
 
@@ -306,7 +308,7 @@ Click the export icon (top-right of the chart) to:
 
 ### Settings Persistence
 
-All settings (axis selections, filters, palettes, etc.) are saved to browser cookies and restored automatically on your next visit.
+All settings (axis selections, filters, palettes, etc.) are saved to browser localStorage and restored automatically on your next visit. Saved column selections that don't exist in the currently loaded dataset are ignored, so switching datasets always produces a valid chart.
 
 Click **Clear Settings** to reset everything to defaults.
 
@@ -377,6 +379,7 @@ Set X and Y axis columns. Shows chart-type-specific sub-panels:
 - **Numeric range filter** -- Set min/max on any numeric column
 - **Include only** -- Text-match to keep specific values
 - **Data type overrides** -- Force a column to be treated as numeric or categorical
+- **Render sample** -- Cap how many rows are drawn (uniform sample) for large datasets; a banner shows when active
 
 ### Margins Tab
 - Plot width, height, and padding
@@ -384,6 +387,9 @@ Set X and Y axis columns. Shows chart-type-specific sub-panels:
 - Row/column facet header dimensions
 - Maximum number of facets to display
 - Legend column count
+
+### Summary Tab
+Per-column statistics for the full dataset: type, valid/missing/distinct counts, min, median, mean, standard deviation, max, and the most frequent value for categorical columns. Computed on first open.
 
 ---
 
