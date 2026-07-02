@@ -673,6 +673,49 @@ function wireOverviewActions(element) {
 	});
 }
 
+// ---- Normal QQ plot --------------------------------------------------------
+// Computed in JS (Vega expressions lack a normal quantile function) from the
+// rendered data for the current X column, grouped by Color_By, and injected
+// into the qq_data dataset. The dashed reference line goes through the
+// quartile pair, R's qqline style.
+function computeQQ(view) {
+	var on = false;
+	try { on = view.signal('QQNorm_'); } catch (e) { return; }
+	var rows = [];
+	if (on) {
+		var xcol = view.signal('X_Axis');
+		var ccol = view.signal('Color_By');
+		var data = view.data('mydata');
+		var groups = {};
+		for (var i = 0; i < data.length; i++) {
+			var v = data[i][xcol];
+			if (v == null || v === '') { continue; }
+			var x = typeof v === 'number' ? v : Number(v);
+			if (x !== x) { continue; }
+			var g = (ccol && ccol !== 'None') ? String(data[i][ccol]) : 'all';
+			(groups[g] = groups[g] || []).push(x);
+		}
+		var norm = gen.random.normal(0, 1);
+		Object.keys(groups).forEach(function(g) {
+			var vals = groups[g].sort(function(a, b) { return a - b; });
+			var n = vals.length;
+			if (n < 3) { return; }
+			var step = Math.max(1, Math.floor(n / 800));
+			for (var k = 0; k < n; k += step) {
+				rows.push({theoretical: norm.icdf((k + 0.5) / n), sample: vals[k], Color_Value: g, isline: 0});
+			}
+			var q = function(p) { return vals[Math.max(0, Math.min(n - 1, Math.floor(p * n)))]; };
+			var t25 = norm.icdf(0.25), t75 = norm.icdf(0.75);
+			var slope = (q(0.75) - q(0.25)) / (t75 - t25);
+			var icept = q(0.25) - slope * t25;
+			var tmin = norm.icdf(0.5 / n), tmax = norm.icdf((n - 0.5) / n);
+			rows.push({theoretical: tmin, sample: icept + slope * tmin, Color_Value: g, isline: 1});
+			rows.push({theoretical: tmax, sample: icept + slope * tmax, Color_Value: g, isline: 1});
+		});
+	}
+	view.change('qq_data', vega.changeset().remove(function() { return true; }).insert(rows)).runAsync();
+}
+
 // Lazily fills the Summary tab; one column per frame so wide data can't freeze the UI
 function renderSummary(element, data, mycolumns) {
 	var container = document.getElementById('Summary_Table' + element);
@@ -1095,6 +1138,24 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 			renderOverview(element, _fullData[element], spec.data[dataMap['mycolumns']].values);
 			document.getElementById('cc_overview' + element).style.display = 'block';
 		}
+		// QQ plot data is computed in JS whenever its inputs change
+		['QQNorm_', 'X_Axis', 'Color_By'].forEach(function(sig) {
+			result.view.addSignalListener(sig, function() { computeQQ(result.view); });
+		});
+		computeQQ(result.view);
+		// Correlation matrix cells click through to the underlying pair
+		result.view.addEventListener('click', function(event, item) {
+			if (!item || !item.datum || item.datum.var1 === undefined || item.datum.var2 === undefined) { return; }
+			var covCb = document.querySelector('#Show_Covariance' + element + ' input[type=checkbox]');
+			var xSel = document.querySelector('#X_Axis' + element + ' select');
+			var ySel = document.querySelector('#Y_Axis' + element + ' select');
+			if (!xSel || !ySel || !result.view.signal('Show_Covariance')) { return; }
+			xSel.value = item.datum.var1;
+			xSel.dispatchEvent(new Event('change', {bubbles: true}));
+			ySel.value = item.datum.var2;
+			ySel.dispatchEvent(new Event('change', {bubbles: true}));
+			if (covCb && covCb.checked) { covCb.click(); }
+		});
 		//initialize instance
 		var save_icon=document.querySelector("#view_crossex"+ element+" > details > summary");
 		save_icon.innerHTML="<div id='Exporting'>"+itgz.decompressFromEncodedURIComponent("<%=save_icon%>")+"</div>";
@@ -1133,9 +1194,12 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 				myview = result.view;
 			});
 			checkbox.addEventListener('change', (event) => {
-				var new_signals_ar=["X_Axis","Search_By","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","SortX_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","LogY_","Jitter_" ,"Weight_Contour","Tips_","Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point","Min_Point","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Include_Only","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Manual_Color","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Plot_Padding","Title_Height","X_Axis_Height","Row_Header_Width","Row_Height","Max_Facets","Legend_Height","Legend_Cols","ContourCounts","Resolve","Contour_Levels","CellSize_"];
+				var new_signals_ar=["X_Axis","Search_By","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","SortX_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","LogY_","Jitter_" ,"Weight_Contour","Tips_","Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point","Min_Point","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Include_Only","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Manual_Color","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Plot_Padding","Title_Height","X_Axis_Height","Row_Header_Width","Row_Height","Max_Facets","Legend_Height","Legend_Cols","ContourCounts","resolve","ContourLevels","CellSize_","Line_","ECDF_","QQNorm_"];
 				for (var i = 0; i < new_signals_ar.length; i++) {
-					spec.signals[signalMap[new_signals_ar[i]]]['value']=result.view.signal(new_signals_ar[i]);
+					if (signalMap[new_signals_ar[i]] === undefined) { continue; }
+					try {
+						spec.signals[signalMap[new_signals_ar[i]]]['value'] = result.view.signal(new_signals_ar[i]);
+					} catch (e) { /* signal not in this view */ }
 				}
 				result.finalize();
 				delete result.view;

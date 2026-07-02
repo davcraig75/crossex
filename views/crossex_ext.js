@@ -293,6 +293,39 @@ document.getElementById("clear_cookies").onclick = function fun() {
 	clearAllCookies();
 };
 
+// Pivot table (PivotTable.js) over the loaded dataset — standalone page only,
+// since pivotUI needs jQuery/jQuery-UI
+var _pivotInited = null;
+document.getElementById("pivot_button").onclick = function fun() {
+	var wrap = document.getElementById('cc_pivot_wrap');
+	if (wrap.style.display !== 'none') {
+		wrap.style.display = 'none';
+		return;
+	}
+	if (!window.jQuery || !jQuery.fn.pivotUI) {
+		wrap.style.display = 'block';
+		document.getElementById('cc_pivot_note').textContent = 'The pivot table needs jQuery + jQuery-UI on the page.';
+		return;
+	}
+	if (!_lastStruct || !_lastStruct.length) {
+		wrap.style.display = 'block';
+		document.getElementById('cc_pivot_note').textContent = 'Load or paste data first, then click Graph Data.';
+		return;
+	}
+	wrap.style.display = 'block';
+	if (_pivotInited === _lastStruct) { return; }
+	_pivotInited = _lastStruct;
+	var rows = _lastStruct.length > 50000 ? sampleRows(_lastStruct, 50000) : _lastStruct;
+	document.getElementById('cc_pivot_note').textContent = 'Pivot over ' + rows.length.toLocaleString() + ' rows' +
+		(rows.length < _lastStruct.length ? ' (uniform sample of ' + _lastStruct.length.toLocaleString() + ')' : '') +
+		' — drag fields to rows/columns.';
+	// Vega's formula transforms annotate the raw rows in place — hide those
+	// derived fields (same set the CSV export filters out)
+	jQuery('#cc_pivot').pivotUI(rows, {
+		hiddenAttributes: ["X_Value", "Col_Value", "Y_Value", "Row_Value", "Count", "None", "O_Value", "Color_Value", "Cstr", "Xstr", "Ystr", "Size_Value", "jitter", "xfocus", "yfocus", "Stroke_Value", "ecdf_rank", "ecdf_n", "ecdf_p"]
+	}, true);
+};
+
 document.getElementById("graph_button").onclick = function clicks() {
 	var btn = document.getElementById("graph_button");
 	// rows already parsed (large file re-graph, or generated demo) — reuse them
@@ -326,7 +359,44 @@ document.getElementById("graph_button").onclick = function clicks() {
 	}, 30);
 };
 
+// d3.autoType parses ISO-like strings into Date objects, but the chart engine
+// is numeric/categorical. Date columns become decimal years (e.g. 2023.4521):
+// quantitative, sortable, and readable on a linear axis — enable the Line
+// option under Scatter for a time-series view.
+function convertDates(struct) {
+	if (!struct.length) { return; }
+	var headers = struct.columns || Object.keys(struct[0]);
+	headers.forEach(function(col) {
+		var isDate = false;
+		var seen = 0;
+		for (var i = 0; i < struct.length && seen < 50; i++) {
+			var v = struct[i][col];
+			if (v == null || v === '') { continue; }
+			seen++;
+			if (v instanceof Date) { isDate = true; break; }
+		}
+		if (!isDate) { return; }
+		for (var r = 0; r < struct.length; r++) {
+			var d = struct[r][col];
+			if (d instanceof Date) {
+				if (isNaN(+d)) { struct[r][col] = null; continue; }
+				var y0 = +new Date(d.getFullYear(), 0, 1);
+				var y1 = +new Date(d.getFullYear() + 1, 0, 1);
+				struct[r][col] = Math.round((d.getFullYear() + (+d - y0) / (y1 - y0)) * 10000) / 10000;
+			}
+		}
+	});
+}
+
+var _lastStruct = null;
+
 function graphStruct(struct) {
+	convertDates(struct);
+	_lastStruct = struct;
+	// new data invalidates any open pivot
+	var pivotWrap = document.getElementById('cc_pivot_wrap');
+	if (pivotWrap) { pivotWrap.style.display = 'none'; }
+	_pivotInited = null;
 	toggle("myccinput");
 	var headers = struct.columns;
 	var axis = optimize_axis(headers, struct);

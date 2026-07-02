@@ -1398,6 +1398,30 @@
     {
       "name": "down",
       "value": null
+    },
+    {
+      "name": "Line_",
+      "value": false,
+      "bind": {
+        "input": "checkbox",
+        "element": "#Line_-ccnm"
+      }
+    },
+    {
+      "name": "ECDF_",
+      "value": false,
+      "bind": {
+        "input": "checkbox",
+        "element": "#ECDF_-ccnm"
+      }
+    },
+    {
+      "name": "QQNorm_",
+      "value": false,
+      "bind": {
+        "input": "checkbox",
+        "element": "#QQNorm_-ccnm"
+      }
     }
   ],
   "data": [
@@ -1858,7 +1882,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "show_stacked_graphs&&!Show_Covariance"
+          "expr": "show_stacked_graphs&&!Show_Covariance&&!QQNorm_"
         }
       ]
     },
@@ -1870,7 +1894,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "Show_Covariance"
+          "expr": "Show_Covariance&&!QQNorm_"
         }
       ]
     },
@@ -1894,7 +1918,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "show_box_graphs&&!Show_Covariance"
+          "expr": "show_box_graphs&&!Show_Covariance&&!QQNorm_"
         }
       ]
     },
@@ -1906,7 +1930,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "show_hzbox_graphs&&!Show_Covariance"
+          "expr": "show_hzbox_graphs&&!Show_Covariance&&!QQNorm_"
         }
       ]
     },
@@ -1918,7 +1942,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "show_grid_graphs&&!Show_Covariance"
+          "expr": "show_grid_graphs&&!Show_Covariance&&!QQNorm_"
         }
       ]
     },
@@ -1930,7 +1954,7 @@
       "transform": [
         {
           "type": "filter",
-          "expr": "(show_scatter_graph||show_hist_graph)&&!Show_Covariance"
+          "expr": "(show_scatter_graph||show_hist_graph)&&!Show_Covariance&&!QQNorm_"
         }
       ]
     },
@@ -1967,6 +1991,42 @@
         {
           "type": "filter",
           "expr": "Regression_&show_scatter_graph"
+        }
+      ]
+    },
+    {
+      "name": "qq_data",
+      "values": []
+    },
+    {
+      "name": "qq_points",
+      "source": "qq_data",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "!datum.isline"
+        }
+      ]
+    },
+    {
+      "name": "qq_lines",
+      "source": "qq_data",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.isline"
+        }
+      ]
+    },
+    {
+      "name": "graph_qq",
+      "values": [
+        1
+      ],
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "QQNorm_"
         }
       ]
     }
@@ -2899,6 +2959,38 @@
                       }
                     }
                   ]
+                },
+                {
+                  "name": "line_data",
+                  "source": "scatter_data",
+                  "transform": [
+                    {
+                      "type": "filter",
+                      "expr": "Line_ && isValid(datum.X_Value) && isValid(datum.Y_Value)"
+                    },
+                    {
+                      "type": "aggregate",
+                      "groupby": [
+                        "X_Value",
+                        "Color_Value"
+                      ],
+                      "ops": [
+                        "mean"
+                      ],
+                      "fields": [
+                        "Y_Value"
+                      ],
+                      "as": [
+                        "Y_Value"
+                      ]
+                    },
+                    {
+                      "type": "collect",
+                      "sort": {
+                        "field": "X_Value"
+                      }
+                    }
+                  ]
                 }
               ],
               "marks": [
@@ -2966,6 +3058,20 @@
                               "y1"
                             ]
                           }
+                        },
+                        {
+                          "name": "ecdf_scale",
+                          "type": "linear",
+                          "domain": [
+                            0,
+                            1
+                          ],
+                          "range": [
+                            {
+                              "signal": "hist_graph_height"
+                            },
+                            0
+                          ]
                         }
                       ],
                       "axes": [
@@ -3043,6 +3149,26 @@
                             }
                           },
                           "labels": true
+                        },
+                        {
+                          "scale": "ecdf_scale",
+                          "orient": "right",
+                          "tickCount": 2,
+                          "domain": false,
+                          "grid": false,
+                          "ticks": false,
+                          "encode": {
+                            "labels": {
+                              "update": {
+                                "fillOpacity": {
+                                  "signal": "if(ECDF_ && !show_scatter_graph, 1, 0)"
+                                },
+                                "dx": {
+                                  "value": -16
+                                }
+                              }
+                            }
+                          }
                         }
                       ],
                       "data": [
@@ -3089,6 +3215,57 @@
                                 "field": "Color_Value"
                               },
                               "field": "count"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "ecdf_data",
+                          "source": "facet_data",
+                          "transform": [
+                            {
+                              "type": "filter",
+                              "expr": "ECDF_ && show_hist_graph && isValid(datum.X_Value)"
+                            },
+                            {
+                              "type": "collect",
+                              "sort": {
+                                "field": [
+                                  "Color_Value",
+                                  "X_Value"
+                                ]
+                              }
+                            },
+                            {
+                              "type": "window",
+                              "groupby": [
+                                "Color_Value"
+                              ],
+                              "sort": {
+                                "field": "X_Value"
+                              },
+                              "ops": [
+                                "rank"
+                              ],
+                              "as": [
+                                "ecdf_rank"
+                              ]
+                            },
+                            {
+                              "type": "joinaggregate",
+                              "groupby": [
+                                "Color_Value"
+                              ],
+                              "ops": [
+                                "count"
+                              ],
+                              "as": [
+                                "ecdf_n"
+                              ]
+                            },
+                            {
+                              "type": "formula",
+                              "as": "ecdf_p",
+                              "expr": "datum.ecdf_rank/datum.ecdf_n"
                             }
                           ]
                         }
@@ -3147,6 +3324,111 @@
                               ]
                             }
                           }
+                        },
+                        {
+                          "type": "group",
+                          "name": "ecdf_series",
+                          "from": {
+                            "facet": {
+                              "data": "ecdf_data",
+                              "name": "ecdf_facet",
+                              "groupby": [
+                                "Color_Value"
+                              ]
+                            }
+                          },
+                          "marks": [
+                            {
+                              "type": "line",
+                              "interactive": false,
+                              "from": {
+                                "data": "ecdf_facet"
+                              },
+                              "encode": {
+                                "update": {
+                                  "x": [
+                                    {
+                                      "test": "LogX_",
+                                      "scale": "x_cont_log_scale",
+                                      "field": "X_Value"
+                                    },
+                                    {
+                                      "scale": "x_cont_scale",
+                                      "field": "X_Value"
+                                    }
+                                  ],
+                                  "y": {
+                                    "scale": "ecdf_scale",
+                                    "field": "ecdf_p"
+                                  },
+                                  "interpolate": {
+                                    "value": "step-after"
+                                  },
+                                  "stroke": [
+                                    {
+                                      "value": "#ffffff"
+                                    }
+                                  ],
+                                  "strokeWidth": {
+                                    "value": 4
+                                  },
+                                  "strokeOpacity": {
+                                    "signal": "if(ECDF_, 0.85, 0)"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "type": "line",
+                              "interactive": false,
+                              "from": {
+                                "data": "ecdf_facet"
+                              },
+                              "encode": {
+                                "update": {
+                                  "x": [
+                                    {
+                                      "test": "LogX_",
+                                      "scale": "x_cont_log_scale",
+                                      "field": "X_Value"
+                                    },
+                                    {
+                                      "scale": "x_cont_scale",
+                                      "field": "X_Value"
+                                    }
+                                  ],
+                                  "y": {
+                                    "scale": "ecdf_scale",
+                                    "field": "ecdf_p"
+                                  },
+                                  "interpolate": {
+                                    "value": "step-after"
+                                  },
+                                  "stroke": [
+                                    {
+                                      "test": "Color_By=='None'",
+                                      "value": "#b3261e"
+                                    },
+                                    {
+                                      "test": "Cord",
+                                      "scale": "color_scale_cat",
+                                      "field": "Color_Value"
+                                    },
+                                    {
+                                      "scale": "color_scale_cont",
+                                      "field": "Color_Value"
+                                    }
+                                  ],
+                                  "strokeWidth": {
+                                    "value": 2.2
+                                  },
+                                  "strokeOpacity": {
+                                    "signal": "if(ECDF_, 0.95, 0)"
+                                  }
+                                }
+                              }
+                            }
+                          ]
                         }
                       ]
                     }
@@ -3322,12 +3604,12 @@
                           },
                           "fill": [
                             {
-                              "test": "Color_By=='None'",
-                              "value": "#4c78a8"
-                            },
-                            {
                               "test": "!Points_",
                               "value": "transparent"
+                            },
+                            {
+                              "test": "Color_By=='None'",
+                              "value": "#4c78a8"
                             },
                             {
                               "test": "Cord",
@@ -3438,6 +3720,75 @@
                           }
                         }
                       }
+                    },
+                    {
+                      "type": "group",
+                      "name": "line_series",
+                      "from": {
+                        "facet": {
+                          "data": "line_data",
+                          "name": "line_facet",
+                          "groupby": [
+                            "Color_Value"
+                          ]
+                        }
+                      },
+                      "marks": [
+                        {
+                          "type": "line",
+                          "interactive": false,
+                          "from": {
+                            "data": "line_facet"
+                          },
+                          "encode": {
+                            "update": {
+                              "x": [
+                                {
+                                  "test": "LogX_",
+                                  "scale": "x_cont_log_scale",
+                                  "field": "X_Value"
+                                },
+                                {
+                                  "scale": "x_cont_scale",
+                                  "field": "X_Value"
+                                }
+                              ],
+                              "y": [
+                                {
+                                  "test": "LogY_",
+                                  "scale": "y_cont_log_scale2",
+                                  "field": "Y_Value"
+                                },
+                                {
+                                  "scale": "y_cont_scale2",
+                                  "field": "Y_Value"
+                                }
+                              ],
+                              "stroke": [
+                                {
+                                  "test": "Color_By=='None'",
+                                  "value": "#4c78a8"
+                                },
+                                {
+                                  "test": "Cord",
+                                  "scale": "color_scale_cat",
+                                  "field": "Color_Value"
+                                },
+                                {
+                                  "scale": "color_scale_cont",
+                                  "field": "Color_Value"
+                                }
+                              ],
+                              "strokeWidth": {
+                                "signal": "max(1.5, Stroke_Width*2)"
+                              },
+                              "strokeOpacity": {
+                                "signal": "if(Line_, 0.9, 0)"
+                              }
+                            }
+                          }
+                        }
+                      ]
                     }
                   ]
                 },
@@ -8027,7 +8378,7 @@
                     "band": 0.8
                   },
                   "tooltip": {
-                    "signal": "Tips_ ? {'Var 1': datum.var1, 'Var 2': datum.var2, 'R²': format(datum['% Variance'], '.3f')} : null"
+                    "signal": "Tips_ ? {'Var 1': datum.var1, 'Var 2': datum.var2, 'R²': format(datum['% Variance'], '.3f'), 'Click': 'plot this pair'} : null"
                   },
                   "cornerRadius": {
                     "signal": "Grid_Radius"
@@ -8940,6 +9291,192 @@
           }
         }
       }
+    },
+    {
+      "type": "group",
+      "name": "QQ_graphs",
+      "interactive": true,
+      "from": {
+        "data": "graph_qq"
+      },
+      "marks": [
+        {
+          "type": "group",
+          "name": "qq_plot",
+          "encode": {
+            "update": {
+              "height": {
+                "signal": "height-Title_Height-X_Axis_Height-Legend_Height"
+              },
+              "x": {
+                "signal": "Row_Header_Width"
+              },
+              "width": {
+                "signal": "width-Row_Header_Width"
+              },
+              "y": {
+                "signal": "Title_Height"
+              }
+            }
+          },
+          "scales": [
+            {
+              "name": "qqx",
+              "type": "linear",
+              "nice": true,
+              "zero": false,
+              "domain": {
+                "data": "qq_points",
+                "field": "theoretical"
+              },
+              "range": [
+                0,
+                {
+                  "signal": "width-Row_Header_Width"
+                }
+              ]
+            },
+            {
+              "name": "qqy",
+              "type": "linear",
+              "nice": true,
+              "zero": false,
+              "domain": {
+                "data": "qq_points",
+                "field": "sample"
+              },
+              "range": [
+                {
+                  "signal": "height-Title_Height-X_Axis_Height-Legend_Height"
+                },
+                0
+              ]
+            },
+            {
+              "name": "qqcolor",
+              "type": "ordinal",
+              "domain": {
+                "data": "qq_points",
+                "field": "Color_Value"
+              },
+              "range": {
+                "scheme": {
+                  "signal": "Palette"
+                }
+              }
+            }
+          ],
+          "axes": [
+            {
+              "scale": "qqx",
+              "orient": "bottom",
+              "title": "Theoretical N(0,1) quantiles",
+              "tickCount": 7,
+              "grid": true
+            },
+            {
+              "scale": "qqy",
+              "orient": "left",
+              "tickCount": 7,
+              "grid": true,
+              "encode": {
+                "title": {
+                  "update": {
+                    "text": {
+                      "signal": "'Sample quantiles: ' + X_Axis"
+                    }
+                  }
+                }
+              },
+              "title": "Sample quantiles"
+            }
+          ],
+          "marks": [
+            {
+              "type": "group",
+              "from": {
+                "facet": {
+                  "data": "qq_lines",
+                  "name": "qq_line_facet",
+                  "groupby": [
+                    "Color_Value"
+                  ]
+                }
+              },
+              "marks": [
+                {
+                  "type": "line",
+                  "interactive": false,
+                  "from": {
+                    "data": "qq_line_facet"
+                  },
+                  "encode": {
+                    "update": {
+                      "x": {
+                        "scale": "qqx",
+                        "field": "theoretical"
+                      },
+                      "y": {
+                        "scale": "qqy",
+                        "field": "sample"
+                      },
+                      "stroke": {
+                        "value": "#999"
+                      },
+                      "strokeDash": {
+                        "value": [
+                          5,
+                          4
+                        ]
+                      },
+                      "strokeWidth": {
+                        "value": 1.2
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "symbol",
+              "from": {
+                "data": "qq_points"
+              },
+              "encode": {
+                "update": {
+                  "x": {
+                    "scale": "qqx",
+                    "field": "theoretical"
+                  },
+                  "y": {
+                    "scale": "qqy",
+                    "field": "sample"
+                  },
+                  "size": {
+                    "value": 26
+                  },
+                  "fill": [
+                    {
+                      "test": "Color_By=='None'",
+                      "value": "#4c78a8"
+                    },
+                    {
+                      "scale": "qqcolor",
+                      "field": "Color_Value"
+                    }
+                  ],
+                  "fillOpacity": {
+                    "value": 0.75
+                  },
+                  "tooltip": {
+                    "signal": "Tips_ ? {'Group': datum.Color_Value, 'Theoretical': format(datum.theoretical, '.3f'), 'Sample': datum.sample} : null"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

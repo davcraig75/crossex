@@ -272,6 +272,8 @@ Missing values (`"NA"`, `"null"`, `"N/A"`, `"unknown"`, `""`) are automatically 
 
 Or click **Load Demo Data** to load a sample dataset, or **Load 5M Demo** to synthesize a 5,000,000-row mixed-type dataset in the browser (no download) and explore the large-data path.
 
+**Pivot Table** opens a drag-and-drop PivotTable.js view of the loaded data below the chart (capped at a uniform 50,000-row sample for very large datasets). Date-like columns parsed from CSV/TSV are converted to decimal years (e.g. 2023.4521) so they behave as quantitative axes; combine with the **Line** toggle for time-series charts.
+
 Large inputs are handled without freezing the page: big delimited files parse in chunks with a progress indicator, files larger than a few MB are held in memory and only previewed in the text area (parsed once, reused for re-graphs), and column typing runs incrementally on very wide/tall tables. Datasets over 150,000 rows are rendered from a uniform 100,000-row sample by default, and faceted views render at most 10,000 rows (rebuilding every facet cell is expensive inside the Vega dataflow) — a banner always shows exactly what is displayed, and you can change the cap under **Filtering ▸ Render sample**. The Summary tab and CSV export always use the full dataset — tested through 5 million rows.
 
 **Embedded on a page**: pass data directly via the `crossex()` function (see [API](#api-reference)).
@@ -319,12 +321,13 @@ Click **Clear Settings** to reset everything to defaults.
 | Type | When Used | Key Options |
 |------|-----------|-------------|
 | **Scatter Plot** | Two numeric axes | Points, Regression, Contours (per facet cell, grouped by color), Jitter |
-| **Histogram** | One numeric axis (Y = "None") | Bin size, Ratio |
+| **Line / Time Series** | Two numeric axes + the Line toggle (Scatter options) | Mean line per color group, sorted by X; date columns auto-convert to decimal years |
+| **Histogram** | One numeric axis (Y = "None") | Bin size, Ratio, ECDF overlay, Normal QQ plot |
 | **Box Plot** | Categorical X + Numeric Y | Outliers toggle |
 | **Violin Plot** | Categorical X + Numeric Y | Violin width, Dashes |
 | **Stacked Bar** | Categorical axes with Sum_By | Sum column selection |
 | **Grid / Heatmap** | Two categorical axes | Cells colored by row count by default (hover for the count); map Color_By/Size_By or enable Jitter for per-row views |
-| **Correlation Matrix** | All numeric columns | Show Covariance toggle |
+| **Correlation Matrix** | All numeric columns | Show Covariance toggle; click any cell to open that pair's plot |
 
 ---
 

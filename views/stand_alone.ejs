@@ -7,13 +7,14 @@
     <meta content="Institute of Translational Genomics, USC 2020 David W. Craig" name="author">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-            <!-- external libs from cdnjs -->
-            <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-            <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.0/jquery-ui.min.js"></script>
-            <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+            <!-- local libs (the old cdnjs jqueryui/1.13.0 URL 404s, so jQuery UI
+                 never actually loaded; local files also make the page offline-capable) -->
+            <script type="text/javascript" src="/src/lib/jquery-3.6.0.min.js"></script>
+            <script type="text/javascript" src="/src/lib/jquery-ui.min.js"></script>
+            <script type="text/javascript" src="/src/lib/jquery.ui.touch-punch.min.js"></script>
 </head>
 <body>
-    <script src="https://d3js.org/d3.v7.min.js"></script> 
+    <script src="/src/d3.v7.min.js"></script>
     <div id="crossex_app" style="position:inherit;max-width:100%;margin:0 auto;padding:10px;background:#FFF;"></div>
     <script type="text/javascript" settings="{}"><%- include('wrapper.ejs') %></script>
 </body>
