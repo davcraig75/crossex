@@ -411,7 +411,7 @@
     },
     {
       "name": "Cnt_St_Opacity",
-      "value": 0.4,
+      "value": 0.85,
       "bind": {
         "element": "#Cnt_St_Opacity-ccnm",
         "input": "range",
@@ -422,7 +422,7 @@
     },
     {
       "name": "Contour_Opacity",
-      "value": 0.4,
+      "value": 0.55,
       "bind": {
         "element": "#Contour_Opacity-ccnm",
         "input": "range",
@@ -2369,8 +2369,8 @@
                           "weight": {
                             "expr": "if(Weight_Contour,datum.Size_Value/S_maxmin_num[1],1)"
                           },
-                          "cellSize": {"signal": "CellSize_"},
-                          "bandwidth": {"signal": "[bandwidth, bandwidth]"},
+                          "cellSize": {"signal": "toNumber(CellSize_)>0?toNumber(CellSize_):10"},
+                          "bandwidth": {"signal": "[toNumber(bandwidth), toNumber(bandwidth)]"},
                           "counts": {"signal": "ContourCounts"}
                         }
                       ]
@@ -2388,7 +2388,7 @@
                           "field": "grid",
                           "resolve": {"signal": "resolve"},
                           "smooth": true,
-                          "levels": {"signal": "toString(ContourLevels)"}
+                          "levels": {"signal": "toNumber(ContourLevels)>0?toNumber(ContourLevels):3"}
                         },
                         {"type": "filter", "expr": "isValid(datum.Color_Value)"}
                       ]
@@ -2433,7 +2433,7 @@
                       "from": {"data": "contours_data"},
                       "encode": {
                         "update": {
-                          "strokeWidth": {"signal": "Stroke_Width"},
+                          "strokeWidth": {"signal": "max(1.2, Stroke_Width*2)"},
                           "strokeOpacity": {"signal": "Cnt_St_Opacity"},
                           "tooltip": {"signal": "Tips_ && isValid(datum.X_Value) ? {X: datum.X_Value, Y: datum.Y_Value, Color: datum.Color_Value, Row: datum.Row_Value, Col: datum.Col_Value, } : null"},
                           "stroke": {
@@ -2507,8 +2507,8 @@
                           "weight": {
                             "expr": "if(Weight_Contour,datum.Size_Value/S_maxmin_num[1],1)"
                           },
-                          "cellSize": {"signal": "CellSize_"},
-                          "bandwidth": {"signal": "[bandwidth, bandwidth]"},
+                          "cellSize": {"signal": "toNumber(CellSize_)>0?toNumber(CellSize_):10"},
+                          "bandwidth": {"signal": "[toNumber(bandwidth), toNumber(bandwidth)]"},
                           "counts": {"signal": "ContourCounts"}
                         }
                       ]
@@ -2526,7 +2526,7 @@
                           "field": "grid",
                           "smooth": true,
                           "resolve": {"signal": "resolve"},
-                          "levels": {"signal": "toString(ContourLevels)"}
+                          "levels": {"signal": "toNumber(ContourLevels)>0?toNumber(ContourLevels):3"}
                         }
                       ]
                     }
@@ -5320,7 +5320,7 @@
                             "signal": "{'X':datum['X_Value'],'Y': datum['Y_Value'],'C':datum['Color_Value'],'Row':datum['Col_Value'],'Col':datum['Row_Value'],'Size':datum['Size_Value']}"
                           },
                           "cornerRadius": {"signal": "Jitter_Radius"},
-                          "opacity": [{"signal": "Opacity_"}],
+                          "opacity": [{"signal": "if(Color_By=='None' && Size_By=='None' && !Jitter_, 0, Opacity_)"}],
                           "fill": [
                             {
                               "test": "Cord",
@@ -5385,8 +5385,46 @@
                       "height": {"signal": "Plot_Height"}
                     }
                   },
-                  "scales": [],
+                  "scales": [
+                    {
+                      "name": "grid_count_color",
+                      "type": "linear",
+                      "domain": {"data": "cellcounts", "field": "cell_count"},
+                      "range": {"scheme": {"signal": "Palette"}},
+                      "reverse": {"signal": "Reverse_Color"}
+                    }
+                  ],
+                  "data": [
+                    {
+                      "name": "cellcounts",
+                      "source": "plategrid",
+                      "transform": [
+                        {
+                          "type": "aggregate",
+                          "groupby": ["X_Value", "Y_Value"],
+                          "ops": ["count"],
+                          "as": ["cell_count"]
+                        }
+                      ]
+                    }
+                  ],
                   "marks": [
+                    {
+                      "type": "rect",
+                      "from": {"data": "cellcounts"},
+                      "encode": {
+                        "update": {
+                          "xc": {"band": 0.5, "scale": "gx_scale", "field": "X_Value"},
+                          "yc": {"band": 0.5, "scale": "gy_scale", "field": "Y_Value"},
+                          "width": {"signal": "bandwidth('gx_scale')*0.95"},
+                          "height": {"signal": "min(bandwidth('gx_scale'),bandwidth('gy_scale'))*0.95"},
+                          "cornerRadius": {"signal": "Grid_Radius"},
+                          "tooltip": {"signal": "{'X': datum.X_Value, 'Y': datum.Y_Value, 'Count': datum.cell_count}"},
+                          "opacity": {"signal": "if(Color_By=='None' && Size_By=='None', Grid_Opacity, 0)"},
+                          "fill": {"scale": "grid_count_color", "field": "cell_count"}
+                        }
+                      }
+                    },
                     {
                       "type": "rect",
                       "from": {"data": "plategrid"},
@@ -5414,7 +5452,7 @@
                             "signal": "{'X':datum['X_Value'],'Y': datum['Y_Value'],'C':datum['Color_Value'],'Row':datum['Col_Value'],'Col':datum['Row_Value'],'Size':datum['Size_Value']}"
                           },
                           "cornerRadius": {"signal": "Grid_Radius"},
-                          "opacity": [{"signal": "Opacity_"}],
+                          "opacity": [{"signal": "if(Color_By=='None' && Size_By=='None', 0, Opacity_)"}],
                           "fill": [
                             {
                               "test": "Cord",

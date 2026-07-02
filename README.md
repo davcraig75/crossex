@@ -323,7 +323,7 @@ Click **Clear Settings** to reset everything to defaults.
 | **Box Plot** | Categorical X + Numeric Y | Outliers toggle |
 | **Violin Plot** | Categorical X + Numeric Y | Violin width, Dashes |
 | **Stacked Bar** | Categorical axes with Sum_By | Sum column selection |
-| **Grid / Heatmap** | Two categorical axes | Grid radius, Cell size |
+| **Grid / Heatmap** | Two categorical axes | Cells colored by row count by default (hover for the count); map Color_By/Size_By or enable Jitter for per-row views |
 | **Correlation Matrix** | All numeric columns | Show Covariance toggle |
 
 ---
