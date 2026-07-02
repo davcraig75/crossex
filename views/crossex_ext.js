@@ -1,42 +1,4 @@
 
-var _dragState = {};
-
-function initDrag(e) {
-	_dragState.startX = e.clientX;
-	_dragState.startY = e.clientY;
-	_dragState.startWidth = parseInt(document.defaultView.getComputedStyle(_dragState.el).width, 10);
-	_dragState.startHeight = parseInt(document.defaultView.getComputedStyle(_dragState.el).height, 10);
-	document.documentElement.addEventListener('mousemove', doDrag, false);
-	document.documentElement.addEventListener('mouseup', stopDrag, false);
-}
-
-function doDrag(e) {
-	_dragState.el.style.width = (_dragState.startWidth + e.clientX - _dragState.startX) + 'px';
-	_dragState.el.style.height = (_dragState.startHeight + e.clientY - _dragState.startY) + 'px';
-}
-
-function stopDrag(e) {
-	document.documentElement.removeEventListener('mousemove', doDrag, false);
-	document.documentElement.removeEventListener('mouseup', stopDrag, false);
-	var elmnt = document.getElementById(_dragState.id);
-	_dragState.result.view.width(setWidth_smart(_dragState.id)).signal('chart_height_min', elmnt.offsetHeight - 200).run();
-}
-
-function draggable(id, result) {
-	var p = document.getElementById(id);
-	p.addEventListener('click', function init() {
-		p.removeEventListener('click', init, false);
-		p.className = p.className + ' resizable';
-		var resizer = document.createElement('div');
-		resizer.className = 'resizer';
-		p.appendChild(resizer);
-		_dragState.el = p;
-		_dragState.id = id;
-		_dragState.result = result;
-		resizer.addEventListener('mousedown', initDrag, false);
-	}, false);
-}
-
 function toggle(id) {
 	var x = document.getElementById(id);
 	if (x.style.display === "none") {

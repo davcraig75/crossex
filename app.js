@@ -62,7 +62,6 @@ var data = {
   min_smartplot: [],
   demo: itg_comp("src/penguins.csv"),
   cc_css: itg_comp("src/inc/cc_styles.css"),
-  pvt_css: itg_comp("src/lib/pivot.css"),
   ext_styles: itg_comp("src/ext_styles.css"),
   save_icon: itg_comp("src/inc/file-download-solid.svg"),
   body: itg_comp("views/body.ejs"),

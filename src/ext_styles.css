@@ -1,5 +1,5 @@
 /* Main –––––––––––––––––––––––––––––––––––––––––––––––––– */
-#crosscorrelate {
+#crossex {
 	margin: 0 auto;
 	position: relative;
 	vertical-align: top;
@@ -13,8 +13,7 @@
 
 /* cc Button –––––––––––––––––––––––––––––––––––––––––––––––––– */
 
-
-a.cc_button, button.cc_button, div.cc_button {
+div.cc_button {
 	border-radius: 4px;
 	font-size: 10px;
 	font-weight: bold;
@@ -24,34 +23,12 @@ a.cc_button, button.cc_button, div.cc_button {
 	text-transform: uppercase;
 	cursor: pointer;
 }
-button.cc_button:hover, div.cc_button:hover {
+div.cc_button:hover {
 	background: #830862;
-	cursor: pointer;
 }
-div.cc_button active {
-	background: #830862;
-	color: #FFF;
-	cursor: pointer;
-}
-button.cc_button active {
+div.cc_button.active {
 	background: #830862;
 	color: #FFF;
-	cursor: pointer;
-}
-/* Tables –––––––––––––––––––––––––––––––––––––––––––––––––– */
-
-.resizable {
-	background: cyan;
-	position: relative;
-}
-.resizer {
-	width: 10px;
-	height: 10px;
-	background: blue;
-	position: absolute;
-	right: 0;
-	bottom: 0;
-	cursor: se-resize;
 }
 
 /* Data input drag & drop –––––––––––––––––––––––––––––––––––––––––––––––––– */
