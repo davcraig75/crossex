@@ -53,3 +53,10 @@ button.cc_button active {
 	bottom: 0;
 	cursor: se-resize;
 }
+
+/* Data input drag & drop –––––––––––––––––––––––––––––––––––––––––––––––––– */
+textarea#myccinput.cc_dragover {
+	outline: 2px dashed #830862;
+	outline-offset: -4px;
+	background: #f7eef5;
+}

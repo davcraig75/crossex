@@ -69,8 +69,11 @@ function optimize_axis(headers, struct) {
 	var split_to_panels1_by_name = "None";
 	var split_to_panels2_by_name = "None";
 	headers.forEach(function(element) {
-		var distinct = [...new Set(struct.map(x => x[element]))];
-		var ln = distinct.length;
+		var distinct = new Set();
+		for (var r = 0; r < struct.length; ++r) {
+			distinct.add(struct[r][element]);
+		}
+		var ln = distinct.size;
 		if (typeof(struct[0][element]) === 'string') {
 			if (ln < max_cat && ln > my_low_cat ) {
 				my_low_cat = ln;
@@ -123,8 +126,82 @@ function optimize_axis(headers, struct) {
 	}
 	return [x_axis_name, y_axis_name, split_to_panels1_by_name, split_to_panels2_by_name, color_by_name];
 }
+// Accepts CSV, TSV, or a JSON array of row objects; returns rows with a
+// .columns property (same shape d3.csvParse produces)
+function parseInputData(string) {
+	var trimmed = string.trim();
+	if (trimmed[0] == '[' || trimmed[0] == '{') {
+		try {
+			var parsed = JSON.parse(trimmed);
+			if (!Array.isArray(parsed)) {
+				parsed = [parsed];
+			}
+			// union keys across the first rows in case some are sparse
+			var cols = [];
+			var seen = new Set();
+			var limit = Math.min(parsed.length, 100);
+			for (var i = 0; i < limit; i++) {
+				for (var k in parsed[i]) {
+					if (!seen.has(k)) {
+						seen.add(k);
+						cols.push(k);
+					}
+				}
+			}
+			parsed.columns = cols;
+			return parsed;
+		} catch (e) { /* not valid JSON — fall through to delimited parsing */ }
+	}
+	if (string.search(/\t/) > 0) {
+		return d3.tsvParse(string, d3.autoType);
+	}
+	return d3.csvParse(string, d3.autoType);
+}
+
+function loadFileIntoInput(file) {
+	var reader = new FileReader();
+	reader.onload = function(e) {
+		var input = document.getElementById("myccinput");
+		input.value = e.target.result;
+		// normalize toggle state so the graph click always hides the input
+		input.style.display = "block";
+		document.getElementById("graph_button").innerHTML = "Graph Data";
+		document.getElementById("graph_button").click();
+	};
+	reader.readAsText(file);
+}
+
+document.getElementById("load_file").onclick = function fun() {
+	document.getElementById("ccfileinput").click();
+};
+
+document.getElementById("ccfileinput").addEventListener('change', function(e) {
+	if (e.target.files.length) {
+		loadFileIntoInput(e.target.files[0]);
+		e.target.value = "";
+	}
+});
+
+var _dropTarget = document.getElementById("myccinput");
+['dragenter', 'dragover'].forEach(function(evt) {
+	_dropTarget.addEventListener(evt, function(e) {
+		e.preventDefault();
+		_dropTarget.classList.add('cc_dragover');
+	});
+});
+_dropTarget.addEventListener('dragleave', function(e) {
+	_dropTarget.classList.remove('cc_dragover');
+});
+_dropTarget.addEventListener('drop', function(e) {
+	e.preventDefault();
+	_dropTarget.classList.remove('cc_dragover');
+	if (e.dataTransfer.files.length) {
+		loadFileIntoInput(e.dataTransfer.files[0]);
+	}
+});
+
 document.getElementById("default_data").onclick = function fun() {
-	document.getElementById("myccinput").innerHTML = itg_decomp("<%=demo%>");
+	document.getElementById("myccinput").value = itg_decomp("<%=demo%>");
 };
 
 document.getElementById("clear_cookies").onclick = function fun() {
@@ -132,15 +209,12 @@ document.getElementById("clear_cookies").onclick = function fun() {
 };
 
 document.getElementById("graph_button").onclick = function clicks() {
-	toggle("myccinput");
 	var string = document.getElementById("myccinput").value;
-	var n = string.search(/\t/);
-	var struct;
-	if (n > 0) {
-		struct = d3.tsvParse(string, d3.autoType);
-	} else {
-		struct = d3.csvParse(string, d3.autoType);
+	var struct = parseInputData(string);
+	if (!struct || !struct.length) {
+		return;
 	}
+	toggle("myccinput");
 	var headers = struct.columns;
 	var axis = optimize_axis(headers, struct);
 	var init_val=headers[1];

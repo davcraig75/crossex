@@ -38,10 +38,11 @@ app.use(function(req, res, next) {
   next();
 });
 
-// Static files
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/public', express.static(path.join(__dirname, 'public')));
-app.use('/src', express.static(path.join(__dirname, 'src')));
+// Static files (cache for 1 hour; browsers revalidate with ETag after that)
+var static_opts = { maxAge: "1h" };
+app.use(express.static(path.join(__dirname, 'public'), static_opts));
+app.use('/public', express.static(path.join(__dirname, 'public'), static_opts));
+app.use('/src', express.static(path.join(__dirname, 'src'), static_opts));
 
 // Compression utilities
 var itgz = require("./src/lz-string.js");
@@ -85,40 +86,41 @@ app.get("/", function(req, res) {
 //////////////////////////////////////////////////////////////////////////////////
 // Compile Javascript
 //////////////////////////////////////////////////////////////////////////////////
-if (process.argv[2] == "build_site") {
-  app.render("wrapper", data, function(err, javascript) {
-    if (err) { console.error(err); process.exit(1); }
-    fs.writeFile("public/" + app_name + "_site.js", javascript, function(err) {
-      if (err) console.error(err);
-      console.log("Built crossex_site.js -> public/");
-      fs.writeFile(app_name + "_site.js", javascript, function(err) {
-        if (err) console.error(err);
-        console.log("Built crossex_site.js -> root");
-        app.render("stand_alone", data, function(err, html) {
-          if (err) { console.error(err); process.exit(1); }
-          fs.writeFile("electron/index.html", html, function(err) {
-            if (err) console.error(err);
-            console.log("Built index.html -> electron/");
-            process.exit();
-          });
-        });
-      });
+var build_mode = process.argv[2] == "build" || process.argv[2] == "build_site";
+
+function renderToString(view) {
+  return new Promise(function(resolve, reject) {
+    app.render(view, data, function(err, output) {
+      if (err) { reject(err); } else { resolve(output); }
     });
   });
 }
 
+if (process.argv[2] == "build_site") {
+  renderToString("wrapper").then(function(javascript) {
+    fs.writeFileSync("public/" + app_name + "_site.js", javascript);
+    console.log("Built crossex_site.js -> public/");
+    fs.writeFileSync(app_name + "_site.js", javascript);
+    console.log("Built crossex_site.js -> root");
+    return renderToString("stand_alone");
+  }).then(function(html) {
+    fs.writeFileSync("electron/index.html", html);
+    console.log("Built index.html -> electron/");
+  }).catch(function(err) {
+    console.error(err);
+    process.exitCode = 1;
+  });
+}
+
 if (process.argv[2] == "build") {
-  app.render("crossex_base", data, function(err, javascript) {
-    if (err) { console.error(err); process.exit(1); }
-    fs.writeFile(app_name + ".js", javascript, function(err) {
-      if (err) console.error(err);
-      console.log("Built crossex.js -> root");
-      fs.writeFile("public/" + app_name + ".js", javascript, function(err) {
-        if (err) console.error(err);
-        console.log("Built crossex.js -> public/");
-        process.exit();
-      });
-    });
+  renderToString("crossex_base").then(function(javascript) {
+    fs.writeFileSync(app_name + ".js", javascript);
+    console.log("Built crossex.js -> root");
+    fs.writeFileSync("public/" + app_name + ".js", javascript);
+    console.log("Built crossex.js -> public/");
+  }).catch(function(err) {
+    console.error(err);
+    process.exitCode = 1;
   });
 }
 
@@ -161,10 +163,12 @@ function onListening() {
   debug("Listening on " + bind);
 }
 
-var server = http.createServer(app);
-server.listen(port);
-server.on("error", onError);
-server.on("listening", onListening);
-console.log("ITG RESTful API server started on: " + port);
+if (!build_mode) {
+  var server = http.createServer(app);
+  server.listen(port);
+  server.on("error", onError);
+  server.on("listening", onListening);
+  console.log("ITG RESTful API server started on: " + port);
+}
 
 //////////////////////////////////////////////////////////////////////////////////

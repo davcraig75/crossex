@@ -660,3 +660,35 @@ div.vega-bind > label > input[type="checkbox"] {
 /* Tables  –––––––––––––––––––––––––––––––––––––––––––––––––– */
 
 .crossexloader {border: 1em solid #f3f3f3;border-top: 1em solid #3498db;border-radius: 50%;width: 50px;margin: 0 auto !important;height: 50px;vertical-align: middle;display: block;animation: spin 1s linear infinite;};@-webkit-keyframes spin {0% {-webkit-transform: rotate(0deg);}100% {-webkit-transform: rotate(360deg);}}@keyframes spin {0% {transform: rotate(0deg);}100% {transform: rotate(360deg);}}
+/* Summary tab  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+.cc_summary_wrap {
+	max-width: 380px;
+	max-height: 480px;
+	overflow: auto;
+	background: #fff;
+	border: 1px solid #ccc;
+}
+table.cc_summary {
+	border-collapse: collapse;
+	font-size: 10px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+table.cc_summary th, table.cc_summary td {
+	padding: 2px 6px;
+	border-bottom: 1px solid #e3e3e3;
+	text-align: right;
+	white-space: nowrap;
+}
+table.cc_summary th {
+	position: sticky;
+	top: 0;
+	background: #ddd;
+	z-index: 1;
+}
+table.cc_summary td:first-child, table.cc_summary th:first-child {
+	text-align: left;
+	font-weight: 600;
+	max-width: 120px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}

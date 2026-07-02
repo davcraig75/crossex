@@ -61,7 +61,8 @@ var TAB_CONFIG = [
 	{id: 'Fonts_tablinks', panel: 'Fonts'},
 	{id: 'Coloring_tablinks', panel: 'Coloring'},
 	{id: 'Filtering_tablinks', panel: 'Filtering'},
-	{id: 'Margins_tablinks', panel: 'Margins'}
+	{id: 'Margins_tablinks', panel: 'Margins'},
+	{id: 'Summary_tablinks', panel: 'Summary'}
 ];
 
 var _resizeHandlers = {};
@@ -82,6 +83,8 @@ var crossexloader=function crossexloader(element,status) {
 	}
 }
 
+// Settings persist in localStorage: cookies cap at ~4KB (the full signal state
+// is larger and silently failed to save) and get sent with every HTTP request.
 function saveSignalsToCookie(signalsArray, cookieName) {
     const signalState = {};
     signalsArray.forEach(signal => {
@@ -89,32 +92,46 @@ function saveSignalsToCookie(signalsArray, cookieName) {
             signalState[signal.name] = signal.value;
         }
     });
-    // Save to cookie (expires in 365 days)
-    const expires = new Date();
-    expires.setTime(expires.getTime() + (365 * 24 * 60 * 60 * 1000));
-    document.cookie = cookieName + '=' + JSON.stringify(signalState) + ';expires=' + expires.toUTCString() + ';path=/';
+    saveSignalState(cookieName, signalState);
     return signalState;
 }
 
-// Helper function to load signals from cookie
-function loadSignalsFromCookie(cookieName) {
-    const name = cookieName + "=";
-    const decodedCookie = decodeURIComponent(document.cookie);
-    const cookieArray = decodedCookie.split(';');
-    for(let i = 0; i < cookieArray.length; i++) {
-        let c = cookieArray[i];
-        while (c.charAt(0) == ' ') {
-            c = c.substring(1);
+function saveSignalState(storageName, signalState) {
+    try {
+        window.localStorage.setItem(storageName, JSON.stringify(signalState));
+    } catch (e) { /* storage full or unavailable (private mode) */ }
+}
+
+function loadSignalsFromCookie(storageName) {
+    try {
+        const stored = window.localStorage.getItem(storageName);
+        if (stored) {
+            return JSON.parse(stored);
         }
-        if (c.indexOf(name) == 0) {
-            return JSON.parse(c.substring(name.length, c.length));
+        // Migrate state saved by older cookie-based versions
+        const name = storageName + "=";
+        const cookieArray = decodeURIComponent(document.cookie).split(';');
+        for (let i = 0; i < cookieArray.length; i++) {
+            const c = cookieArray[i].trim();
+            if (c.indexOf(name) == 0) {
+                const state = JSON.parse(c.substring(name.length));
+                saveSignalState(storageName, state);
+                return state;
+            }
         }
-    }
+    } catch (e) { /* corrupted state — fall through to defaults */ }
     return null;
 }
 
-// Helper function to clear all cookies
+// Clear all persisted settings (localStorage and legacy cookies)
 function clearAllCookies() {
+    try {
+        Object.keys(window.localStorage).forEach(function(key) {
+            if (key.indexOf('vegaSignals_') == 0) {
+                window.localStorage.removeItem(key);
+            }
+        });
+    } catch (e) {}
     const cookies = document.cookie.split(';');
     for (let i = 0; i < cookies.length; i++) {
         const cookie = cookies[i];
@@ -153,15 +170,16 @@ function isNumeric(n) {
 
 var json2csv = function json2csv(filename,json) {
     var fields = [];
-	var filtered = ["Y_Value", "Col_Value", "X_Value", "Row_Value", "Count","None","O_Value","Color_Value","Cstr","Xstr","Ystr","Size_Value"];
+	var excluded = new Set(["Y_Value", "Col_Value", "X_Value", "Row_Value", "Count","None","O_Value","Color_Value","Cstr","Xstr","Ystr","Size_Value"]);
+    var seen = new Set();
     for (var j=0;j<json.length;j++) {
-        Object.keys(json[j]).forEach(function(key){
-            if(fields.indexOf(key) == -1 && !(filtered.includes(key))) 
-            {
+        for (var key in json[j]) {
+            if (!seen.has(key) && !excluded.has(key)) {
+                seen.add(key);
                 fields.push(key);
             }
-        });
-    }	
+        }
+    }
     var replacer = function(key, value) { return value === null ? '' : value } 
     var csv = json.map(function(row){
         return fields.map(function(fieldName){
@@ -234,10 +252,7 @@ function initAndListen(listener, id, result) {
 	});
 }
 
-var corrmatrix = function (df, cols) {
-	if (!cols) {
-		cols = Object.keys(df[0]);
-	}
+function corrColTypes(df, cols) {
 	var colTypes = {};
 	cols.forEach(function(col) {
 		var isNum = true;
@@ -249,22 +264,38 @@ var corrmatrix = function (df, cols) {
 		}
 		colTypes[col] = isNum ? "num" : "cat";
 	});
+	return colTypes;
+}
+
+// Spearman r^2 for one column pair; aligned arrays avoid per-row object allocation
+function corrPairR2(df, col1, col2, isNum1, isNum2) {
+	var v1s = [], v2s = [];
+	for (var i = 0; i < df.length; ++i) {
+		var raw1 = df[i][col1], raw2 = df[i][col2];
+		if (raw1 != 'NA' && raw1 != '' && raw2 != 'NA' && raw2 != '') {
+			v1s.push(isNum1 ? Number(raw1) : raw1);
+			v2s.push(isNum2 ? Number(raw2) : raw2);
+		}
+	}
+	return Math.pow(stats.cor.rank(v1s, v2s), 2);
+}
+
+// The matrix is symmetric with a constant diagonal (rank corr of a column with
+// itself is always 1), so only the upper triangle is computed and then mirrored.
+var corrmatrix = function (df, cols) {
+	if (!cols) {
+		cols = Object.keys(df[0]);
+	}
+	var colTypes = corrColTypes(df, cols);
 	var corr = [];
 	for (var ci = 0; ci < cols.length; ++ci) {
 		var col1 = cols[ci];
-		var isNum1 = colTypes[col1] === "num";
-		for (var cj = 0; cj < cols.length; ++cj) {
+		corr.push({"var1": col1, "var2": col1, "% Variance": 1});
+		for (var cj = ci + 1; cj < cols.length; ++cj) {
 			var col2 = cols[cj];
-			var isNum2 = colTypes[col2] === "num";
-			var pair = [];
-			for (var i = 0; i < df.length; ++i) {
-				var v1 = isNum1 ? Number(df[i][col1]) : df[i][col1];
-				var v2 = isNum2 ? Number(df[i][col2]) : df[i][col2];
-				if (df[i][col1] != 'NA' && df[i][col1] != '' && df[i][col2] != 'NA' && df[i][col2] != '') {
-					pair.push({col1: v1, col2: v2});
-				}
-			}
-			corr.push({"var1": col1, "var2": col2, "% Variance": Math.pow(stats.cor.rank(pair, 'col1', 'col2'), 2)});
+			var r2 = corrPairR2(df, col1, col2, colTypes[col1] === "num", colTypes[col2] === "num");
+			corr.push({"var1": col1, "var2": col2, "% Variance": r2});
+			corr.push({"var1": col2, "var2": col1, "% Variance": r2});
 		}
 	}
 	return corr;
@@ -275,42 +306,24 @@ var corrmatrixAsync = function (df, cols, callback) {
 	if (!cols) {
 		cols = Object.keys(df[0]);
 	}
-	var colTypes = {};
-	cols.forEach(function(col) {
-		var isNum = true;
-		for (var r = 0; r < df.length; ++r) {
-			if (!isNumeric(df[r][col]) && df[r][col] != null && df[r][col] != "NA") {
-				isNum = false;
-				break;
-			}
-		}
-		colTypes[col] = isNum ? "num" : "cat";
-	});
-	// Build list of all column pairs to process
+	var colTypes = corrColTypes(df, cols);
+	var corr = [];
 	var pairs = [];
 	for (var ci = 0; ci < cols.length; ++ci) {
-		for (var cj = 0; cj < cols.length; ++cj) {
+		corr.push({"var1": cols[ci], "var2": cols[ci], "% Variance": 1});
+		for (var cj = ci + 1; cj < cols.length; ++cj) {
 			pairs.push([cols[ci], cols[cj]]);
 		}
 	}
-	var corr = [];
 	var idx = 0;
 	var CHUNK_SIZE = Math.max(1, Math.ceil(pairs.length / 20)); // ~20 frames
 	function processChunk() {
 		var end = Math.min(idx + CHUNK_SIZE, pairs.length);
 		for (; idx < end; idx++) {
 			var col1 = pairs[idx][0], col2 = pairs[idx][1];
-			var isNum1 = colTypes[col1] === "num";
-			var isNum2 = colTypes[col2] === "num";
-			var pair = [];
-			for (var i = 0; i < df.length; ++i) {
-				var v1 = isNum1 ? Number(df[i][col1]) : df[i][col1];
-				var v2 = isNum2 ? Number(df[i][col2]) : df[i][col2];
-				if (df[i][col1] != 'NA' && df[i][col1] != '' && df[i][col2] != 'NA' && df[i][col2] != '') {
-					pair.push({col1: v1, col2: v2});
-				}
-			}
-			corr.push({"var1": col1, "var2": col2, "% Variance": Math.pow(stats.cor.rank(pair, 'col1', 'col2'), 2)});
+			var r2 = corrPairR2(df, col1, col2, colTypes[col1] === "num", colTypes[col2] === "num");
+			corr.push({"var1": col1, "var2": col2, "% Variance": r2});
+			corr.push({"var1": col2, "var2": col1, "% Variance": r2});
 		}
 		if (idx < pairs.length) {
 			requestAnimationFrame(processChunk);
@@ -320,6 +333,96 @@ var corrmatrixAsync = function (df, cols, callback) {
 	}
 	requestAnimationFrame(processChunk);
 };
+
+function escapeHtml(s) {
+	return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function fmtStat(v) {
+	if (v == null || v !== v) { return ''; }
+	if (Number.isInteger(v) && Math.abs(v) < 1e15) { return String(v); }
+	var a = Math.abs(v);
+	if (a >= 1e6 || (a > 0 && a < 0.001)) { return v.toExponential(2); }
+	return String(parseFloat(v.toPrecision(4)));
+}
+
+// One pass over the data per column: count/missing/distinct for everything,
+// Welford mean/sd plus min/max/median for numeric, mode for categorical.
+function summarizeColumn(data, col, isNum) {
+	var n = 0, missing = 0, mean = 0, M2 = 0, min = Infinity, max = -Infinity;
+	var counts = {};
+	var nums = isNum ? [] : null;
+	for (var i = 0; i < data.length; ++i) {
+		var v = data[i][col];
+		if (v == null || v === '' || NA_VALUES.has(v)) { missing++; continue; }
+		counts[v] = (counts[v] || 0) + 1;
+		if (isNum) {
+			var x = Number(v);
+			if (x !== x) { missing++; continue; }
+			n++;
+			nums.push(x);
+			var delta = x - mean;
+			mean += delta / n;
+			M2 += delta * (x - mean);
+			if (x < min) { min = x; }
+			if (x > max) { max = x; }
+		} else {
+			n++;
+		}
+	}
+	var row = {col: col, type: isNum ? 'num' : 'cat', n: n, missing: missing, distinct: Object.keys(counts).length};
+	if (isNum && n > 0) {
+		nums.sort(function(a, b) { return a - b; });
+		row.min = min;
+		row.max = max;
+		row.mean = mean;
+		row.sd = n > 1 ? Math.sqrt(M2 / (n - 1)) : 0;
+		row.median = stats.quantile(nums, 0.5);
+	} else if (!isNum) {
+		var top = null, topCount = -1;
+		for (var k in counts) {
+			if (counts[k] > topCount) { topCount = counts[k]; top = k; }
+		}
+		if (top !== null) { row.top = top + ' (' + topCount + ')'; }
+	}
+	return row;
+}
+
+function summaryTableHtml(rows) {
+	var html = '<table class="cc_summary"><thead><tr><th>Column</th><th>Type</th><th>n</th><th>Miss</th><th>Uniq</th><th>Min</th><th>Median</th><th>Mean</th><th>SD</th><th>Max</th><th>Top Value</th></tr></thead><tbody>';
+	rows.forEach(function(r) {
+		html += '<tr><td>' + escapeHtml(r.col) + '</td><td>' + r.type + '</td><td>' + r.n + '</td><td>' + r.missing + '</td><td>' + r.distinct + '</td>';
+		html += '<td>' + fmtStat(r.min) + '</td><td>' + fmtStat(r.median) + '</td><td>' + fmtStat(r.mean) + '</td><td>' + fmtStat(r.sd) + '</td><td>' + fmtStat(r.max) + '</td>';
+		html += '<td>' + (r.top != null ? escapeHtml(r.top) : '') + '</td></tr>';
+	});
+	html += '</tbody></table>';
+	return html;
+}
+
+// Lazily fills the Summary tab; one column per frame so wide data can't freeze the UI
+function renderSummary(element, data, mycolumns) {
+	var container = document.getElementById('Summary_Table' + element);
+	if (!container || container.getAttribute('data-rendered') == '1') { return; }
+	container.setAttribute('data-rendered', '1');
+	if (!data || !data.length || !mycolumns || !mycolumns.length) {
+		container.innerHTML = '<span>No data loaded</span>';
+		container.removeAttribute('data-rendered');
+		return;
+	}
+	container.innerHTML = '<span>Computing…</span>';
+	var rows = [];
+	var idx = 0;
+	function processColumn() {
+		rows.push(summarizeColumn(data, mycolumns[idx].feature, mycolumns[idx].type == 'num'));
+		idx++;
+		if (idx < mycolumns.length) {
+			requestAnimationFrame(processColumn);
+		} else {
+			container.innerHTML = summaryTableHtml(rows);
+		}
+	}
+	requestAnimationFrame(processColumn);
+}
 
 var crossex = function crossex(element, data, options,widthid) {
 	//legacy	
@@ -504,12 +607,22 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 		var el = document.getElementById(tab.id + element);
 		el.addEventListener('click', function(event) { ccOpenCity(event, tab.panel + element, element); });
 	});
+	// Summary table is computed on first open, not up front
+	document.getElementById('Summary_tablinks' + element).addEventListener('click', function() {
+		renderSummary(element, spec.data[dataMap['mydata']].values, spec.data[dataMap['mycolumns']].values);
+	});
 	var cookieName = 'vegaSignals_' + element;
 	var savedSignals = loadSignalsFromCookie(cookieName);
 	if (savedSignals) {
 		spec.signals.forEach(function(signal) {
 			if (signal.name && savedSignals.hasOwnProperty(signal.name)) {
-				signal.value = savedSignals[signal.name];
+				var saved = savedSignals[signal.name];
+				// a dropdown value saved for a previous dataset may name a column
+				// that no longer exists — restoring it would draw an empty chart
+				if (signal.bind && signal.bind.options && signal.bind.options.indexOf(saved) < 0) {
+					return;
+				}
+				signal.value = saved;
 			}
 		});
 	}
@@ -543,9 +656,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 					pendingCookieState[name] = value;
 					clearTimeout(_cookieDebounceTimers[cookieName]);
 					_cookieDebounceTimers[cookieName] = setTimeout(function() {
-						var expires = new Date();
-						expires.setTime(expires.getTime() + (365 * 24 * 60 * 60 * 1000));
-						document.cookie = cookieName + '=' + JSON.stringify(pendingCookieState) + ';expires=' + expires.toUTCString() + ';path=/';
+						saveSignalState(cookieName, pendingCookieState);
 					}, 250);
 				});
 			}
@@ -586,7 +697,9 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 				if (event.currentTarget.checked ) {
 					document.getElementById("Violin_Options"+element).style['display']='none';
 					crossexloader(element,true);
-					delay().then(() => result.view.change('covariance', vega.changeset().insert(corrmatrix(spec.data[dataMap["mydata"]].values,spec.data[dataMap["col_names"]].values)).remove(function () {return true})).runAsync().then(crossexloader(element,false)));
+					corrmatrixAsync(spec.data[dataMap["mydata"]].values, spec.data[dataMap["col_names"]].values, function(corr) {
+						result.view.change('covariance', vega.changeset().insert(corr).remove(function () {return true})).runAsync().then(function() { crossexloader(element,false); });
+					});
 				} else {
 					document.getElementById("Violin_Options"+element).style['display']='block';
 				}
