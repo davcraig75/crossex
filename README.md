@@ -318,7 +318,7 @@ Click **Clear Settings** to reset everything to defaults.
 
 | Type | When Used | Key Options |
 |------|-----------|-------------|
-| **Scatter Plot** | Two numeric axes | Points, Regression, Contours, Jitter |
+| **Scatter Plot** | Two numeric axes | Points, Regression, Contours (unfaceted view only), Jitter |
 | **Histogram** | One numeric axis (Y = "None") | Bin size, Ratio |
 | **Box Plot** | Categorical X + Numeric Y | Outliers toggle |
 | **Violin Plot** | Categorical X + Numeric Y | Violin width, Dashes |
