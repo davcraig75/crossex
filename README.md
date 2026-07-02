@@ -272,7 +272,7 @@ Missing values (`"NA"`, `"null"`, `"N/A"`, `"unknown"`, `""`) are automatically 
 
 Or click **Load Demo Data** to load a sample dataset, or **Load 5M Demo** to synthesize a 5,000,000-row mixed-type dataset in the browser (no download) and explore the large-data path.
 
-Large inputs are handled without freezing the page: big delimited files parse in chunks with a progress indicator, files larger than a few MB are held in memory and only previewed in the text area (parsed once, reused for re-graphs), and column typing runs incrementally on very wide/tall tables. Datasets over 150,000 rows are rendered from a uniform 100,000-row sample by default (a banner shows exactly what is displayed); change or disable this under **Filtering ▸ Render sample**. The Summary tab and CSV export always use the full dataset — tested through 5 million rows.
+Large inputs are handled without freezing the page: big delimited files parse in chunks with a progress indicator, files larger than a few MB are held in memory and only previewed in the text area (parsed once, reused for re-graphs), and column typing runs incrementally on very wide/tall tables. Datasets over 150,000 rows are rendered from a uniform 100,000-row sample by default, and faceted views render at most 10,000 rows (rebuilding every facet cell is expensive inside the Vega dataflow) — a banner always shows exactly what is displayed, and you can change the cap under **Filtering ▸ Render sample**. The Summary tab and CSV export always use the full dataset — tested through 5 million rows.
 
 **Embedded on a page**: pass data directly via the `crossex()` function (see [API](#api-reference)).
 
@@ -318,7 +318,7 @@ Click **Clear Settings** to reset everything to defaults.
 
 | Type | When Used | Key Options |
 |------|-----------|-------------|
-| **Scatter Plot** | Two numeric axes | Points, Regression, Contours (unfaceted view only), Jitter |
+| **Scatter Plot** | Two numeric axes | Points, Regression, Contours (per facet cell, grouped by color), Jitter |
 | **Histogram** | One numeric axis (Y = "None") | Bin size, Ratio |
 | **Box Plot** | Categorical X + Numeric Y | Outliers toggle |
 | **Violin Plot** | Categorical X + Numeric Y | Violin width, Dashes |

@@ -2747,6 +2747,158 @@
                       "expr": "Contours_&show_scatter_graph&!Cord"
                     }
                   ]
+                },
+                {
+                  "name": "contour_facet_data_cat",
+                  "source": "facet_data",
+                  "transform": [
+                    {
+                      "type": "filter",
+                      "expr": "Contours_&show_scatter_graph"
+                    }
+                  ]
+                },
+                {
+                  "name": "density_cat",
+                  "source": "contour_facet_data_cat",
+                  "transform": [
+                    {
+                      "type": "filter",
+                      "expr": "Contours_&show_scatter_graph"
+                    },
+                    {
+                      "type": "kde2d",
+                      "groupby": [
+                        {
+                          "signal": "if(colors_count<100 & Contours_,'Color_Value','None')"
+                        }
+                      ],
+                      "size": [
+                        {
+                          "signal": "Plot_Width"
+                        },
+                        {
+                          "signal": "scatter_graph_height"
+                        }
+                      ],
+                      "x": {
+                        "expr": "scale('x_cont_scale', datum.X_Value)"
+                      },
+                      "y": {
+                        "expr": "scale('y_cont_scale2', datum.Y_Value)"
+                      },
+                      "weight": {
+                        "expr": "if(Weight_Contour,datum.Size_Value/S_maxmin_num[1],1)"
+                      },
+                      "cellSize": {
+                        "signal": "toNumber(CellSize_)>0?toNumber(CellSize_):10"
+                      },
+                      "bandwidth": {
+                        "signal": "[toNumber(bandwidth), toNumber(bandwidth)]"
+                      },
+                      "counts": {
+                        "signal": "ContourCounts"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "contours_data_cat",
+                  "source": "density_cat",
+                  "transform": [
+                    {
+                      "type": "filter",
+                      "expr": "Contours_&show_scatter_graph"
+                    },
+                    {
+                      "type": "isocontour",
+                      "field": "grid",
+                      "resolve": {
+                        "signal": "resolve"
+                      },
+                      "smooth": true,
+                      "levels": {
+                        "signal": "toNumber(ContourLevels)>0?toNumber(ContourLevels):3"
+                      }
+                    },
+                    {
+                      "type": "filter",
+                      "expr": "isValid(datum.Color_Value)"
+                    }
+                  ]
+                },
+                {
+                  "name": "contour_facet_data_cont",
+                  "source": "facet_data",
+                  "transform": [
+                    {
+                      "type": "filter",
+                      "expr": "Contours_&show_scatter_graph"
+                    }
+                  ]
+                },
+                {
+                  "name": "density_cont",
+                  "source": "contour_facet_data_cont",
+                  "transform": [
+                    {
+                      "type": "filter",
+                      "expr": "Contours_&show_scatter_graph"
+                    },
+                    {
+                      "type": "kde2d",
+                      "groupby": [
+                        "None"
+                      ],
+                      "size": [
+                        {
+                          "signal": "Plot_Width"
+                        },
+                        {
+                          "signal": "scatter_graph_height"
+                        }
+                      ],
+                      "x": {
+                        "expr": "scale('x_cont_scale', datum.X_Value)"
+                      },
+                      "y": {
+                        "expr": "scale('y_cont_scale2', datum.Y_Value)"
+                      },
+                      "weight": {
+                        "expr": "if(Weight_Contour,datum.Size_Value/S_maxmin_num[1],1)"
+                      },
+                      "cellSize": {
+                        "signal": "toNumber(CellSize_)>0?toNumber(CellSize_):10"
+                      },
+                      "bandwidth": {
+                        "signal": "[toNumber(bandwidth), toNumber(bandwidth)]"
+                      },
+                      "counts": {
+                        "signal": "ContourCounts"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "contours_data_cont",
+                  "source": "density_cont",
+                  "transform": [
+                    {
+                      "type": "filter",
+                      "expr": "Contours_&show_scatter_graph"
+                    },
+                    {
+                      "type": "isocontour",
+                      "field": "grid",
+                      "smooth": true,
+                      "resolve": {
+                        "signal": "resolve"
+                      },
+                      "levels": {
+                        "signal": "toNumber(ContourLevels)>0?toNumber(ContourLevels):3"
+                      }
+                    }
+                  ]
                 }
               ],
               "marks": [
@@ -3316,7 +3468,7 @@
                       "name": "colorscale_contour",
                       "type": "ordinal",
                       "domain": {
-                        "data": "contour_facet_data",
+                        "data": "contour_facet_data_cat",
                         "field": "Color_Value"
                       },
                       "range": {
@@ -3329,92 +3481,12 @@
                       }
                     }
                   ],
-                  "data": [
-                    {
-                      "name": "contour_facet_data",
-                      "source": "facet_data",
-                      "transform": [
-                        {
-                          "type": "filter",
-                          "expr": "Contours_&show_scatter_graph"
-                        }
-                      ]
-                    },
-                    {
-                      "name": "density",
-                      "source": "contour_facet_data",
-                      "transform": [
-                        {
-                          "type": "filter",
-                          "expr": "Contours_&show_scatter_graph"
-                        },
-                        {
-                          "type": "kde2d",
-                          "groupby": [
-                            {
-                              "signal": "if(colors_count<100 & Contours_,'Color_Value','None')"
-                            }
-                          ],
-                          "size": [
-                            {
-                              "signal": "Plot_Width"
-                            },
-                            {
-                              "signal": "scatter_graph_height"
-                            }
-                          ],
-                          "x": {
-                            "expr": "scale('x_cont_scale', datum.X_Value)"
-                          },
-                          "y": {
-                            "expr": "scale('y_cont_scale2', datum.Y_Value)"
-                          },
-                          "weight": {
-                            "expr": "if(Weight_Contour,datum.Size_Value/S_maxmin_num[1],1)"
-                          },
-                          "cellSize": {
-                            "signal": "toNumber(CellSize_)>0?toNumber(CellSize_):10"
-                          },
-                          "bandwidth": {
-                            "signal": "[toNumber(bandwidth), toNumber(bandwidth)]"
-                          },
-                          "counts": {
-                            "signal": "ContourCounts"
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "name": "contours_data",
-                      "source": "density",
-                      "transform": [
-                        {
-                          "type": "filter",
-                          "expr": "Contours_&show_scatter_graph"
-                        },
-                        {
-                          "type": "isocontour",
-                          "field": "grid",
-                          "resolve": {
-                            "signal": "resolve"
-                          },
-                          "smooth": true,
-                          "levels": {
-                            "signal": "toNumber(ContourLevels)>0?toNumber(ContourLevels):3"
-                          }
-                        },
-                        {
-                          "type": "filter",
-                          "expr": "isValid(datum.Color_Value)"
-                        }
-                      ]
-                    }
-                  ],
+                  "data": [],
                   "marks": [
                     {
                       "type": "image",
                       "from": {
-                        "data": "density"
+                        "data": "density_cat"
                       },
                       "clip": true,
                       "encode": {
@@ -3459,7 +3531,7 @@
                       "type": "path",
                       "clip": true,
                       "from": {
-                        "data": "contours_data"
+                        "data": "contours_data_cat"
                       },
                       "encode": {
                         "update": {
@@ -3514,7 +3586,7 @@
                       "name": "colorscale_contour_cont",
                       "type": "linear",
                       "domain": {
-                        "data": "contours_data",
+                        "data": "contours_data_cont",
                         "field": "contour.value"
                       },
                       "range": {
@@ -3527,88 +3599,14 @@
                       }
                     }
                   ],
-                  "data": [
-                    {
-                      "name": "contour_facet_data",
-                      "source": "facet_data",
-                      "transform": [
-                        {
-                          "type": "filter",
-                          "expr": "Contours_&show_scatter_graph"
-                        }
-                      ]
-                    },
-                    {
-                      "name": "density",
-                      "source": "contour_facet_data",
-                      "transform": [
-                        {
-                          "type": "filter",
-                          "expr": "Contours_&show_scatter_graph"
-                        },
-                        {
-                          "type": "kde2d",
-                          "groupby": [
-                            "None"
-                          ],
-                          "size": [
-                            {
-                              "signal": "Plot_Width"
-                            },
-                            {
-                              "signal": "scatter_graph_height"
-                            }
-                          ],
-                          "x": {
-                            "expr": "scale('x_cont_scale', datum.X_Value)"
-                          },
-                          "y": {
-                            "expr": "scale('y_cont_scale2', datum.Y_Value)"
-                          },
-                          "weight": {
-                            "expr": "if(Weight_Contour,datum.Size_Value/S_maxmin_num[1],1)"
-                          },
-                          "cellSize": {
-                            "signal": "toNumber(CellSize_)>0?toNumber(CellSize_):10"
-                          },
-                          "bandwidth": {
-                            "signal": "[toNumber(bandwidth), toNumber(bandwidth)]"
-                          },
-                          "counts": {
-                            "signal": "ContourCounts"
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "name": "contours_data",
-                      "source": "density",
-                      "transform": [
-                        {
-                          "type": "filter",
-                          "expr": "Contours_&show_scatter_graph"
-                        },
-                        {
-                          "type": "isocontour",
-                          "field": "grid",
-                          "smooth": true,
-                          "resolve": {
-                            "signal": "resolve"
-                          },
-                          "levels": {
-                            "signal": "toNumber(ContourLevels)>0?toNumber(ContourLevels):3"
-                          }
-                        }
-                      ]
-                    }
-                  ],
+                  "data": [],
                   "marks": [
                     {
                       "type": "path",
                       "clip": true,
                       "zindex": 0,
                       "from": {
-                        "data": "contours_data"
+                        "data": "contours_data_cont"
                       },
                       "encode": {
                         "update": {
@@ -3643,7 +3641,7 @@
                     {
                       "type": "image",
                       "from": {
-                        "data": "density"
+                        "data": "density_cont"
                       },
                       "clip": true,
                       "encode": {

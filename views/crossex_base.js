@@ -79,6 +79,25 @@ var _crossexOpts = {};
 var _typeCache = new WeakMap();
 var SAMPLE_AUTO_THRESHOLD = 150000;
 var SAMPLE_AUTO_DEFAULT = 100000;
+// Vega rebuilds the full per-cell scaffolding on every facet change; beyond
+// ~10k rendered rows the transition takes many seconds and beyond ~50k the
+// tab dies. Faceted views therefore render at most this many rows.
+var FACET_SAMPLE_MAX = 10000;
+var _renderCount = {};
+
+function facetsRequested(element, repSignalsJson) {
+	var saved = loadSignalsFromCookie('vegaSignals_' + element) || {};
+	var vals = [saved['Facet_Rows_By'], saved['Facet_Cols_By']];
+	if (repSignalsJson) {
+		repSignalsJson.forEach(function(sig) {
+			if ((sig.name === 'Facet_Rows_By' || sig.name === 'Facet_Cols_By') &&
+				!(sig.name in saved) && sig.value != null) {
+				vals.push(sig.value);
+			}
+		});
+	}
+	return vals.some(function(v) { return v && v !== 'None'; });
+}
 
 function getSampleSetting(element, nrows) {
 	var stored = null;
@@ -747,17 +766,25 @@ var crossex = function crossex(element, data, options,widthid) {
 		_fullData[element] = data;
 		var renderData = data;
 		var sampleN = getSampleSetting(element, data.length);
+		var facetCapped = false;
+		if (facetsRequested(element, repSignalsJson) && data.length > FACET_SAMPLE_MAX &&
+			(sampleN === 0 || sampleN > FACET_SAMPLE_MAX)) {
+			sampleN = FACET_SAMPLE_MAX;
+			facetCapped = true;
+		}
 		var noticeEl = document.getElementById('cc_sample_notice' + element);
 		if (sampleN > 0 && data.length > sampleN) {
 			renderData = sampleRows(data, sampleN);
 			if (noticeEl) {
 				noticeEl.textContent = 'Rendering ' + sampleN.toLocaleString() + ' of ' + data.length.toLocaleString() +
-					' rows (uniform sample). Summary tab uses all rows. Change under Filtering ▸ Render sample.';
+					' rows (uniform sample' + (facetCapped ? '; faceted views are capped for responsiveness' : '') +
+					'). Summary tab uses all rows. Change under Filtering ▸ Render sample.';
 				noticeEl.style.display = 'block';
 			}
 		} else if (noticeEl) {
 			noticeEl.style.display = 'none';
 		}
+		_renderCount[element] = renderData.length;
 		spec.data[dataMap["mydata"]].values = renderData;
 		var sampleSel = document.getElementById('Render_Sample_Select' + element);
 		if (sampleSel) {
@@ -798,6 +825,34 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 	// summarizes the full dataset even when the chart renders a sample
 	document.getElementById('Summary_tablinks' + element).addEventListener('click', function() {
 		renderSummary(element, _fullData[element] || spec.data[dataMap['mydata']].values, spec.data[dataMap['mycolumns']].values);
+	});
+	// Facet changes rebuild every cell's scaffolding inside Vega — on large
+	// rendered data that freezes or crashes the tab. Intercept the dropdown
+	// before Vega sees it and re-render through the sampler instead.
+	['Facet_Rows_By', 'Facet_Cols_By'].forEach(function(sigName) {
+		var wrap = document.getElementById(sigName + element);
+		if (!wrap || wrap.getAttribute('data-facet-guard')) { return; }
+		wrap.setAttribute('data-facet-guard', '1');
+		wrap.addEventListener('change', function(e) {
+			var full = _fullData[element];
+			if (!full || full.length <= FACET_SAMPLE_MAX) { return; }
+			var newVal = e.target.value;
+			var count = _renderCount[element] || 0;
+			var otherName = sigName === 'Facet_Rows_By' ? 'Facet_Cols_By' : 'Facet_Rows_By';
+			var otherSel = document.querySelector('#' + otherName + element + ' select');
+			var otherVal = otherSel ? otherSel.value : 'None';
+			var enteringFacet = newVal !== 'None' && count > FACET_SAMPLE_MAX;
+			var leavingFacet = newVal === 'None' && otherVal === 'None' && count <= FACET_SAMPLE_MAX;
+			if (!enteringFacet && !leavingFacet) { return; }
+			e.stopImmediatePropagation();
+			e.preventDefault();
+			var store = loadSignalsFromCookie('vegaSignals_' + element) || {};
+			store[sigName] = newVal;
+			saveSignalState('vegaSignals_' + element, store);
+			var opts = _crossexOpts[element];
+			crossexloader(element, true);
+			delay(30).then(function() { crossex(element, full, opts.options, opts.widthid); });
+		}, true);
 	});
 	var cookieName = 'vegaSignals_' + element;
 	var savedSignals = loadSignalsFromCookie(cookieName);
