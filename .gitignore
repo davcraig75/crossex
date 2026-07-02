@@ -105,3 +105,4 @@ dist
 # TernJS port file
 .tern-port
 public/bench_300k.csv
+public/bench_5m.csv

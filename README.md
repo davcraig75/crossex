@@ -270,9 +270,9 @@ Missing values (`"NA"`, `"null"`, `"N/A"`, `"unknown"`, `""`) are automatically 
 2. Click **Graph Data**
 3. The tool auto-detects delimiters (tab vs comma) and column types (numeric vs categorical)
 
-Or click **Load Demo Data** to load a sample dataset.
+Or click **Load Demo Data** to load a sample dataset, or **Load 5M Demo** to synthesize a 5,000,000-row mixed-type dataset in the browser (no download) and explore the large-data path.
 
-Files larger than a few MB are held in memory and only previewed in the text area. Datasets over 150,000 rows are rendered from a uniform 100,000-row sample by default (a banner shows exactly what is displayed); change or disable this under **Filtering ▸ Render sample**. The Summary tab and exports always use the full dataset.
+Large inputs are handled without freezing the page: big delimited files parse in chunks with a progress indicator, files larger than a few MB are held in memory and only previewed in the text area (parsed once, reused for re-graphs), and column typing runs incrementally on very wide/tall tables. Datasets over 150,000 rows are rendered from a uniform 100,000-row sample by default (a banner shows exactly what is displayed); change or disable this under **Filtering ▸ Render sample**. The Summary tab and CSV export always use the full dataset — tested through 5 million rows.
 
 **Embedded on a page**: pass data directly via the `crossex()` function (see [API](#api-reference)).
 

@@ -164,6 +164,47 @@ function parseInputData(string) {
 	return d3.csvParse(string, d3.autoType);
 }
 
+// Large delimited text parses in ~8MB slices with a frame between each, so
+// the tab stays responsive and progress can be shown. RFC-4180 quoted fields
+// may contain newlines, so anything containing a quote falls back to one
+// monolithic parse; JSON always parses in one shot.
+var CHUNK_PARSE_BYTES = 8 * 1024 * 1024;
+function parseInputDataAsync(string, onProgress, callback) {
+	var trimmed = string.trim();
+	if (trimmed[0] == '[' || trimmed[0] == '{' ||
+		string.length < CHUNK_PARSE_BYTES || string.indexOf('"') !== -1) {
+		callback(parseInputData(string));
+		return;
+	}
+	var parseFn = string.search(/\t/) > 0 ? d3.tsvParse : d3.csvParse;
+	var headerEnd = string.indexOf('\n');
+	var header = string.slice(0, headerEnd);
+	var rows = null;
+	var pos = headerEnd + 1;
+	var totalLen = string.length;
+	function parseChunk() {
+		var end = Math.min(pos + CHUNK_PARSE_BYTES, totalLen);
+		if (end < totalLen) {
+			end = string.indexOf('\n', end);
+			if (end === -1) { end = totalLen; }
+		}
+		var part = parseFn(header + '\n' + string.slice(pos, end), d3.autoType);
+		if (rows === null) {
+			rows = part; // keeps .columns from the first chunk
+		} else {
+			for (var i = 0; i < part.length; i++) { rows.push(part[i]); }
+		}
+		pos = end + 1;
+		if (pos < totalLen) {
+			if (onProgress) { onProgress(Math.round(100 * pos / totalLen)); }
+			requestAnimationFrame(parseChunk);
+		} else {
+			callback(rows);
+		}
+	}
+	parseChunk();
+}
+
 // Files above this size skip the textarea (a preview is shown instead):
 // a 50MB string in a DOM textarea costs seconds of layout time and doubles
 // the memory held. Editing the textarea discards the loaded file.
@@ -229,28 +270,101 @@ document.getElementById("default_data").onclick = function fun() {
 	document.getElementById("myccinput").value = itg_decomp("<%=demo%>");
 };
 
+// Synthesizes a 5,000,000-row mixed-type dataset in the browser (no download,
+// no CSV parse) and graphs it directly — a stress-test/demo for the
+// large-data path. Generation is chunked so the UI stays responsive.
+document.getElementById("large_demo").onclick = function fun() {
+	var btn = document.getElementById("large_demo");
+	if (btn.getAttribute('data-busy')) { return; }
+	btn.setAttribute('data-busy', '1');
+	var N = 5000000;
+	var CHUNK = 250000;
+	var c3 = ['low', 'medium', 'high'];
+	var c8 = [], c40 = [], c500 = [];
+	for (var i = 0; i < 500; i++) {
+		if (i < 8) { c8.push('grp' + i); }
+		if (i < 40) { c40.push('panel' + i); }
+		c500.push('clinic' + i);
+	}
+	// mulberry32 — deterministic so repeat runs are comparable
+	var seed = 1234567;
+	function rnd() { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }
+	function normal() { var u = 0, v = 0; while (!u) { u = rnd(); } while (!v) { v = rnd(); } return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+	var struct = [];
+	struct.columns = ['uid', 'group', 'cohort', 'panel', 'clinic', 'expr_a', 'expr_b', 'logval', 'score', 'na_val'];
+	function gen() {
+		var stop = Math.min(struct.length + CHUNK, N);
+		for (var r = struct.length; r < stop; r++) {
+			var base = normal();
+			struct.push({
+				uid: 1000000 + r,
+				group: c3[(rnd() * 3) | 0],
+				cohort: c8[(rnd() * 8) | 0],
+				panel: c40[(rnd() * 40) | 0],
+				clinic: c500[(rnd() * 500) | 0],
+				expr_a: +(base * 2 + 10).toFixed(3),
+				expr_b: +(base * 1.5 + normal() + 8).toFixed(3),
+				logval: +Math.exp(normal()).toFixed(4),
+				score: +(rnd() * 100).toFixed(1),
+				na_val: rnd() < 0.08 ? null : +(normal() * 5 + 50).toFixed(2)
+			});
+		}
+		if (struct.length < N) {
+			btn.innerHTML = 'Generating… ' + Math.round(100 * struct.length / N) + '%';
+			requestAnimationFrame(gen);
+		} else {
+			btn.innerHTML = 'Load 5M Demo';
+			btn.removeAttribute('data-busy');
+			_loadedFile = { name: 'demo_5m', text: null, struct: struct };
+			var input = document.getElementById('myccinput');
+			input.value = '[Generated demo dataset: 5,000,000 rows × ' + struct.columns.length + ' columns. Editing this box discards it.]';
+			input.style.display = 'block';
+			document.getElementById('graph_button').innerHTML = 'Graph Data';
+			document.getElementById('graph_button').click();
+		}
+	}
+	btn.innerHTML = 'Generating… 0%';
+	requestAnimationFrame(gen);
+};
+
 document.getElementById("clear_cookies").onclick = function fun() {
 	clearAllCookies();
 };
 
 document.getElementById("graph_button").onclick = function clicks() {
 	var btn = document.getElementById("graph_button");
+	// rows already parsed (large file re-graph, or generated demo) — reuse them
+	if (_loadedFile && _loadedFile.struct) {
+		graphStruct(_loadedFile.struct);
+		return;
+	}
 	var string = _loadedFile ? _loadedFile.text : document.getElementById("myccinput").value;
 	if (!string || !string.trim()) {
 		return;
 	}
 	var prevLabel = btn.innerHTML;
 	btn.innerHTML = "Working…";
-	// let the label paint before the synchronous parse blocks the main thread
-	setTimeout(function() { graphParsedInput(string, btn, prevLabel); }, 30);
+	// let the label paint before parsing starts
+	setTimeout(function() {
+		parseInputDataAsync(string, function(pct) {
+			btn.innerHTML = "Parsing… " + pct + "%";
+		}, function(struct) {
+			if (!struct || !struct.length) {
+				btn.innerHTML = prevLabel;
+				return;
+			}
+			if (_loadedFile) {
+				// keep the parsed rows for re-graphs and let the raw text
+				// (hundreds of MB for big files) be garbage collected
+				_loadedFile.struct = struct;
+				_loadedFile.text = null;
+			}
+			graphStruct(struct);
+		});
+	}, 30);
 };
 
-function graphParsedInput(string, btn, prevLabel) {
-	var struct = parseInputData(string);
-	if (!struct || !struct.length) {
-		btn.innerHTML = prevLabel;
-		return;
-	}
+function graphStruct(struct) {
 	toggle("myccinput");
 	var headers = struct.columns;
 	var axis = optimize_axis(headers, struct);

@@ -7023,6 +7023,76 @@ function renderSummary(element, data, mycolumns) {
 	requestAnimationFrame(processColumn);
 }
 
+// Single pass per column: detect types, clean NAs, count distinct.
+// Distinct sets are capped just above the largest dropdown threshold (150) —
+// high-cardinality columns (IDs) would otherwise hold every value in memory.
+// NAs become null rather than `delete`: the Vega spec uses isValid(), which
+// treats null and undefined the same, and deleting keys pushes V8 objects
+// into slow dictionary mode. Results are cached per dataset; above ~20M cells
+// the scan runs one column per frame so the tab never freezes.
+function computeColInfo(data, headers, callback) {
+	if (!data || !data.length || !headers.length) {
+		callback({colInfo: {}, sum_cols: [], col_names: []});
+		return;
+	}
+	var cached = _typeCache.get(data);
+	if (cached) {
+		callback(cached);
+		return;
+	}
+	var colInfo = {};
+	var sum_cols = [];
+	var col_names = [];
+	var DISTINCT_CAP = 151;
+	var nrows = data.length;
+	function scanColumn(col) {
+		var ci = { isNum: true, distinct: new Set() };
+		colInfo[col] = ci;
+		var dset = ci.distinct;
+		for (var k = 0; k < nrows; ++k) {
+			var v = data[k][col];
+			if (v == null || v === "") { continue; }
+			// numbers can't be NA strings and are trivially numeric —
+			// skipping those checks avoids ~2 hash/parse calls per cell
+			if (typeof v !== 'number') {
+				if (NA_VALUES.has(v)) {
+					data[k][col] = null;
+					continue;
+				}
+				if (ci.isNum && !isNumeric(v)) {
+					ci.isNum = false;
+				}
+			}
+			if (dset.size < DISTINCT_CAP) {
+				dset.add(v);
+			}
+		}
+		sum_cols.push({"feature": col, "type": ci.isNum ? "num" : "cat"});
+		col_names.push(col);
+	}
+	function finish() {
+		var typed = {colInfo: colInfo, sum_cols: sum_cols, col_names: col_names};
+		_typeCache.set(data, typed);
+		callback(typed);
+	}
+	if (nrows * headers.length <= 20000000) {
+		for (var h = 0; h < headers.length; ++h) { scanColumn(headers[h]); }
+		finish();
+		return;
+	}
+	var next = 0;
+	function chunk() {
+		scanColumn(headers[next]);
+		next++;
+		if (next < headers.length) {
+			requestAnimationFrame(chunk);
+		} else {
+			finish();
+		}
+	}
+	requestAnimationFrame(chunk);
+}
+
 var crossex = function crossex(element, data, options,widthid) {
 	_crossexOpts[element] = {options: options, widthid: widthid};
 	//legacy
@@ -7057,7 +7127,6 @@ var crossex = function crossex(element, data, options,widthid) {
 	var new_signalsString = JSON.stringify(options);
 	var col_names=[];
 	var sum_cols=[];
-	var datatyped=false;
 	// Create index maps for O(1) lookups
 	var signalMap = createIndexMap(spec.signals);
 	var dataMap = createIndexMap(spec.data);
@@ -7073,34 +7142,48 @@ var crossex = function crossex(element, data, options,widthid) {
 	crossexloader(element,true);
 	
 
+	var repSignalsJson = null;
 	if (new_signalsString != null) {
 		repSignalsJson = JSON.parse(new_signalsString.replace(/\-ccnm/g, element));
-		for (var i=0;i<repSignalsJson.length;++i) {
-			if (typeof repSignalsJson[i]['hide_panel'] !== 'undefined') {
+		// panel flags don't need column types — apply them before the
+		// (possibly async) type scan so hidden panels never flash visible
+		for (var f=0;f<repSignalsJson.length;++f) {
+			if (typeof repSignalsJson[f]['hide_panel'] !== 'undefined') {
 				hide_panel=true;
 				document.querySelector('#cc_panel'+element).style.display = "none";
 				document.querySelector('#cc_tab'+element).style.display = "none";
 				document.querySelector('#cc_tabscontent'+element).style.display = "none";
-				continue;
-			}
-			if (typeof repSignalsJson[i]['Links_Editable'] !== 'undefined') {
+			} else if (typeof repSignalsJson[f]['Links_Editable'] !== 'undefined') {
 				document.getElementById('#Links_Options' + element).style.display = "block";
-				continue;
+			} else if (typeof repSignalsJson[f]['editable'] !== 'undefined') {
+				editable = repSignalsJson[f]['editable']==1;
+			} else if (typeof repSignalsJson[f]['exportable'] !== 'undefined') {
+				exportable = repSignalsJson[f]['exportable']==1;
 			}
-			if (typeof repSignalsJson[i]['editable'] !== 'undefined') {
-				if (repSignalsJson[i]['editable']==1) {
-					editable=true;
-				} else {
-					editable=false;
-				}
-				continue;
+		}
+	}
+	// union of every dropdown's column list — typed in one pre-pass
+	var allHeaders = [];
+	var seenHeader = new Set();
+	if (repSignalsJson) {
+		repSignalsJson.forEach(function(sig) {
+			if (sig.name != null && sig.bind && sig.bind.options != null) {
+				sig.bind.options.forEach(function(hname) {
+					if (!seenHeader.has(hname)) {
+						seenHeader.add(hname);
+						allHeaders.push(hname);
+					}
+				});
 			}
-			if (typeof repSignalsJson[i]['exportable'] !== 'undefined') {
-				if (repSignalsJson[i]['exportable']==1) {
-					exportable=true;
-				} else {
-					exportable=false;
-				}
+		});
+	}
+	computeColInfo(data, allHeaders, function(typed) {
+	var colInfo = typed.colInfo;
+	sum_cols = typed.sum_cols;
+	col_names = typed.col_names;
+	if (repSignalsJson != null) {
+		for (var i=0;i<repSignalsJson.length;++i) {
+			if (repSignalsJson[i].name == null) {
 				continue;
 			}
 			var index = signalMap[repSignalsJson[i].name];
@@ -7116,62 +7199,14 @@ var crossex = function crossex(element, data, options,widthid) {
 						var finalheaders = [];
 						var signalName = repSignalsJson[i].name;
 						var signalFilter = SIGNAL_HEADER_FILTERS[signalName];
-						// Single pass per column: detect types, clean NAs, count distinct.
-						// Distinct sets are capped just above the largest dropdown
-						// threshold (150) — high-cardinality columns (IDs) would
-						// otherwise hold every value in memory for no benefit.
-						// NAs become null rather than `delete`: the Vega spec uses
-						// isValid(), which treats null and undefined the same, and
-						// deleting keys pushes V8 objects into slow dictionary mode.
-						if (!datatyped) {
-							var cached = _typeCache.get(data);
-							if (cached) {
-								colInfo = cached.colInfo;
-								sum_cols = cached.sum_cols;
-								col_names = cached.col_names;
-								datatyped = true;
-							}
-						}
-						if (!datatyped) {
-							var colInfo = {};
-							var DISTINCT_CAP = 151;
-							var nrows = data.length;
-							for (var h = 0; h < headers.length; ++h) {
-								var col = headers[h];
-								var ci = { isNum: true, distinct: new Set() };
-								colInfo[col] = ci;
-								var dset = ci.distinct;
-								for (var k = 0; k < nrows; ++k) {
-									var v = data[k][col];
-									if (v == null || v === "") { continue; }
-									// numbers can't be NA strings and are trivially numeric —
-									// skipping those checks avoids ~2 hash/parse calls per cell
-									if (typeof v !== 'number') {
-										if (NA_VALUES.has(v)) {
-											data[k][col] = null;
-											continue;
-										}
-										if (ci.isNum && !isNumeric(v)) {
-											ci.isNum = false;
-										}
-									}
-									if (dset.size < DISTINCT_CAP) {
-										dset.add(v);
-									}
-								}
-								sum_cols.push({"feature": col, "type": ci.isNum ? "num" : "cat"});
-								col_names.push(col);
-							}
-							_typeCache.set(data, {colInfo: colInfo, sum_cols: sum_cols, col_names: col_names});
-							datatyped = true;
-						}
-						headers.forEach(function(element) {
-							var ln = colInfo ? colInfo[element].distinct.size : new Set(data.map(function(x) { return x[element]; })).size;
-							var isNum = colInfo ? colInfo[element].isNum : true;
+						headers.forEach(function(hname) {
+							var info = colInfo[hname];
+							var ln = info ? info.distinct.size : 0;
+							var isNum = info ? info.isNum : false;
 							if (ln > 0 && signalFilter) {
 								if ((!signalFilter.maxDistinct || ln < signalFilter.maxDistinct) &&
 									(!signalFilter.numericOnly || isNum)) {
-									finalheaders.push(element);
+									finalheaders.push(hname);
 								}
 							}
 						});
@@ -7183,7 +7218,7 @@ var crossex = function crossex(element, data, options,widthid) {
 						}
 						if (!finalheaders.includes("Count") && (repSignalsJson[i].name == "X_Axis" || repSignalsJson[i].name == "Y_Axis")) {
 							finalheaders.push("Count");
-						}					
+						}
 						spec.signals[index].bind.options = finalheaders;
 					}
 				}
@@ -7228,11 +7263,11 @@ var crossex = function crossex(element, data, options,widthid) {
 		}
 	}
 	spec.data[dataMap["col_names"]].values = col_names;
-	//spec.data[Index(spec.data, "covariance")].values=corrmatrix(spec.data[Index(spec.data, "mydata")].values,col_names);
 
 	let amyview;
 	crossexloader(element,true);
 	delay().then(() => drawGraph(amyview,element,spec,widthNode,hide_panel,editable,exportable));
+	});
 };
 
 
@@ -7334,7 +7369,8 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 			var checkbox = document.querySelector('#Interactive_'+element + '> div > label > input[type=checkbox]');
 			var DownloadCSVNode=document.querySelector("#view_crossex"+element+" > details > div > a:nth-child(1)");
 			DownloadCSVNode.addEventListener('click', function(e) {
-				var ds=result.view.data('mydata');
+				// export the full dataset, not the (possibly sampled) render data
+				var ds=_fullData[element] || result.view.data('mydata');
 				json2csv('crossex.'+element+'.csv',ds)
 			}, false);
 			var cross_checkbox=document.querySelector("#Show_Covariance"+element + "> div > label > input[type=checkbox]");
