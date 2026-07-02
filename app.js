@@ -95,6 +95,7 @@ var page_assets = [
   ["src/lib/jquery-ui.min.js", "src/lib"],
   ["src/lib/jquery.ui.touch-punch.min.js", "src/lib"],
   ["src/lib/pivot.js", "src/lib"],
+  ["src/lib/crossex3d.js", "src/lib"],
   ["src/d3-dsv.v1.min.js", "src"],
   ["public/crossex.120.png", ""]
 ];

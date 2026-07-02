@@ -293,9 +293,153 @@ document.getElementById("clear_cookies").onclick = function fun() {
 	clearAllCookies();
 };
 
+// ---- 3D unit view (SandDance-style) ----------------------------------------
+// Every row is one WebGL mark; layouts animate between a 3D scatter and
+// stacked unit columns. The renderer (src/lib/crossex3d.js, no dependencies)
+// lazy-loads on first use.
+var _3d = null;
+var _3dData = null;
+var _3dCfg = null;
+var _3D_MAX_POINTS = 100000;
+
+function numericColumns(struct) {
+	var headers = struct.columns || Object.keys(struct[0] || {});
+	var nums = [], cats = [];
+	headers.forEach(function(col) {
+		var seen = 0, numeric = true;
+		for (var i = 0; i < struct.length && seen < 50; i++) {
+			var v = struct[i][col];
+			if (v == null || v === '') { continue; }
+			seen++;
+			if (typeof v !== 'number' && (isNaN(parseFloat(v)) || !isFinite(v))) { numeric = false; break; }
+		}
+		(numeric && seen ? nums : cats).push(col);
+	});
+	return { nums: nums, cats: cats, all: headers };
+}
+
+function build3dControls(struct) {
+	var colInfo = numericColumns(struct);
+	var wrap = document.getElementById('cc_3d_controls');
+	var defaults = {
+		x: colInfo.nums[0] || colInfo.all[0],
+		y: colInfo.nums[1] || colInfo.all[1] || colInfo.all[0],
+		z: colInfo.nums[2] || colInfo.nums[0] || colInfo.all[0],
+		color: colInfo.cats[0] || 'None',
+		layout: 'scatter'
+	};
+	_3dCfg = defaults;
+	function sel(label, key, options, value) {
+		return '<label>' + label + ' <select data-cc3d="' + key + '">' + options.map(function(o) {
+			return '<option' + (o === value ? ' selected' : '') + '>' + o + '</option>';
+		}).join('') + '</select></label>';
+	}
+	wrap.innerHTML =
+		sel('X', 'x', colInfo.all, defaults.x) +
+		sel('Y', 'y', colInfo.all, defaults.y) +
+		sel('Z', 'z', colInfo.all, defaults.z) +
+		sel('Color', 'color', ['None'].concat(colInfo.all), defaults.color) +
+		'<span class="cc_3d_layouts">' +
+		'<button data-cc3dlayout="scatter" class="cc_button active">Scatter</button>' +
+		'<button data-cc3dlayout="stacks" class="cc_button">Stacks</button></span>' +
+		'<button id="cc_3d_reset" class="cc_button">Reset View</button>';
+	wrap.querySelectorAll('select[data-cc3d]').forEach(function(s) {
+		s.addEventListener('change', function() {
+			_3dCfg[s.getAttribute('data-cc3d')] = s.value;
+			if (_3d) { _3d.applyConfig(_3dCfg, false); render3dLegend(); }
+		});
+	});
+	wrap.querySelectorAll('button[data-cc3dlayout]').forEach(function(b) {
+		b.addEventListener('click', function() {
+			_3dCfg.layout = b.getAttribute('data-cc3dlayout');
+			wrap.querySelectorAll('button[data-cc3dlayout]').forEach(function(x) { x.classList.remove('active'); });
+			b.classList.add('active');
+			if (_3d) { _3d.applyConfig(_3dCfg, false); }
+		});
+	});
+	wrap.querySelector('#cc_3d_reset').addEventListener('click', function() {
+		if (_3d) { _3d.resetCamera(); }
+	});
+}
+
+function render3dLegend() {
+	var el = document.getElementById('cc_3d_legend');
+	if (!_3d || !_3d.legend) { el.innerHTML = ''; return; }
+	el.innerHTML = _3d.legend.slice(0, 12).map(function(e) {
+		return '<span class="cc_3d_key"><span class="cc_3d_swatch" style="background:' + e.color + '"></span>' +
+			String(e.label).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</span>';
+	}).join('');
+}
+
+document.getElementById("threed_button").onclick = function fun() {
+	var wrap = document.getElementById('cc_3d_wrap');
+	var note = document.getElementById('cc_3d_note');
+	if (wrap.style.display !== 'none') {
+		wrap.style.display = 'none';
+		return;
+	}
+	wrap.style.display = 'block';
+	if (!_lastStruct || !_lastStruct.length) {
+		note.textContent = 'Load or paste data first, then click Graph Data.';
+		return;
+	}
+	if (_3dData === _lastStruct && _3d) { return; }
+	note.textContent = 'Loading 3D renderer…';
+	loadScriptsSequentially(window.crossex3d ? [] : ['src/lib/crossex3d.js']).then(function() {
+		_3dData = _lastStruct;
+		var rows = _lastStruct.length > _3D_MAX_POINTS ? sampleRows(_lastStruct, _3D_MAX_POINTS) : _lastStruct;
+		note.textContent = rows.length.toLocaleString() + ' rows shown' +
+			(rows.length < _lastStruct.length ? ' (uniform sample of ' + _lastStruct.length.toLocaleString() + ')' : '') +
+			' — drag to orbit, scroll to zoom, click a point for details, double-click to reset.';
+		build3dControls(_lastStruct);
+		var stage = document.getElementById('cc_3d_stage');
+		if (_3d) { _3d.destroy(); }
+		_3d = crossex3d.create(stage, function(row, cx, cy) {
+			var tip = document.getElementById('cc_3d_tip') || (function() {
+				var d = document.createElement('div');
+				d.id = 'cc_3d_tip';
+				d.className = 'cc_3d_tip';
+				document.body.appendChild(d);
+				return d;
+			})();
+			if (!row) { tip.style.display = 'none'; return; }
+			var keys = Object.keys(row).filter(function(k) {
+				return ['X_Value', 'Col_Value', 'Y_Value', 'Row_Value', 'Count', 'None', 'O_Value', 'Color_Value',
+					'Cstr', 'Xstr', 'Ystr', 'Size_Value', 'jitter', 'xfocus', 'yfocus', 'Stroke_Value',
+					'ecdf_rank', 'ecdf_n', 'ecdf_p', 'SortX_Value', 'Term'].indexOf(k) < 0;
+			}).slice(0, 10);
+			tip.innerHTML = keys.map(function(k) {
+				return '<b>' + k + '</b>: ' + String(row[k]).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+			}).join('<br>');
+			tip.style.display = 'block';
+			tip.style.left = Math.min(window.innerWidth - 220, cx + 12) + 'px';
+			tip.style.top = (cy + 12) + 'px';
+			clearTimeout(tip._hideTimer);
+			tip._hideTimer = setTimeout(function() { tip.style.display = 'none'; }, 4000);
+		});
+		if (_3d) { _3d.setData(rows, _3dCfg); render3dLegend(); }
+	}).catch(function(err) {
+		note.textContent = '3D view unavailable: ' + err.message;
+	});
+};
+
 // Pivot table (PivotTable.js) over the loaded dataset. The app itself has no
 // jQuery dependency, so the jQuery/jQuery-UI/pivot stack (~410KB) loads
 // lazily the first time the button is used instead of blocking every page load.
+function loadScriptsSequentially(urls) {
+	return urls.reduce(function(chain, url) {
+		return chain.then(function() {
+			return new Promise(function(resolve, reject) {
+				var s = document.createElement('script');
+				s.src = url;
+				s.onload = resolve;
+				s.onerror = function() { reject(new Error('could not load ' + url)); };
+				document.head.appendChild(s);
+			});
+		});
+	}, Promise.resolve());
+}
+
 var PIVOT_LIBS = [
 	'src/lib/jquery-3.6.0.min.js',
 	'src/lib/jquery-ui.min.js',
@@ -307,17 +451,7 @@ var _pivotLibsPromise = null;
 function ensurePivotLibs() {
 	if (window.jQuery && jQuery.fn.pivotUI) { return Promise.resolve(); }
 	if (!_pivotLibsPromise) {
-		_pivotLibsPromise = PIVOT_LIBS.reduce(function(chain, url) {
-			return chain.then(function() {
-				return new Promise(function(resolve, reject) {
-					var s = document.createElement('script');
-					s.src = url;
-					s.onload = resolve;
-					s.onerror = function() { reject(new Error('could not load ' + url)); };
-					document.head.appendChild(s);
-				});
-			});
-		}, Promise.resolve());
+		_pivotLibsPromise = loadScriptsSequentially(PIVOT_LIBS);
 	}
 	return _pivotLibsPromise;
 }
@@ -421,10 +555,13 @@ var _lastStruct = null;
 function graphStruct(struct) {
 	convertDates(struct);
 	_lastStruct = struct;
-	// new data invalidates any open pivot
+	// new data invalidates any open pivot or 3D view
 	var pivotWrap = document.getElementById('cc_pivot_wrap');
 	if (pivotWrap) { pivotWrap.style.display = 'none'; }
 	_pivotInited = null;
+	var threedWrap = document.getElementById('cc_3d_wrap');
+	if (threedWrap) { threedWrap.style.display = 'none'; }
+	_3dData = null;
 	toggle("myccinput");
 	var headers = struct.columns;
 	var axis = optimize_axis(headers, struct);
