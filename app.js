@@ -86,7 +86,24 @@ app.get("/", function(req, res) {
 //////////////////////////////////////////////////////////////////////////////////
 // Compile Javascript
 //////////////////////////////////////////////////////////////////////////////////
-var build_mode = process.argv[2] == "build" || process.argv[2] == "build_site";
+var build_mode = process.argv[2] == "build" || process.argv[2] == "build_site" || process.argv[2] == "build_pages";
+
+// The standalone page is fully self-contained except for these local libs,
+// referenced by relative path from index.html
+var page_assets = [
+  ["src/lib/jquery-3.6.0.min.js", "src/lib"],
+  ["src/lib/jquery-ui.min.js", "src/lib"],
+  ["src/lib/jquery.ui.touch-punch.min.js", "src/lib"],
+  ["src/d3.v7.min.js", "src"],
+  ["public/crossex.120.png", ""]
+];
+function copyPageAssets(destRoot) {
+  page_assets.forEach(function(asset) {
+    var destDir = path.join(destRoot, asset[1]);
+    fs.mkdirSync(destDir, { recursive: true });
+    fs.copyFileSync(asset[0], path.join(destDir, path.basename(asset[0])));
+  });
+}
 
 function renderToString(view) {
   return new Promise(function(resolve, reject) {
@@ -105,7 +122,22 @@ if (process.argv[2] == "build_site") {
     return renderToString("stand_alone");
   }).then(function(html) {
     fs.writeFileSync("electron/index.html", html);
-    console.log("Built index.html -> electron/");
+    copyPageAssets("electron");
+    console.log("Built index.html + libs -> electron/");
+  }).catch(function(err) {
+    console.error(err);
+    process.exitCode = 1;
+  });
+}
+
+// Static GitHub Pages demo: the whole app as ~6 files under docs/
+if (process.argv[2] == "build_pages") {
+  renderToString("stand_alone").then(function(html) {
+    fs.mkdirSync("docs", { recursive: true });
+    fs.writeFileSync("docs/index.html", html);
+    fs.writeFileSync("docs/.nojekyll", "");
+    copyPageAssets("docs");
+    console.log("Built GitHub Pages demo -> docs/");
   }).catch(function(err) {
     console.error(err);
     process.exitCode = 1;

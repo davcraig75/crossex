@@ -7,14 +7,15 @@
     <meta content="Institute of Translational Genomics, USC 2020 David W. Craig" name="author">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-            <!-- local libs (the old cdnjs jqueryui/1.13.0 URL 404s, so jQuery UI
-                 never actually loaded; local files also make the page offline-capable) -->
-            <script type="text/javascript" src="/src/lib/jquery-3.6.0.min.js"></script>
-            <script type="text/javascript" src="/src/lib/jquery-ui.min.js"></script>
-            <script type="text/javascript" src="/src/lib/jquery.ui.touch-punch.min.js"></script>
+            <!-- local libs, relative paths: work from the Express root, from a
+                 GitHub Pages subpath (/crossex/), and from file:// alike -->
+            <link rel="icon" type="image/png" href="crossex.120.png">
+            <script type="text/javascript" src="src/lib/jquery-3.6.0.min.js"></script>
+            <script type="text/javascript" src="src/lib/jquery-ui.min.js"></script>
+            <script type="text/javascript" src="src/lib/jquery.ui.touch-punch.min.js"></script>
 </head>
 <body>
-    <script src="/src/d3.v7.min.js"></script>
+    <script src="src/d3.v7.min.js"></script>
     <div id="crossex_app" style="position:inherit;max-width:100%;margin:0 auto;padding:10px;background:#FFF;"></div>
     <script type="text/javascript" settings="{}"><%- include('wrapper.ejs') %></script>
 </body>

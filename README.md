@@ -2,6 +2,8 @@
 
 **Interactive data exploration and visualization for tables and dataframes.**
 
+**[▶ Try the live demo](https://davcraig75.github.io/crossex/)** — the full app runs client-side on GitHub Pages; paste your own data or load the demos.
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.20260125-green.svg)](https://github.com/davcraig75/crossex)
 
@@ -101,6 +103,10 @@ npm run dev
 ```
 
 Uses [nodemon](https://nodemon.io/) for auto-reload on file changes.
+
+### Deploying the live demo (GitHub Pages)
+
+The app is fully client-side, so it runs on GitHub Pages as static files. `npm run build:pages` renders the standalone page and its local libraries into `docs/`; commit that folder and point Pages at it (Settings ▸ Pages ▸ Deploy from a branch ▸ `/docs`). The published demo lives at <https://davcraig75.github.io/crossex/>.
 
 ---
 
