@@ -2,6 +2,10 @@
 
 var add_css=true;
 var crossex_spec = JSON.parse(itgz.decompressFromEncodedURIComponent("<%-crossex_spec%>"));
+// crossex() needs the spec as a string on every call (for the element-id
+// substitution); stringifying the ~350KB object once here instead of per
+// call saves ~15ms on each re-graph
+var crossex_spec_str = JSON.stringify(crossex_spec);
 var crossex_html=itgz.decompressFromEncodedURIComponent("<%=crossex_html%>");
 crossex_html = crossex_html.replace("itgversion","<%-itgversion%>");
 var ccPanel,ccPanelProxy;
@@ -830,7 +834,7 @@ var crossex = function crossex(element, data, options,widthid) {
 		ElementWidth=getContentWidth(widthNode);
 	}
 	var loc_crossex_html =  crossex_html;
-	var local_vgspec = JSON.stringify(crossex_spec);
+	var local_vgspec = crossex_spec_str;
 	var element_node = document.getElementById(element);
 	var mymax = 150;
 	var loc_crossex_htmlRes = loc_crossex_html.replace(/\-ccnm/g, element);

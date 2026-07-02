@@ -293,37 +293,65 @@ document.getElementById("clear_cookies").onclick = function fun() {
 	clearAllCookies();
 };
 
-// Pivot table (PivotTable.js) over the loaded dataset — standalone page only,
-// since pivotUI needs jQuery/jQuery-UI
+// Pivot table (PivotTable.js) over the loaded dataset. The app itself has no
+// jQuery dependency, so the jQuery/jQuery-UI/pivot stack (~410KB) loads
+// lazily the first time the button is used instead of blocking every page load.
+var PIVOT_LIBS = [
+	'src/lib/jquery-3.6.0.min.js',
+	'src/lib/jquery-ui.min.js',
+	'src/lib/jquery.ui.touch-punch.min.js',
+	'src/lib/pivot.js'
+];
+var _pivotLibsPromise = null;
+
+function ensurePivotLibs() {
+	if (window.jQuery && jQuery.fn.pivotUI) { return Promise.resolve(); }
+	if (!_pivotLibsPromise) {
+		_pivotLibsPromise = PIVOT_LIBS.reduce(function(chain, url) {
+			return chain.then(function() {
+				return new Promise(function(resolve, reject) {
+					var s = document.createElement('script');
+					s.src = url;
+					s.onload = resolve;
+					s.onerror = function() { reject(new Error('could not load ' + url)); };
+					document.head.appendChild(s);
+				});
+			});
+		}, Promise.resolve());
+	}
+	return _pivotLibsPromise;
+}
+
 var _pivotInited = null;
 document.getElementById("pivot_button").onclick = function fun() {
 	var wrap = document.getElementById('cc_pivot_wrap');
+	var note = document.getElementById('cc_pivot_note');
 	if (wrap.style.display !== 'none') {
 		wrap.style.display = 'none';
 		return;
 	}
-	if (!window.jQuery || !jQuery.fn.pivotUI) {
-		wrap.style.display = 'block';
-		document.getElementById('cc_pivot_note').textContent = 'The pivot table needs jQuery + jQuery-UI on the page.';
-		return;
-	}
-	if (!_lastStruct || !_lastStruct.length) {
-		wrap.style.display = 'block';
-		document.getElementById('cc_pivot_note').textContent = 'Load or paste data first, then click Graph Data.';
-		return;
-	}
 	wrap.style.display = 'block';
+	if (!_lastStruct || !_lastStruct.length) {
+		note.textContent = 'Load or paste data first, then click Graph Data.';
+		return;
+	}
 	if (_pivotInited === _lastStruct) { return; }
-	_pivotInited = _lastStruct;
-	var rows = _lastStruct.length > 50000 ? sampleRows(_lastStruct, 50000) : _lastStruct;
-	document.getElementById('cc_pivot_note').textContent = 'Pivot over ' + rows.length.toLocaleString() + ' rows' +
-		(rows.length < _lastStruct.length ? ' (uniform sample of ' + _lastStruct.length.toLocaleString() + ')' : '') +
-		' — drag fields to rows/columns.';
-	// Vega's formula transforms annotate the raw rows in place — hide those
-	// derived fields (same set the CSV export filters out)
-	jQuery('#cc_pivot').pivotUI(rows, {
-		hiddenAttributes: ["X_Value", "Col_Value", "Y_Value", "Row_Value", "Count", "None", "O_Value", "Color_Value", "Cstr", "Xstr", "Ystr", "Size_Value", "jitter", "xfocus", "yfocus", "Stroke_Value", "ecdf_rank", "ecdf_n", "ecdf_p", "SortX_Value", "Term"]
-	}, true);
+	note.textContent = 'Loading pivot libraries…';
+	ensurePivotLibs().then(function() {
+		if (_pivotInited === _lastStruct) { return; }
+		_pivotInited = _lastStruct;
+		var rows = _lastStruct.length > 50000 ? sampleRows(_lastStruct, 50000) : _lastStruct;
+		note.textContent = 'Pivot over ' + rows.length.toLocaleString() + ' rows' +
+			(rows.length < _lastStruct.length ? ' (uniform sample of ' + _lastStruct.length.toLocaleString() + ')' : '') +
+			' — drag fields to rows/columns.';
+		// Vega's formula transforms annotate the raw rows in place — hide those
+		// derived fields (same set the CSV export filters out)
+		jQuery('#cc_pivot').pivotUI(rows, {
+			hiddenAttributes: ["X_Value", "Col_Value", "Y_Value", "Row_Value", "Count", "None", "O_Value", "Color_Value", "Cstr", "Xstr", "Ystr", "Size_Value", "jitter", "xfocus", "yfocus", "Stroke_Value", "ecdf_rank", "ecdf_n", "ecdf_p", "SortX_Value", "Term"]
+		}, true);
+	}).catch(function(err) {
+		note.textContent = 'Pivot table unavailable: ' + err.message;
+	});
 };
 
 document.getElementById("graph_button").onclick = function clicks() {

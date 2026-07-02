@@ -94,7 +94,8 @@ var page_assets = [
   ["src/lib/jquery-3.6.0.min.js", "src/lib"],
   ["src/lib/jquery-ui.min.js", "src/lib"],
   ["src/lib/jquery.ui.touch-punch.min.js", "src/lib"],
-  ["src/d3.v7.min.js", "src"],
+  ["src/lib/pivot.js", "src/lib"],
+  ["src/d3-dsv.v1.min.js", "src"],
   ["public/crossex.120.png", ""]
 ];
 function copyPageAssets(destRoot) {
@@ -133,6 +134,7 @@ if (process.argv[2] == "build_site") {
 // Static GitHub Pages demo: the whole app as ~6 files under docs/
 if (process.argv[2] == "build_pages") {
   renderToString("stand_alone").then(function(html) {
+    fs.rmSync("docs", { recursive: true, force: true });
     fs.mkdirSync("docs", { recursive: true });
     fs.writeFileSync("docs/index.html", html);
     fs.writeFileSync("docs/.nojekyll", "");

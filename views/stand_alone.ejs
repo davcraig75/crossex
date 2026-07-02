@@ -7,15 +7,15 @@
     <meta content="Institute of Translational Genomics, USC 2020 David W. Craig" name="author">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-            <!-- local libs, relative paths: work from the Express root, from a
-                 GitHub Pages subpath (/crossex/), and from file:// alike -->
+            <!-- The app itself needs no jQuery: the jQuery/jQuery-UI/PivotTable
+                 stack lazy-loads on first use of the Pivot Table button.
+                 d3-dsv (3KB) covers everything the page uses from d3
+                 (csvParse/tsvParse/autoType). Relative paths work from the
+                 Express root, a GitHub Pages subpath, and file:// alike. -->
             <link rel="icon" type="image/png" href="crossex.120.png">
-            <script type="text/javascript" src="src/lib/jquery-3.6.0.min.js"></script>
-            <script type="text/javascript" src="src/lib/jquery-ui.min.js"></script>
-            <script type="text/javascript" src="src/lib/jquery.ui.touch-punch.min.js"></script>
 </head>
 <body>
-    <script src="src/d3.v7.min.js"></script>
+    <script src="src/d3-dsv.v1.min.js"></script>
     <div id="crossex_app" style="position:inherit;max-width:100%;margin:0 auto;padding:10px;background:#FFF;"></div>
     <script type="text/javascript" settings="{}"><%- include('wrapper.ejs') %></script>
 </body>
