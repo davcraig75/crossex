@@ -67,6 +67,8 @@ var TAB_CONFIG = [
 
 var _resizeHandlers = {};
 var _cookieDebounceTimers = {};
+var _panelObservers = {};
+var _panelResizeTimers = {};
 
 // Full datasets and call arguments per element, so the render-sample
 // control can re-run crossex without re-parsing. Charts and the
@@ -525,6 +527,152 @@ function summaryTableHtml(rows) {
 	return html;
 }
 
+// ---- Overview: one distribution card per column ---------------------------
+// Numeric columns get a mini histogram with range/mean/missing; categorical
+// columns get top-category bars. Clicking a card graphs that column's
+// distribution. Shown automatically on first visit (no saved settings).
+var _overviewCache = new WeakMap();
+var OVERVIEW_BINS = 24;
+var OVERVIEW_TOP_CATS = 8;
+
+function overviewColumn(data, col, isNum) {
+	var n = 0, missing = 0, mean = 0, min = Infinity, max = -Infinity;
+	if (isNum) {
+		var nums = new Float64Array(data.length);
+		for (var i = 0; i < data.length; ++i) {
+			var v = data[i][col];
+			if (v == null || v === '' || (typeof v !== 'number' && NA_VALUES.has(v))) { missing++; continue; }
+			var x = typeof v === 'number' ? v : Number(v);
+			if (x !== x) { missing++; continue; }
+			nums[n] = x;
+			n++;
+			mean += (x - mean) / n;
+			if (x < min) { min = x; }
+			if (x > max) { max = x; }
+		}
+		var bins = new Array(OVERVIEW_BINS).fill(0);
+		if (n > 0 && max > min) {
+			var scale = OVERVIEW_BINS / (max - min);
+			for (var b = 0; b < n; ++b) {
+				var idx = Math.min(OVERVIEW_BINS - 1, Math.floor((nums[b] - min) * scale));
+				bins[idx]++;
+			}
+		} else if (n > 0) {
+			bins[0] = n;
+		}
+		return {col: col, type: 'num', n: n, missing: missing, min: min, max: max, mean: mean, bins: bins};
+	}
+	var counts = Object.create(null);
+	var trackedKeys = 0, sawUntracked = false;
+	for (var j = 0; j < data.length; ++j) {
+		var c = data[j][col];
+		if (c == null || c === '' || (typeof c !== 'number' && NA_VALUES.has(c))) { missing++; continue; }
+		n++;
+		if (counts[c] !== undefined) {
+			counts[c]++;
+		} else if (trackedKeys < SUMMARY_MAX_TRACKED) {
+			counts[c] = 1;
+			trackedKeys++;
+		} else {
+			sawUntracked = true;
+		}
+	}
+	var entries = [];
+	for (var k in counts) { entries.push([k, counts[k]]); }
+	entries.sort(function(a, b2) { return b2[1] - a[1]; });
+	return {col: col, type: 'cat', n: n, missing: missing,
+		distinct: sawUntracked ? '≥' + SUMMARY_MAX_TRACKED : trackedKeys,
+		top: entries.slice(0, OVERVIEW_TOP_CATS),
+		otherCount: entries.slice(OVERVIEW_TOP_CATS).reduce(function(s, e) { return s + e[1]; }, 0)};
+}
+
+function overviewCardHtml(r, total) {
+	var missPct = total ? Math.round(100 * r.missing / total) : 0;
+	var head = '<div class="cc_ovname" title="' + escapeHtml(r.col) + '">' + escapeHtml(r.col) +
+		'<span class="cc_ovtype">' + (r.type === 'num' ? 'numeric' : 'categorical') + '</span></div>';
+	var body = '';
+	var meta = '';
+	if (r.type === 'num') {
+		var peak = Math.max.apply(null, r.bins) || 1;
+		body = '<div class="cc_ovhist">' + r.bins.map(function(bcount) {
+			return '<div class="cc_ovbin" style="height:' + Math.max(bcount > 0 ? 4 : 0, Math.round(100 * bcount / peak)) + '%"></div>';
+		}).join('') + '</div>';
+		meta = fmtStat(r.min) + ' – ' + fmtStat(r.max) + ' · mean ' + fmtStat(r.mean);
+	} else {
+		var catPeak = (r.top[0] && r.top[0][1]) || 1;
+		body = '<div class="cc_ovcats">' + r.top.map(function(e) {
+			return '<div class="cc_ovcatrow"><span class="cc_ovcatlabel" title="' + escapeHtml(e[0]) + '">' + escapeHtml(e[0]) + '</span>' +
+				'<span class="cc_ovcatbar"><span style="width:' + Math.max(2, Math.round(100 * e[1] / catPeak)) + '%"></span></span>' +
+				'<span class="cc_ovcatn">' + e[1].toLocaleString() + '</span></div>';
+		}).join('') +
+		(r.otherCount > 0 ? '<div class="cc_ovcatrow cc_ovother">+ ' + r.otherCount.toLocaleString() + ' rows in other values</div>' : '') +
+		'</div>';
+		meta = r.distinct + ' distinct';
+	}
+	meta += ' · n=' + r.n.toLocaleString() + (r.missing ? ' · <span class="cc_ovmiss">' + missPct + '% missing</span>' : '');
+	return '<div class="cc_ovcard" data-col="' + escapeHtml(r.col) + '">' + head + body +
+		'<div class="cc_ovmeta">' + meta + '</div></div>';
+}
+
+function renderOverview(element, data, mycolumns) {
+	var container = document.getElementById('cc_overview' + element);
+	if (!container) { return; }
+	var header = '<div class="cc_ovheader"><b>Column Overview</b>' +
+		'<span class="cc_ovhint">click a column to graph its distribution</span>' +
+		'<span class="cc_ovclose" id="cc_ovclose' + element + '">✕ close</span></div>';
+	if (!data || !data.length || !mycolumns || !mycolumns.length) {
+		container.innerHTML = header + '<div class="cc_ovmeta">No data loaded.</div>';
+		wireOverviewActions(element);
+		return;
+	}
+	var cached = _overviewCache.get(data);
+	if (cached) {
+		container.innerHTML = header + cached;
+		wireOverviewActions(element);
+		return;
+	}
+	container.innerHTML = header + '<div class="cc_ovmeta">Computing…</div>';
+	wireOverviewActions(element);
+	var cards = [];
+	var idx = 0;
+	function processColumn() {
+		var def = mycolumns[idx];
+		cards.push(overviewCardHtml(overviewColumn(data, def.feature, def.type === 'num'), data.length));
+		idx++;
+		if (idx < mycolumns.length) {
+			requestAnimationFrame(processColumn);
+		} else {
+			var html = '<div class="cc_ovgrid">' + cards.join('') + '</div>';
+			_overviewCache.set(data, html);
+			container.innerHTML = header + html;
+			wireOverviewActions(element);
+		}
+	}
+	requestAnimationFrame(processColumn);
+}
+
+function wireOverviewActions(element) {
+	var container = document.getElementById('cc_overview' + element);
+	var closer = document.getElementById('cc_ovclose' + element);
+	if (closer) {
+		closer.onclick = function() { container.style.display = 'none'; };
+	}
+	container.querySelectorAll('.cc_ovcard').forEach(function(card) {
+		card.onclick = function() {
+			var col = card.getAttribute('data-col');
+			var ySel = document.querySelector('#Y_Axis' + element + ' select');
+			var xSel = document.querySelector('#X_Axis' + element + ' select');
+			if (xSel && ySel) {
+				ySel.value = 'None';
+				ySel.dispatchEvent(new Event('change', {bubbles: true}));
+				xSel.value = col;
+				xSel.dispatchEvent(new Event('change', {bubbles: true}));
+			}
+			container.style.display = 'none';
+		};
+	});
+}
+
 // Lazily fills the Summary tab; one column per frame so wide data can't freeze the UI
 function renderSummary(element, data, mycolumns) {
 	var container = document.getElementById('Summary_Table' + element);
@@ -826,6 +974,16 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 	document.getElementById('Summary_tablinks' + element).addEventListener('click', function() {
 		renderSummary(element, _fullData[element] || spec.data[dataMap['mydata']].values, spec.data[dataMap['mycolumns']].values);
 	});
+	// Overview toggles a column-distribution overlay over the chart area
+	document.getElementById('Overview_btn' + element).addEventListener('click', function() {
+		var ov = document.getElementById('cc_overview' + element);
+		if (ov.style.display === 'none') {
+			renderOverview(element, _fullData[element] || spec.data[dataMap['mydata']].values, spec.data[dataMap['mycolumns']].values);
+			ov.style.display = 'block';
+		} else {
+			ov.style.display = 'none';
+		}
+	});
 	// Facet changes rebuild every cell's scaffolding inside Vega — on large
 	// rendered data that freezes or crashes the tab. Intercept the dropdown
 	// before Vega sees it and re-render through the sampler instead.
@@ -856,6 +1014,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 	});
 	var cookieName = 'vegaSignals_' + element;
 	var savedSignals = loadSignalsFromCookie(cookieName);
+	var firstVisit = !savedSignals;
 	if (savedSignals) {
 		spec.signals.forEach(function(signal) {
 			if (signal.name && savedSignals.hasOwnProperty(signal.name)) {
@@ -912,6 +1071,30 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 			result.view.width(setWidth_smart(element,widthNode)).run();
 		};
 		window.addEventListener('resize', _resizeHandlers[element]);
+		// The control panel grows when contextual controls appear (e.g. Sum_By
+		// for stacked charts). Shrink the chart to fit instead of letting the
+		// widget overflow into a horizontal scrollbar.
+		if (window.ResizeObserver) {
+			if (_panelObservers[element]) {
+				_panelObservers[element].disconnect();
+			}
+			var lastPanelW = -1;
+			_panelObservers[element] = new ResizeObserver(function(entries) {
+				var w = entries[0].contentRect.width;
+				if (w === lastPanelW) { return; }
+				lastPanelW = w;
+				clearTimeout(_panelResizeTimers[element]);
+				_panelResizeTimers[element] = setTimeout(function() {
+					result.view.width(setWidth_smart(element, widthNode)).run();
+				}, 120);
+			});
+			_panelObservers[element].observe(document.getElementById('cc_tabscontent' + element));
+		}
+		// First visit with no saved settings: open with the column overview
+		if (firstVisit && !hide_panel && _fullData[element] && _fullData[element].length) {
+			renderOverview(element, _fullData[element], spec.data[dataMap['mycolumns']].values);
+			document.getElementById('cc_overview' + element).style.display = 'block';
+		}
 		//initialize instance
 		var save_icon=document.querySelector("#view_crossex"+ element+" > details > summary");
 		save_icon.innerHTML="<div id='Exporting'>"+itgz.decompressFromEncodedURIComponent("<%=save_icon%>")+"</div>";

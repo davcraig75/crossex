@@ -391,6 +391,9 @@ Set X and Y axis columns. Shows chart-type-specific sub-panels:
 ### Summary Tab
 Per-column statistics for the full dataset: type, valid/missing/distinct counts, min, median, mean, standard deviation, max, and the most frequent value for categorical columns. Computed on first open.
 
+### Overview
+The bar-chart button at the bottom of the tab strip toggles a Column Overview: one card per column showing its distribution (a mini histogram for numeric columns, top-category bars for categorical ones) with range, mean, distinct and missing counts. Clicking a card graphs that column's distribution. The Overview opens automatically the first time a dataset is viewed with no saved settings.
+
 ---
 
 ## Project Structure

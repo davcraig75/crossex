@@ -716,3 +716,128 @@ table.cc_summary td:first-child, table.cc_summary th:first-child {
 	font-size: x-small;
 	max-width: 88px;
 }
+
+/* Column overview overlay  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+.cc_overview {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 60;
+	background: #fff;
+	overflow: auto;
+	padding: 8px 12px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.cc_ovheader {
+	font-size: 13px;
+	padding: 2px 0 8px 0;
+	border-bottom: 1px solid #ddd;
+	margin-bottom: 8px;
+}
+.cc_ovhint {
+	color: #888;
+	font-size: 11px;
+	margin-left: 10px;
+}
+.cc_ovclose {
+	float: right;
+	cursor: pointer;
+	color: #830862;
+	font-size: 11px;
+	font-weight: bold;
+}
+.cc_ovgrid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	align-items: stretch;
+}
+.cc_ovcard {
+	width: 230px;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	padding: 6px 8px;
+	cursor: pointer;
+	background: #fafafa;
+}
+.cc_ovcard:hover {
+	border-color: #830862;
+	background: #fff;
+}
+.cc_ovname {
+	font-size: 12px;
+	font-weight: bold;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.cc_ovtype {
+	float: right;
+	font-weight: normal;
+	font-size: 10px;
+	color: #999;
+}
+.cc_ovhist {
+	display: flex;
+	align-items: flex-end;
+	gap: 1px;
+	height: 56px;
+	margin: 6px 0 2px 0;
+}
+.cc_ovbin {
+	flex: 1;
+	background: #4c78a8;
+	min-width: 2px;
+}
+.cc_ovcats {
+	margin: 6px 0 2px 0;
+}
+.cc_ovcatrow {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 10px;
+	line-height: 15px;
+}
+.cc_ovcatlabel {
+	width: 72px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-align: right;
+	color: #444;
+}
+.cc_ovcatbar {
+	flex: 1;
+	background: #eee;
+	height: 9px;
+	border-radius: 2px;
+	overflow: hidden;
+}
+.cc_ovcatbar > span {
+	display: block;
+	height: 100%;
+	background: #4c78a8;
+}
+.cc_ovcatn {
+	width: 48px;
+	color: #777;
+	text-align: right;
+}
+.cc_ovother {
+	color: #999;
+	font-style: italic;
+}
+.cc_ovmeta {
+	font-size: 10px;
+	color: #666;
+	margin-top: 4px;
+}
+.cc_ovmiss {
+	color: #b3261e;
+}
+.cc_graph_container {
+	position: relative;
+}
