@@ -295,6 +295,13 @@ function ccOpenCity(evt, cityName,element) {
 	document.getElementById(cityName).style.display = "block";
 	ccPanelProxy[element][element]=document.getElementById(cityName).offsetWidth;
 	evt.currentTarget.className += " active";
+	// picking a config tab exits any full-container overlay, back to the chart
+	var ov = document.getElementById('cc_overview' + element);
+	if (ov) { ov.style.display = 'none'; }
+	var td = document.getElementById('cc_3d' + element);
+	if (td) { td.style.display = 'none'; }
+	var tip = document.getElementById('cc_3d_tip');
+	if (tip) { tip.style.display = 'none'; }
 }
 
 function initAndListen(listener, id, result) {
@@ -618,6 +625,124 @@ function overviewCardHtml(r, total) {
 		'<div class="cc_ovmeta">' + meta + '</div></div>';
 }
 
+// ---- 3D unit view (SandDance-style, WebGL) ---------------------------------
+// A toggleable overlay inside the chart container, driven by the widget's own
+// full dataset; the renderer (crossex3d, inlined into the bundle) has no deps.
+var _3d = {};
+var _3D_MAX_POINTS = 100000;
+var _3D_HIDDEN_FIELDS = {X_Value:1,Col_Value:1,Y_Value:1,Row_Value:1,Count:1,None:1,O_Value:1,Color_Value:1,Cstr:1,Xstr:1,Ystr:1,Size_Value:1,jitter:1,xfocus:1,yfocus:1,Stroke_Value:1,ecdf_rank:1,ecdf_n:1,ecdf_p:1,SortX_Value:1,Term:1};
+
+function threeDColumnLists(mycolumns) {
+	var nums = [], cats = [], all = [];
+	(mycolumns || []).forEach(function(c) {
+		if (!c.feature || c.feature === 'None') { return; }
+		all.push(c.feature);
+		(c.type === 'num' ? nums : cats).push(c.feature);
+	});
+	return { nums: nums, cats: cats, all: all };
+}
+
+function show3dTip(row, cx, cy) {
+	var tip = document.getElementById('cc_3d_tip');
+	if (!tip) { tip = document.createElement('div'); tip.id = 'cc_3d_tip'; tip.className = 'cc_3d_tip'; document.body.appendChild(tip); }
+	if (!row) { tip.style.display = 'none'; return; }
+	var keys = Object.keys(row).filter(function(k) { return !_3D_HIDDEN_FIELDS[k]; }).slice(0, 10);
+	tip.innerHTML = keys.map(function(k) { return '<b>' + escapeHtml(k) + '</b>: ' + escapeHtml(String(row[k])); }).join('<br>');
+	tip.style.display = 'block';
+	tip.style.left = Math.min(window.innerWidth - 240, cx + 12) + 'px';
+	tip.style.top = (cy + 12) + 'px';
+	clearTimeout(tip._t);
+	tip._t = setTimeout(function() { tip.style.display = 'none'; }, 4000);
+}
+
+function render3dLegend(element) {
+	var el = document.getElementById('cc_3d_legend' + element);
+	var inst = _3d[element] && _3d[element].inst;
+	if (!el) { return; }
+	if (!inst || !inst.legend) { el.innerHTML = ''; return; }
+	el.innerHTML = inst.legend.slice(0, 12).map(function(e) {
+		return '<span class="cc_3d_key"><span class="cc_3d_swatch" style="background:' + e.color + '"></span>' + escapeHtml(String(e.label)) + '</span>';
+	}).join('');
+}
+
+function build3dControls(element, lists) {
+	var wrap = document.getElementById('cc_3d_controls' + element);
+	var state = _3d[element];
+	var cfg = state.cfg;
+	function optHtml(list, value) {
+		return list.map(function(o) { return '<option' + (o === value ? ' selected' : '') + '>' + escapeHtml(o) + '</option>'; }).join('');
+	}
+	wrap.innerHTML =
+		'<label>X <select data-cc3d="x">' + optHtml(lists.all, cfg.x) + '</select></label>' +
+		'<label>Y <select data-cc3d="y">' + optHtml(lists.all, cfg.y) + '</select></label>' +
+		'<label>Z <select data-cc3d="z">' + optHtml(lists.all, cfg.z) + '</select></label>' +
+		'<label>Color <select data-cc3d="color">' + optHtml(['None'].concat(lists.all), cfg.color) + '</select></label>' +
+		'<span class="cc_3d_layouts">' +
+		'<button data-cc3dlayout="scatter" class="cc_3d_btn' + (cfg.layout === 'scatter' ? ' active' : '') + '">Scatter</button>' +
+		'<button data-cc3dlayout="stacks" class="cc_3d_btn' + (cfg.layout === 'stacks' ? ' active' : '') + '">Stacks</button>' +
+		'</span>' +
+		'<button data-cc3dreset class="cc_3d_btn">Reset</button>';
+	wrap.querySelectorAll('select[data-cc3d]').forEach(function(s) {
+		s.onchange = function() {
+			cfg[s.getAttribute('data-cc3d')] = s.value;
+			if (state.inst) { state.inst.applyConfig(cfg, false); render3dLegend(element); }
+		};
+	});
+	wrap.querySelectorAll('button[data-cc3dlayout]').forEach(function(b) {
+		b.onclick = function() {
+			cfg.layout = b.getAttribute('data-cc3dlayout');
+			wrap.querySelectorAll('button[data-cc3dlayout]').forEach(function(x) { x.classList.remove('active'); });
+			b.classList.add('active');
+			if (state.inst) { state.inst.applyConfig(cfg, false); }
+		};
+	});
+	wrap.querySelector('button[data-cc3dreset]').onclick = function() { if (state.inst) { state.inst.resetCamera(); } };
+}
+
+function open3dView(element, data, mycolumns) {
+	var overlay = document.getElementById('cc_3d' + element);
+	var note = document.getElementById('cc_3d_note' + element);
+	if (!overlay) { return; }
+	var lists = threeDColumnLists(mycolumns);
+	if (typeof crossex3d === 'undefined' || !lists.all.length) {
+		overlay.style.display = 'flex';
+		note.textContent = (typeof crossex3d === 'undefined') ? '3D renderer is not available.' : 'No columns available to plot.';
+		return;
+	}
+	var state = _3d[element] || (_3d[element] = {});
+	var rows = data.length > _3D_MAX_POINTS ? sampleRows(data, _3D_MAX_POINTS) : data;
+	if (!state.cfg || state.data !== data) {
+		state.cfg = {
+			x: lists.nums[0] || lists.all[0],
+			y: lists.nums[1] || lists.all[1] || lists.all[0],
+			z: lists.nums[2] || lists.nums[0] || lists.all[0],
+			color: lists.cats[0] || 'None',
+			layout: 'scatter'
+		};
+		state.data = data;
+		state.rows = rows;
+		state.rebuild = true;
+	}
+	note.textContent = state.rows.length.toLocaleString() + ' rows' +
+		(state.rows.length < data.length ? ' (uniform sample of ' + data.length.toLocaleString() + ')' : '') +
+		' — drag to orbit · scroll to zoom · click a point · double-click to reset';
+	build3dControls(element, lists);
+	overlay.style.display = 'flex';
+	if (!state.inst || state.rebuild) {
+		if (state.inst) { try { state.inst.dispose(); } catch (e) {} }
+		var stage = document.getElementById('cc_3d_stage' + element);
+		stage.innerHTML = '';
+		// defer one frame so the just-shown overlay has real layout dimensions
+		requestAnimationFrame(function() {
+			state.inst = crossex3d.create(stage, show3dTip);
+			state.rebuild = false;
+			if (state.inst) { state.inst.setData(state.rows, state.cfg); render3dLegend(element); }
+		});
+	} else {
+		render3dLegend(element);
+	}
+}
+
 function renderOverview(element, data, mycolumns) {
 	var container = document.getElementById('cc_overview' + element);
 	if (!container) { return; }
@@ -817,6 +942,11 @@ function computeColInfo(data, headers, callback) {
 
 var crossex = function crossex(element, data, options,widthid) {
 	_crossexOpts[element] = {options: options, widthid: widthid};
+	// re-rendering wipes the container's DOM; free any prior 3D GL context first
+	if (_3d[element]) {
+		if (_3d[element].inst) { try { _3d[element].inst.dispose(); } catch (e) {} }
+		delete _3d[element];
+	}
 	//legacy
 	var ElementWidth=0;
 	//data=JSON.parse(JSON.stringify(data).replace(/\"null\"/gi,"\"\"").replace(/\"NA\"/gi,"\"\"").replace(/\"unknown\"/gi,"\"\""));
@@ -1025,11 +1155,28 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 	document.getElementById('Overview_btn' + element).addEventListener('click', function() {
 		var ov = document.getElementById('cc_overview' + element);
 		if (ov.style.display === 'none') {
+			var td = document.getElementById('cc_3d' + element);
+			if (td) { td.style.display = 'none'; }
 			renderOverview(element, _fullData[element] || spec.data[dataMap['mydata']].values, spec.data[dataMap['mycolumns']].values);
 			ov.style.display = 'block';
 		} else {
 			ov.style.display = 'none';
 		}
+	});
+	// 3D view toggles a WebGL unit-visualization overlay over the chart area
+	document.getElementById('ThreeD_btn' + element).addEventListener('click', function() {
+		var td = document.getElementById('cc_3d' + element);
+		if (td.style.display === 'none' || !td.style.display) {
+			document.getElementById('cc_overview' + element).style.display = 'none';
+			open3dView(element, _fullData[element] || spec.data[dataMap['mydata']].values, spec.data[dataMap['mycolumns']].values);
+		} else {
+			td.style.display = 'none';
+		}
+	});
+	document.getElementById('cc_3d_close' + element).addEventListener('click', function() {
+		document.getElementById('cc_3d' + element).style.display = 'none';
+		var tip = document.getElementById('cc_3d_tip');
+		if (tip) { tip.style.display = 'none'; }
 	});
 	// Facet changes rebuild every cell's scaffolding inside Vega — on large
 	// rendered data that freezes or crashes the tab. Intercept the dropdown

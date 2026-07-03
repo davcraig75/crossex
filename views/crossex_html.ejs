@@ -41,6 +41,9 @@
                 <button aria-label="Overview of All Columns" data-crossextip-position="right" role="tooltip" class="cc_tablinks" id="Overview_btn-ccnm">
                     <svg viewBox="0 0 24 24" width="14" height="14" style="opacity:0.75"><rect x="2" y="12" width="4" height="9" fill="#333"/><rect x="8" y="6" width="4" height="15" fill="#333"/><rect x="14" y="9" width="4" height="12" fill="#333"/><rect x="20" y="15" width="3" height="6" fill="#333"/></svg>
                 </button>
+                <button aria-label="3D Unit View" data-crossextip-position="right" role="tooltip" class="cc_tablinks" id="ThreeD_btn-ccnm">
+                    <svg viewBox="0 0 24 24" width="14" height="14" style="opacity:0.75"><path d="M12 2.5 L20.5 7 L20.5 17 L12 21.5 L3.5 17 L3.5 7 Z" fill="none" stroke="#333" stroke-width="1.4"/><path d="M12 2.5 L12 12 M12 12 L20.5 7 M12 12 L3.5 7" fill="none" stroke="#333" stroke-width="1.1"/></svg>
+                </button>
             </div>
         </div>
         <div id="cc_tabscontent-ccnm" class="cc_tabscontent">
@@ -249,6 +252,15 @@
         </div>   
         <div class="cc_graph_container" id="cc_graph_container-ccnm">
             <div id="cc_overview-ccnm" class="cc_overview" style="display:none"></div>
+            <div id="cc_3d-ccnm" class="cc_3d_overlay" style="display:none">
+                <div class="cc_3d_bar">
+                    <div id="cc_3d_controls-ccnm" class="cc_3d_controls"></div>
+                    <span class="cc_ovclose" id="cc_3d_close-ccnm">✕ close</span>
+                </div>
+                <div id="cc_3d_stage-ccnm" class="cc_3d_stage_fill"></div>
+                <div id="cc_3d_legend-ccnm" class="cc_3d_legend"></div>
+                <div id="cc_3d_note-ccnm" class="cc_3d_note"></div>
+            </div>
             <div class="cc_container" id="view_crossex-ccnm" style="position: absolute;"></div>
         </div>
     </div>

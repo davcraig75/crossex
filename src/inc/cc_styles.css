@@ -598,3 +598,111 @@ table.cc_summary td:first-child, table.cc_summary th:first-child {
 .cc_ovmiss {
 	color: #b3261e;
 }
+
+/* 3D unit view overlay  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+.cc_3d_overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 61;
+	background: #fff;
+	display: flex;
+	flex-direction: column;
+	padding: 6px 8px;
+	box-sizing: border-box;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.cc_3d_bar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	border-bottom: 1px solid #ddd;
+	padding-bottom: 5px;
+}
+.cc_3d_controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	font-size: 11px;
+	color: #444;
+	flex: 1;
+}
+.cc_3d_controls label {
+	white-space: nowrap;
+}
+.cc_3d_controls select {
+	font-size: 11px;
+	max-width: 130px;
+}
+.cc_3d_btn {
+	border: none;
+	border-radius: 4px;
+	font-size: 10px;
+	font-weight: bold;
+	background: #C7C7C7;
+	color: #FFF;
+	padding: 3px 9px;
+	text-transform: uppercase;
+	cursor: pointer;
+}
+.cc_3d_btn:hover {
+	background: #830862;
+}
+.cc_3d_btn.active {
+	background: #830862;
+	color: #FFF;
+}
+.cc_3d_layouts {
+	display: inline-flex;
+	gap: 3px;
+	margin-left: 4px;
+}
+.cc_3d_stage_fill {
+	flex: 1 1 auto;
+	min-height: 0;
+	position: relative;
+	margin-top: 5px;
+	border: 1px solid #eee;
+	border-radius: 3px;
+	overflow: hidden;
+}
+.cc_3d_legend {
+	margin-top: 4px;
+	font-size: 11px;
+	color: #444;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+.cc_3d_key {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+.cc_3d_swatch {
+	width: 10px;
+	height: 10px;
+	border-radius: 2px;
+	display: inline-block;
+}
+.cc_3d_note {
+	font-size: 10px;
+	color: #777;
+	margin-top: 2px;
+}
+.cc_3d_tip {
+	position: fixed;
+	z-index: 2000;
+	background: rgba(255, 255, 255, 0.97);
+	border: 1px solid #bbb;
+	border-radius: 4px;
+	box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.15);
+	padding: 6px 9px;
+	font: 11px/1.5 Helvetica, Arial, sans-serif;
+	color: #222;
+	max-width: 240px;
+	display: none;
+}

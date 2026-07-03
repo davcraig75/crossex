@@ -510,8 +510,17 @@
 		inst.destroy = function() {
 			inst.destroyed = true;
 			if (ro) { ro.disconnect(); }
-			container.removeChild(canvas);
-			container.removeChild(overlay);
+			if (canvas.parentNode === container) { container.removeChild(canvas); }
+			if (overlay.parentNode === container) { container.removeChild(overlay); }
+		};
+		// Free the WebGL context without touching the DOM — used when the host
+		// re-renders and replaces the container wholesale (GL contexts are a
+		// scarce resource, ~16 per page, so orphaned ones must be reclaimed).
+		inst.dispose = function() {
+			inst.destroyed = true;
+			if (ro) { ro.disconnect(); }
+			var lose = gl.getExtension('WEBGL_lose_context');
+			if (lose) { lose.loseContext(); }
 		};
 
 		resize();
