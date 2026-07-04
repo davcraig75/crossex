@@ -7748,7 +7748,7 @@
                     "title": {
                       "update": {
                         "text": {
-                          "signal": "if(Facet_Cols_By=='None',X_Axis,parent.data)"
+                          "signal": "(Facet_Cols_By!='None' && parent.data=='None') ? '' : (if(Facet_Cols_By=='None',X_Axis,parent.data))"
                         },
                         "align": {
                           "value": "center"
@@ -7762,6 +7762,26 @@
                         },
                         "align": {
                           "value": "right"
+                        },
+                        "opacity": {
+                          "signal": "(Facet_Cols_By!='None' && parent.data=='None') ? 0 : 1"
+                        },
+                        "fillOpacity": {
+                          "signal": "(Facet_Cols_By!='None' && parent.data=='None') ? 0 : 1"
+                        }
+                      }
+                    },
+                    "ticks": {
+                      "update": {
+                        "opacity": {
+                          "signal": "(Facet_Cols_By!='None' && parent.data=='None') ? 0 : 1"
+                        }
+                      }
+                    },
+                    "domain": {
+                      "update": {
+                        "opacity": {
+                          "signal": "(Facet_Cols_By!='None' && parent.data=='None') ? 0 : 1"
                         }
                       }
                     }
@@ -8157,7 +8177,17 @@
                     }
                   ]
                 }
-              ]
+              ],
+              "encode": {
+                "update": {
+                  "width": {
+                    "signal": "width-Row_Header_Width"
+                  },
+                  "height": {
+                    "signal": "height-Title_Height-X_Axis_Height-Legend_Height"
+                  }
+                }
+              }
             }
           ]
         }
