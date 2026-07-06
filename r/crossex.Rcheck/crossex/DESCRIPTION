@@ -1,0 +1,27 @@
+Package: crossex
+Type: Package
+Title: Interactive Data Exploration Widgets for Data Frames
+Version: 1.0.0
+Authors@R: person("David", "Craig", email = "david.w.craig@gmail.com",
+    role = c("aut", "cre"))
+Description: Renders an interactive exploration environment for a data frame:
+    dynamically configurable charts (scatter, line, histogram, box, violin,
+    stacked bar, heatmap, correlation matrix), faceting, filtering,
+    formula-based column transforms, summary statistics, a data table, a 3D
+    unit view, and CSV/PNG/SVG export. Everything runs client side through the
+    bundled 'crossex' JavaScript library, which is built on the 'Vega'
+    visualization grammar <https://vega.github.io/vega/>. Widgets work in the
+    'RStudio' viewer, 'Shiny' applications, and 'R Markdown' documents.
+License: MIT + file LICENSE
+URL: https://github.com/davcraig75/crossex
+BugReports: https://github.com/davcraig75/crossex/issues
+Encoding: UTF-8
+Imports: htmlwidgets
+Suggests: shiny, testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0
+NeedsCompilation: no
+Packaged: 2026-07-05 06:54:35 UTC; davidcraig
+Author: David Craig [aut, cre]
+Maintainer: David Craig <david.w.craig@gmail.com>
+Built: R 4.5.2; ; 2026-07-05 06:54:56 UTC; unix

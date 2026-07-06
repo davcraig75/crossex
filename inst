@@ -1,0 +1,72 @@
+Everything is done, verified end-to-end (40/40 browser checks, zero console errors; 41/41 formula-engine tests; R CMD check --as-cran: 0 errors, 0 warnings, 1 unavoidable "new submission" NOTE), and all builds (crossex.js, crossex_site.js, docs/ GitHub Pages, electron/, R package tarball) are in sync. Nothing is committed yet. Here's what happened, item by item:
+
+
+1. Horizontal overflow — fixed
+Root cause: .cc_graph { width: max-content } let a wide canvas (many facets, big plot width) push past the window. Now the widget caps at max-width: 100% and anything wider scrolls inside the chart container (overflow-x: auto; vertical overflow deliberately hidden so scrollbars can't feed back into the width calculation). Verified: document.scrollWidth <= window.innerWidth after rendering.
+
+
+2. Vega options audit — findings and changes per tab
+The audit compared all 156 spec signals against the panel HTML. Notable: four bindable controls existed in the spec but were misplaced or dead-ended, and six panel divs were dead (no signal behind them — they've rendered as empty gaps for years). What changed:
+
+
+| Tab | Change |
+
+|---|---|
+
+| Interact (new) | Pan/zoom + tooltips moved here from Axis/Fonts; new brush, reset-zoom, saved views, data restore |
+
+| Marks | Shape (point symbol select — existed in the spec, hidden until now); contour controls (resolve, bandwidth, counts, levels) grouped under their own "Contours" header |
+
+| Coloring | Opacity By column encoding surfaced (was hidden); dead Point_Opacity stub removed |
+
+| Fonts | Dead labelFontSize, label_limit, Legend_Label_Width stubs removed; tooltips moved to Interact |
+
+| Margins | Dead ColumnTitle_Height, Yaxis_Width, duplicate PlotTitle_Height removed |
+
+| Charts | Stats toggle now also drives the new p-value badge (see item 10) |
+
+
+Not exposed on purpose: per-facet resolve for scales beyond contours, and Vega config internals (autosize, locale) — they'd add clutter without exploration value.
+
+
+3–5. Data table, share links, melt
+Data Table (grid icon in the tab strip): virtual-scrolling grid over the full dataset (only ~60 rows in the DOM at once), header-click sorting (third click restores data order, blanks sink), and double-click any chart point jumps to its row, highlighted.
+Share Link button: lz-compresses settings + transform definitions + the data itself (inputs up to ~250 KB) into the URL fragment. Opening the link re-parses the data, re-applies your transforms, and restores the exact view — fully client-side.
+Reshape (melt) in the Transforms tab: pick 2+ columns → variable/value long format, X/Y preset accordingly, guarded against row explosions (>3M), with one-click Restore Original Data.
+
+6. Smaller items
+SVG export: already supported by the bundled vega-embed — verified it appears in the export menu ("Save as SVG") and documented it.
+Dark theme: a Dark Mode button — dark panels/overlays/gallery via CSS, dark chart via a Vega config (background, axis/legend/title colors) merged at embed time; persists across sessions. Known cosmetic gap: the legend box background is hardcoded white inside the spec.
+True date axes: deliberately not done — it requires reworking the spec's scale system; decimal years remain. This is the one item I'd scope as its own project.
+
+7–10. Logo, Interact/brush, views, stats
+Logo: the ITG-USC PNG in the spec's image mark is now a DTG SVG (bold DTG + DNA helix + magnifier), linking to the GitHub repo instead of itg.usc.edu.
+Brush selection: drag a box on a scatter → "N of M rows selected · Keep / Exclude / CSV / Zoom". Pixel→data mapping is calibrated by least-squares from the rendered points themselves (each symbol knows its pixel and its datum), which sidesteps Vega's group-scoped scales entirely. Keep/Exclude replace the working dataset with full restore; Zoom writes the manual axis limits.
+Saved Views: name the current state, click to flip back; ✕ to delete; stored in localStorage.
+Stats annotations: with Stats on, box/violin charts get a badge — Welch t-test (2 groups) or one-way ANOVA (3+) with exact p-values via a regularized-incomplete-beta implementation. Sanity check: penguins body mass by species gives F(2,339)=343.6, matching the published value. Scatter r²/slope already existed via the Stats toggle.
+
+11. Design pass (kept the primary design)
+Tab strip now has a separator between config tabs and chart-area views (table/overview/3D); toast notifications give feedback for Share Link, Clear Settings, and dark toggle (no more silent buttons); tagline added to the header; and two real robustness bugs found during testing were fixed: re-renders now finalize the previous Vega view (they used to stack up until the tab wedged) and a debounced-save race that could clobber freshly seeded settings.
+
+
+12. R package — CRAN-ready
+r/crossex/ is a complete htmlwidgets package: crossex(df, x=, y=, color=, facet_cols=, hide_panel=), plus crossexOutput()/renderCrossex() for Shiny; factors→character and Date/POSIXt→decimal-year conversion; hand-checked docs, tests (5 passing testthat blocks), NEWS, LICENSE, cran-comments. npm run build auto-syncs the bundled JS into the package. R CMD check --as-cran passes (the single NOTE is the mandatory "New submission" flag every first CRAN release gets).
+
+
+Use it now, before CRAN:
+
+r
+
+# from GitHub (after you push):
+remotes::install_github("davcraig75/crossex", subdir = "r/crossex")
+# or from the local tree:
+install.packages("r/crossex", repos = NULL, type = "source")
+# or the built tarball:
+install.packages("r/crossex_1.0.0.tar.gz", repos = NULL)
+library(crossex)
+crossex(iris, color = "Species")   # opens in RStudio Viewer
+
+To submit to CRAN when ready: (1) confirm the maintainer email in r/crossex/DESCRIPTION is one you can answer from; (2) re-run R CMD check --as-cran on the current tarball (also via devtools::check_win_devel() for a Windows check); (3) upload crossex_1.0.0.tar.gz at https://cran.r-project.org/submit.html with the text from cran-comments.md; (4) click the confirmation email. One thing to verify first: that the name crossex is still free on CRAN (check https://cran.r-project.org/package=crossex).
+
+
+Model

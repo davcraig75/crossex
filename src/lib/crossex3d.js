@@ -461,6 +461,11 @@
 			requestFrame();
 		};
 
+		inst.setPointScale = function(s) {
+			inst.pointScale = s;
+			requestFrame();
+		};
+
 		// ---- interaction -------------------------------------------------------
 		var dragging = false, lastX = 0, lastY = 0, moved = 0;
 		canvas.addEventListener('pointerdown', function(e) {

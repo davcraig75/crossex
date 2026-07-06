@@ -15,16 +15,24 @@
 	margin: 0 auto !important;
 	border-top-right-radius: 4px;
 	border-bottom-right-radius: 4px;
+	/* shrink-wrap narrow charts, but never push past the window: anything
+	   wider scrolls inside .cc_graph_container instead of the page */
 	width: max-content;
+	max-width: 100%;
 	height: min-content;
 	display: flex;
 }
 .cc_graph_container {
 	position: relative;
 	width: 100%;
+	min-width: 0;
 	height: 100%;
 	background: white;
 	padding:2px;
+	/* x only: a vertical scrollbar here would change the width mid-layout and
+	   feed back into the chart's own width calculation */
+	overflow-x: auto;
+	overflow-y: hidden;
 	z-index:1;
     border-bottom-right-radius: 4px;
     border-top-right-radius: 4px;
@@ -705,4 +713,374 @@ table.cc_summary td:first-child, table.cc_summary th:first-child {
 	color: #222;
 	max-width: 240px;
 	display: none;
+}
+/* Transforms tab  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+.cc_tr {
+	width: 158px;
+	font-size: 10px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.cc_tr input[type=text], .cc_tr textarea, .cc_tr select {
+	width: 100%;
+	box-sizing: border-box;
+	font-size: 10px;
+	margin: 2px 0;
+	border: 1px solid #bbb;
+	border-radius: 2px;
+	background: #fff;
+}
+.cc_tr textarea {
+	font-family: ui-monospace, Menlo, Consolas, monospace;
+	resize: vertical;
+}
+.cc_tr_apply {
+	width: 100%;
+	margin: 2px 0 4px 0;
+}
+.cc_tr_msg {
+	color: #b3261e;
+	white-space: normal;
+	word-break: break-word;
+	margin: 2px 0;
+}
+.cc_tr_item {
+	margin: 3px 0;
+	padding: 2px 3px;
+	background: #fff;
+	border: 1px solid #ddd;
+	border-radius: 2px;
+	word-break: break-all;
+	cursor: pointer;
+}
+.cc_tr_item:hover {
+	border-color: #830862;
+}
+.cc_tr_x {
+	color: #b3261e;
+	cursor: pointer;
+	margin-right: 3px;
+	font-weight: bold;
+}
+.cc_tr_help {
+	margin-top: 5px;
+	color: #555;
+	font-size: 9px;
+}
+.cc_tr_help summary {
+	cursor: pointer;
+	color: #830862;
+	font-weight: bold;
+}
+.cc_tr_help code {
+	background: #ddd;
+	padding: 0 2px;
+	border-radius: 2px;
+}
+
+/* Summary toolbar  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+.cc_summary_bar {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	padding: 3px;
+	position: sticky;
+	left: 0;
+}
+.cc_summary_hint {
+	font-size: 9px;
+	color: #888;
+}
+table.cc_summary th {
+	cursor: pointer;
+	user-select: none;
+}
+
+/* Overview sort  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+.cc_ovsort {
+	font-size: 10px;
+	margin-left: 10px;
+}
+
+/* Tab strip separator (config tabs above, chart-area views below)  –––––– */
+.cc_tab_sep {
+	border-top: 1px solid #999;
+	margin: 5px 3px;
+}
+
+/* Interact tab  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+.cc_brush_ctl, .cc_views {
+	width: 158px;
+	font-size: 10px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.cc_views input[type=text] {
+	width: 100%;
+	box-sizing: border-box;
+	font-size: 10px;
+	margin: 2px 0;
+	border: 1px solid #bbb;
+	border-radius: 2px;
+	background: #fff;
+}
+.cc_tr_help_text {
+	font-size: 9px;
+	color: #666;
+	white-space: normal;
+	margin: 3px 0;
+	width: 158px;
+}
+.cc_tr_msg.cc_ok {
+	color: #1b7837;
+}
+
+/* Brush overlay  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+.cc_brush_rect {
+	position: absolute;
+	border: 1.5px dashed #830862;
+	background: rgba(131, 8, 98, 0.07);
+	z-index: 70;
+	pointer-events: none;
+}
+.cc_brush_bar {
+	position: absolute;
+	top: 6px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 71;
+	background: #fff;
+	border: 1px solid #830862;
+	border-radius: 4px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+	padding: 5px 10px;
+	font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #222;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	white-space: nowrap;
+}
+
+/* Stats badge  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+.cc_stats_badge {
+	position: absolute;
+	top: 4px;
+	left: 8px;
+	z-index: 55;
+	background: rgba(255, 255, 255, 0.94);
+	border: 1px solid #c9c9c9;
+	border-left: 3px solid #830862;
+	border-radius: 3px;
+	padding: 3px 9px;
+	font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #222;
+}
+
+/* Data table overlay  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+.cc_dt_overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 62;
+	background: #fff;
+	display: flex;
+	flex-direction: column;
+	padding: 6px 8px;
+	box-sizing: border-box;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.cc_dt_bar {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 13px;
+	border-bottom: 1px solid #ddd;
+	padding-bottom: 5px;
+}
+.cc_dt_bar .cc_ovclose {
+	margin-left: auto;
+	float: none;
+}
+.cc_dt_info {
+	font-size: 11px;
+	color: #666;
+}
+.cc_dt_head {
+	overflow: hidden;
+	border-bottom: 2px solid #bbb;
+	background: #f2f2f2;
+	flex: 0 0 auto;
+}
+.cc_dt_scroll {
+	flex: 1 1 auto;
+	overflow: auto;
+	min-height: 0;
+	position: relative;
+}
+.cc_dt_spacer {
+	position: relative;
+	overflow: hidden;
+	width: max-content;
+	min-width: 100%;
+}
+.cc_dt_rows {
+	position: relative;
+	will-change: transform;
+}
+.cc_dt_tr {
+	display: flex;
+	height: 20px;
+	line-height: 20px;
+}
+.cc_dt_rows .cc_dt_tr:nth-child(even) {
+	background: #f7f7f9;
+}
+.cc_dt_td, .cc_dt_th {
+	flex: 0 0 110px;
+	width: 110px;
+	padding: 0 6px;
+	box-sizing: border-box;
+	font-size: 10px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	border-right: 1px solid #eee;
+}
+.cc_dt_th {
+	font-weight: bold;
+	cursor: pointer;
+	user-select: none;
+	border-right: 1px solid #ddd;
+}
+.cc_dt_th:hover {
+	color: #830862;
+}
+.cc_dt_hl {
+	background: #f4dff0 !important;
+	outline: 1px solid #830862;
+}
+
+/* Dark theme  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+html.cc-dark body,
+html.cc-dark #crossex_app {
+	background: #101116 !important;
+	color: #c8ccd4;
+}
+html.cc-dark .cc,
+html.cc-dark #crossex {
+	color: #c8ccd4;
+}
+html.cc-dark .cc_graph_container,
+html.cc-dark .cc_overview,
+html.cc-dark .cc_3d_overlay,
+html.cc-dark .cc_dt_overlay {
+	background: #191a21;
+	border-color: #3a3d47;
+}
+html.cc-dark .cc_tab,
+html.cc-dark p.cc-emph {
+	background-color: #2a2c35;
+	color: #d5d9e0;
+	border-color: #3a3d47;
+}
+html.cc-dark .cc_tabscontent,
+html.cc-dark .cc_tabcontent,
+html.cc-dark .cc_tab button.active,
+html.cc-dark .cc_tab button:hover {
+	background: #22242c;
+	background-color: #22242c;
+	border-color: #3a3d47;
+}
+html.cc-dark .cc_tab button.active {
+	border-left-color: #555;
+	box-shadow: -0.5px 1px 1px 0px #000;
+}
+html.cc-dark .cc_tablinks svg path,
+html.cc-dark .cc_tablinks svg rect,
+html.cc-dark .cc_tablinks svg line,
+html.cc-dark .cc_tablinks svg text {
+	fill: #c8ccd4;
+	stroke: none;
+}
+html.cc-dark .cc_tablinks img {
+	filter: invert(0.82);
+}
+html.cc-dark input,
+html.cc-dark select,
+html.cc-dark textarea {
+	background: #14151a;
+	color: #c8ccd4;
+	border-color: #3a3d47;
+}
+html.cc-dark table.cc_summary th {
+	background: #2a2c35;
+	color: #d5d9e0;
+}
+html.cc-dark table.cc_summary td {
+	border-bottom-color: #2c2f38;
+}
+html.cc-dark .cc_summary_wrap {
+	background: #191a21;
+	border-color: #3a3d47;
+}
+html.cc-dark .cc_ovcard,
+html.cc-dark .cc_tr_item {
+	background: #22242c;
+	border-color: #3a3d47;
+}
+html.cc-dark .cc_ovname,
+html.cc-dark .cc_dt_bar {
+	color: #d5d9e0;
+}
+html.cc-dark .cc_ovcatlabel {
+	color: #b7bcc7;
+}
+html.cc-dark .cc_ovcatbar {
+	background: #2c2f38;
+}
+html.cc-dark .cc_dt_head {
+	background: #2a2c35;
+	border-bottom-color: #3a3d47;
+}
+html.cc-dark .cc_dt_td, html.cc-dark .cc_dt_th {
+	border-right-color: #2c2f38;
+	color: #c8ccd4;
+}
+html.cc-dark .cc_dt_rows .cc_dt_tr:nth-child(even) {
+	background: #1e2027;
+}
+html.cc-dark .cc_dt_hl {
+	background: #3d2038 !important;
+}
+html.cc-dark .cc_stats_badge,
+html.cc-dark .cc_brush_bar {
+	background: rgba(30, 32, 39, 0.96);
+	color: #d5d9e0;
+	border-color: #565b66;
+	border-left-color: #b56;
+}
+html.cc-dark .cc_sample_notice {
+	background: #3a3320;
+	border-color: #6b5900;
+	color: #e0c360;
+}
+html.cc-dark .cc_ovhist .cc_ovbin,
+html.cc-dark .cc_ovcatbar > span {
+	background: #638ccc;
+}
+html.cc-dark .cc_tr_help_text,
+html.cc-dark .cc_tr_help,
+html.cc-dark .cc_ovmeta,
+html.cc-dark .cc_dt_info {
+	color: #8b909b;
+}
+html.cc-dark .cc_tr_help code {
+	background: #2c2f38;
+}
+html.cc-dark .cc_3d_note, html.cc-dark .cc_3d_controls, html.cc-dark .cc_3d_legend {
+	color: #b7bcc7;
+}
+html.cc-dark .cc_3d_stage_fill {
+	border-color: #3a3d47;
 }

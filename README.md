@@ -272,13 +272,19 @@ Missing values (`"NA"`, `"null"`, `"N/A"`, `"unknown"`, `""`) are automatically 
 
 **In the standalone app** (`http://localhost:8080/`):
 
+The start page shows a **chart gallery** — one card per chart type (scatter, line, histogram, box, violin, stacked bar, heatmap, correlation matrix, faceted grid, 3D unit view, column overview). Clicking a card loads the demo dataset pre-configured to that example, so you can see every chart type in one click. The gallery disappears as soon as a graph is drawn.
+
+To use your own data:
+
 1. Paste CSV, TSV, or a JSON array of row objects into the text area — or click **Load File**, or drag and drop a file onto the text area
 2. Click **Graph Data**
 3. The tool auto-detects delimiters (tab vs comma) and column types (numeric vs categorical)
 
 Or click **Load Demo Data** to load a sample dataset, or **Load 5M Demo** to synthesize a 5,000,000-row mixed-type dataset in the browser (no download) and explore the large-data path.
 
-**Pivot Table** opens a drag-and-drop PivotTable.js view of the loaded data below the chart (capped at a uniform 50,000-row sample for very large datasets). The **3D View** (cube icon in the chart's tab strip, alongside the other panel buttons) opens a SandDance-style unit visualization *in the chart area* — every row is one WebGL mark — with animated transitions between a 3D scatter and stacked unit columns, orbit/zoom camera, per-column color, and click-for-details, up to 100,000 points. The dependency-free renderer is bundled into the widget, so it also works in embedded `crossex()` instances. Picking any panel tab returns to the Vega chart. Date-like columns parsed from CSV/TSV are converted to decimal years (e.g. 2023.4521) so they behave as quantitative axes; combine with the **Line** toggle for time-series charts.
+**Share Link** copies a URL that encodes the current settings, transform definitions, and (for inputs up to ~250 KB) the data itself, lz-compressed into the fragment — opening it rebuilds the exact view with nothing sent to any server. **Dark Mode** switches the whole app (panels, overlays, and the chart itself) to a dark palette; the choice persists.
+
+**Pivot Table** opens a drag-and-drop PivotTable.js view of the loaded data below the chart (capped at a uniform 50,000-row sample for very large datasets). The **Data Table** button (grid icon in the chart's tab strip) opens a virtual-scrolling raw-row grid over the full dataset — click a header to sort (third click restores data order), and double-click any chart point to jump to its row. The **3D View** (cube icon in the chart's tab strip, alongside the other panel buttons) opens a SandDance-style unit visualization *in the chart area* — every row is one WebGL mark — with animated transitions between a 3D scatter and stacked unit columns, orbit/zoom camera, per-column color, a point-size slider, and click-for-details, up to 100,000 points. The dependency-free renderer is bundled into the widget, so it also works in embedded `crossex()` instances. Picking any panel tab returns to the Vega chart. Date-like columns parsed from CSV/TSV are converted to decimal years (e.g. 2023.4521) so they behave as quantitative axes; combine with the **Line** toggle for time-series charts.
 
 Large inputs are handled without freezing the page: big delimited files parse in chunks with a progress indicator, files larger than a few MB are held in memory and only previewed in the text area (parsed once, reused for re-graphs), and column typing runs incrementally on very wide/tall tables. Datasets over 150,000 rows are rendered from a uniform 100,000-row sample by default, and faceted views render at most 10,000 rows (rebuilding every facet cell is expensive inside the Vega dataflow) — a banner always shows exactly what is displayed, and you can change the cap under **Filtering ▸ Render sample**. The Summary tab and CSV export always use the full dataset — tested through 5 million rows.
 
@@ -311,6 +317,7 @@ Toggle **Interactive mode** (checkbox in the control panel) to enable:
 
 Click the export icon (top-right of the chart) to:
 - **Download PNG** -- High-resolution (2x) image
+- **Download SVG** -- Vector image, ideal for publications
 - **Download CSV** -- Current filtered data as CSV
 - **Open in Vega Editor** -- Edit the raw Vega spec for advanced customization
 
@@ -342,8 +349,14 @@ Click **Clear Settings** to reset everything to defaults.
 ### Search Tab
 Search and highlight data points by text matching against any column.
 
+### Interact Tab
+- **Pan/zoom** (drag + scroll) and **tooltips** toggles
+- **Reset Zoom** clears any manual axis limits
+- **Brush mode** — on an unfaceted, linear-axis scatter plot, drag a box around points, then **Keep** or **Exclude** them (replacing the working dataset, with one-click *Restore Original Data*), download just the selection as **CSV**, or **Zoom** the axes to the box
+- **Saved Views** — name the current full settings state (axes, colors, filters, everything) and flip back to it with one click; views persist in the browser
+
 ### Charts Tab
-Set X and Y axis columns. Shows chart-type-specific sub-panels:
+Set X and Y axis columns. The **Stats** toggle overlays fitted r²/slope on scatter plots and n/μ/σ per category — and, on box/violin charts, a badge with the group-difference test: **Welch t-test** for two groups, **one-way ANOVA** for three or more, computed over the full dataset. Shows chart-type-specific sub-panels:
 - **Scatter options** -- Contour density overlay, histogram margins, regression
 - **Violin/Box options** -- Box plot, violin, dashes, bar plot toggles
 - **Grid options** -- Grid spacing, radius, categorical mapping
@@ -362,6 +375,7 @@ Set X and Y axis columns. Shows chart-type-specific sub-panels:
 - **Outliers** -- Highlight statistical outliers
 - **Jitter** -- Add random offset to overlapping points (configurable radius)
 - **Point size** -- Min/max point size range
+- **Shape** -- Point symbol (circle, square, diamond, triangles, …)
 - **Stroke** -- Map a column to point outline color
 - **Tooltips** -- Enable hover info
 - **Contour levels** -- Number and weighting of density contours
@@ -398,10 +412,22 @@ Set X and Y axis columns. Shows chart-type-specific sub-panels:
 - Legend column count
 
 ### Summary Tab
-Per-column statistics for the full dataset: type, valid/missing/distinct counts, min, median, mean, standard deviation, max, and the most frequent value for categorical columns. Computed on first open.
+Per-column statistics for the full dataset: type, valid/missing/distinct counts, min, median, mean, standard deviation, max, and the most frequent value for categorical columns. Computed on first open. Click any column header to sort the table by that statistic (click again to reverse), and use **Download CSV** to save the summary itself.
+
+### Transforms Tab
+The *fx* button opens the Transforms tab: name a new column, type a formula, and **Add Column** computes it for every row and makes it available in every dropdown (axes, color, facets, filters, summary, 3D view, export). Formulas reference columns by name (`body_mass_g / 1000`) or in brackets when the name has spaces (`[bill length]`), and support:
+
+- Arithmetic, comparisons, boolean logic, and `test ? a : b` conditionals
+- Per-row functions: `abs ceil floor round sqrt exp log log2 log10 pow min max sign if num str upper lower trim len`
+- Whole-column statistics evaluated once: `mean(col) median(col) sd(col) sum(col) count(col) colmin(col) colmax(col)` — e.g. a z-score is `(x - mean(x)) / sd(x)`
+- Text literals in quotes: `bill_length_mm > median(bill_length_mm) ? "long" : "short"`
+
+An **insert column** picker drops any column reference into the formula at the cursor, and **example formulas** offers ready-made templates (log, z-score, percent of total, ratio, difference, high/low split, combined categories) built from your own columns. Created columns are listed in the tab — click one to edit and re-apply it, or ✕ to remove it everywhere. Rows that error, divide by zero, or produce non-finite values become missing (NA). Formulas are compiled once and evaluated in chunks, so transforms work on multi-million-row datasets without freezing the page.
+
+The tab's **Reshape** section melts wide data into long form: select two or more columns and they become `variable`/`value` pairs (names configurable) — the natural shape for multi-series plots (X = variable, Y = value, color by any kept column). Melting replaces the working dataset; *Restore Original Data* (Interact tab) undoes it.
 
 ### Overview
-The bar-chart button at the bottom of the tab strip toggles a Column Overview: one card per column showing its distribution (a mini histogram for numeric columns, top-category bars for categorical ones) with range, mean, distinct and missing counts. Clicking a card graphs that column's distribution. The Overview opens automatically the first time a dataset is viewed with no saved settings.
+The bar-chart button at the bottom of the tab strip toggles a Column Overview: one card per column showing its distribution (a mini histogram for numeric columns, top-category bars for categorical ones) with range, mean, distinct and missing counts. Clicking a card graphs that column's distribution; a sort control orders the cards by data order, name, type, or missingness. The Overview opens automatically the first time a dataset is viewed with no saved settings.
 
 ---
 
@@ -439,6 +465,10 @@ crossex/
 │   ├── crossex_site.js       # Built site copy
 │   └── crossex.html          # Example standalone page
 │
+├── r/crossex/                # R package (htmlwidgets wrapper, CRAN-ready)
+│   ├── R/crossex.R           # crossex(), crossexOutput(), renderCrossex()
+│   └── inst/htmlwidgets/     # widget binding + bundled crossex.js
+│
 └── electron/                 # Electron desktop app
     ├── main.js               # Main process
     ├── index.html            # Desktop entry point
@@ -473,6 +503,25 @@ npm run build:site
 ```
 
 Both commands write output to `./` and `./public/`.
+
+---
+
+## R Package
+
+`r/crossex/` wraps the library as an [htmlwidget](https://www.htmlwidgets.org/): one call opens the full explorer for any data frame, in the RStudio Viewer, Shiny, or R Markdown.
+
+```r
+# until it's on CRAN, install from GitHub:
+remotes::install_github("davcraig75/crossex", subdir = "r/crossex")
+
+library(crossex)
+crossex(iris)                                             # explore interactively
+crossex(iris, x = "Sepal.Length", y = "Sepal.Width",
+        color = "Species")                                # preset the view
+crossex(mtcars, x = "wt", y = "mpg", facet_cols = "cyl")  # faceted
+```
+
+For Shiny use `crossexOutput("id")` / `renderCrossex(crossex(df))`. The package passes `R CMD check --as-cran` (one NOTE: new submission); `npm run build` keeps its bundled JavaScript in sync. See `r/crossex/README.md` for details and CRAN submission notes.
 
 ---
 

@@ -59,6 +59,7 @@ function setInteractiveSignals(spec, signalMap, enable) {
 var TAB_CONFIG = [
 	{id: 'defaultOpen', panel: 'None'},
 	{id: 'Search_tablinks', panel: 'Search'},
+	{id: 'Interact_tablinks', panel: 'Interact'},
 	{id: 'Charts_tablinks', panel: 'Charts'},
 	{id: 'Axis_tablinks', panel: 'Axis'},
 	{id: 'Marks_tablinks', panel: 'Marks'},
@@ -66,7 +67,8 @@ var TAB_CONFIG = [
 	{id: 'Coloring_tablinks', panel: 'Coloring'},
 	{id: 'Filtering_tablinks', panel: 'Filtering'},
 	{id: 'Margins_tablinks', panel: 'Margins'},
-	{id: 'Summary_tablinks', panel: 'Summary'}
+	{id: 'Summary_tablinks', panel: 'Summary'},
+	{id: 'Transforms_tablinks', panel: 'Transforms'}
 ];
 
 var _resizeHandlers = {};
@@ -296,12 +298,24 @@ function ccOpenCity(evt, cityName,element) {
 	ccPanelProxy[element][element]=document.getElementById(cityName).offsetWidth;
 	evt.currentTarget.className += " active";
 	// picking a config tab exits any full-container overlay, back to the chart
-	var ov = document.getElementById('cc_overview' + element);
-	if (ov) { ov.style.display = 'none'; }
-	var td = document.getElementById('cc_3d' + element);
-	if (td) { td.style.display = 'none'; }
+	hideOverlays(element);
+}
+
+// The chart area hosts mutually-exclusive overlays (overview, 3D, table)
+function hideOverlays(element, except) {
+	['cc_overview', 'cc_3d', 'cc_table'].forEach(function(id) {
+		if (id === except) { return; }
+		var el = document.getElementById(id + element);
+		if (el) { el.style.display = 'none'; }
+	});
 	var tip = document.getElementById('cc_3d_tip');
 	if (tip) { tip.style.display = 'none'; }
+	// opening an overlay: overlays anchor to the container's visible box, so
+	// a chart scrolled sideways must not leave the overlay off-screen
+	if (except) {
+		var gc = document.getElementById('cc_graph_container' + element);
+		if (gc) { gc.scrollLeft = 0; gc.scrollTop = 0; }
+	}
 }
 
 function initAndListen(listener, id, result) {
@@ -527,8 +541,20 @@ function summarizeColumn(data, col, isNum) {
 	return row;
 }
 
-function summaryTableHtml(rows) {
-	var html = '<table class="cc_summary"><thead><tr><th>Column</th><th>Type</th><th>n</th><th>Miss</th><th>Uniq</th><th>Min</th><th>Median</th><th>Mean</th><th>SD</th><th>Max</th><th>Top Value</th></tr></thead><tbody>';
+var SUMMARY_COLS = [
+	{ key: 'col', label: 'Column' }, { key: 'type', label: 'Type' },
+	{ key: 'n', label: 'n' }, { key: 'missing', label: 'Miss' },
+	{ key: 'distinct', label: 'Uniq' }, { key: 'min', label: 'Min' },
+	{ key: 'median', label: 'Median' }, { key: 'mean', label: 'Mean' },
+	{ key: 'sd', label: 'SD' }, { key: 'max', label: 'Max' },
+	{ key: 'top', label: 'Top Value' }
+];
+
+function summaryTableHtml(rows, sort) {
+	var html = '<table class="cc_summary"><thead><tr>' + SUMMARY_COLS.map(function(c) {
+		var arrow = sort && sort.key === c.key ? (sort.dir > 0 ? ' ▲' : ' ▼') : '';
+		return '<th data-key="' + c.key + '" title="sort by ' + c.label + '">' + c.label + arrow + '</th>';
+	}).join('') + '</tr></thead><tbody>';
 	rows.forEach(function(r) {
 		html += '<tr><td>' + escapeHtml(r.col) + '</td><td>' + r.type + '</td><td>' + r.n + '</td><td>' + r.missing + '</td><td>' + r.distinct + '</td>';
 		html += '<td>' + fmtStat(r.min) + '</td><td>' + fmtStat(r.median) + '</td><td>' + fmtStat(r.mean) + '</td><td>' + fmtStat(r.sd) + '</td><td>' + fmtStat(r.max) + '</td>';
@@ -681,6 +707,7 @@ function build3dControls(element, lists) {
 		'<button data-cc3dlayout="scatter" class="cc_3d_btn' + (cfg.layout === 'scatter' ? ' active' : '') + '">Scatter</button>' +
 		'<button data-cc3dlayout="stacks" class="cc_3d_btn' + (cfg.layout === 'stacks' ? ' active' : '') + '">Stacks</button>' +
 		'</span>' +
+		'<label>Size <input type="range" data-cc3dsize min="60" max="700" step="10" value="' + (cfg.pointScale || 220) + '" title="point size"></label>' +
 		'<button data-cc3dreset class="cc_3d_btn">Reset</button>';
 	wrap.querySelectorAll('select[data-cc3d]').forEach(function(s) {
 		s.onchange = function() {
@@ -696,6 +723,10 @@ function build3dControls(element, lists) {
 			if (state.inst) { state.inst.applyConfig(cfg, false); }
 		};
 	});
+	wrap.querySelector('input[data-cc3dsize]').oninput = function() {
+		cfg.pointScale = +this.value;
+		if (state.inst && state.inst.setPointScale) { state.inst.setPointScale(cfg.pointScale); }
+	};
 	wrap.querySelector('button[data-cc3dreset]').onclick = function() { if (state.inst) { state.inst.resetCamera(); } };
 }
 
@@ -736,45 +767,455 @@ function open3dView(element, data, mycolumns) {
 		requestAnimationFrame(function() {
 			state.inst = crossex3d.create(stage, show3dTip);
 			state.rebuild = false;
-			if (state.inst) { state.inst.setData(state.rows, state.cfg); render3dLegend(element); }
+			if (state.inst) {
+				state.inst.setData(state.rows, state.cfg);
+				if (state.cfg.pointScale && state.inst.setPointScale) { state.inst.setPointScale(state.cfg.pointScale); }
+				render3dLegend(element);
+			}
 		});
 	} else {
 		render3dLegend(element);
 	}
 }
 
+// ---- Transforms: formula -> new column -------------------------------------
+// A small expression language evaluated once per row. Identifiers resolve only
+// to column names, whitelisted functions, or constants, and "." is not a token,
+// so a compiled formula cannot reach properties or globals. Columns are
+// referenced bare (identifier-like names) or as [name with spaces].
+var _transforms = {};   // element -> [{name, formula}], session-only
+var _reopenTab = {};    // element -> tab button to re-select after a re-render
+
+var TR_RESERVED = (function() {
+	var r = { Sum: 1, Count: 1, None: 1 };
+	for (var k in _3D_HIDDEN_FIELDS) { r[k] = 1; }
+	return r;
+})();
+
+var TR_MATH_FUNCS = {
+	abs: 'Math.abs', ceil: 'Math.ceil', floor: 'Math.floor', round: 'Math.round',
+	sqrt: 'Math.sqrt', exp: 'Math.exp', log: 'Math.log', log2: 'Math.log2',
+	log10: 'Math.log10', pow: 'Math.pow', min: 'Math.min', max: 'Math.max',
+	sign: 'Math.sign'
+};
+var TR_ROW_FUNCS = { 'if': 'IF', num: 'NUM', str: 'STR', upper: 'UPPER', lower: 'LOWER', trim: 'TRIM', len: 'LEN' };
+var TR_AGG_FUNCS = { mean: 1, median: 1, sd: 1, sum: 1, count: 1, colmin: 1, colmax: 1 };
+var TR_CONSTS = { PI: 'Math.PI', E: 'Math.E', 'true': 'true', 'false': 'false', 'null': 'null', NaN: 'NaN' };
+
+var TR_HELPERS = {
+	IF: function(c, a, b) { return c ? a : b; },
+	NUM: function(v) { return v == null || v === '' ? NaN : +v; },
+	STR: function(v) { return v == null ? null : String(v); },
+	UPPER: function(v) { return v == null ? null : String(v).toUpperCase(); },
+	LOWER: function(v) { return v == null ? null : String(v).toLowerCase(); },
+	TRIM: function(v) { return v == null ? null : String(v).trim(); },
+	LEN: function(v) { return v == null ? null : String(v).length; }
+};
+
+// longer operators before their prefixes (** before *, === before ==)
+var TR_TOKEN_RE = /\s+|"([^"]*)"|'([^']*)'|\[([^\]]+)\]|(\d+\.?\d*(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?)|([A-Za-z_][A-Za-z0-9_]*)|(\*\*|<=|>=|===|!==|==|!=|&&|\|\||[-+*\/%(),?:<>!])/g;
+
+function trTokenize(src) {
+	var tokens = [];
+	var pos = 0, m;
+	TR_TOKEN_RE.lastIndex = 0;
+	while ((m = TR_TOKEN_RE.exec(src)) !== null) {
+		if (m.index !== pos) { break; }
+		pos = TR_TOKEN_RE.lastIndex;
+		if (m[1] !== undefined || m[2] !== undefined) {
+			tokens.push({ t: 'str', v: m[1] !== undefined ? m[1] : m[2] });
+		} else if (m[3] !== undefined) {
+			tokens.push({ t: 'col', v: m[3].trim() });
+		} else if (m[4] !== undefined) {
+			tokens.push({ t: 'num', v: m[4] });
+		} else if (m[5] !== undefined) {
+			tokens.push({ t: 'ident', v: m[5] });
+		} else if (m[6] !== undefined) {
+			tokens.push({ t: 'op', v: m[6] });
+		}
+	}
+	if (pos !== src.length) {
+		throw new Error('unexpected character "' + src[pos] + '" in formula');
+	}
+	return tokens;
+}
+
+// Whole-column statistic, numeric-coerced, NA-skipped; emitted as a literal
+function trAggregate(fnName, col, data, cache) {
+	var key = fnName + ' ' + col;
+	if (cache[key] !== undefined) { return cache[key]; }
+	var vals = [];
+	for (var i = 0; i < data.length; i++) {
+		var v = data[i][col];
+		if (v == null || v === '' || (typeof v !== 'number' && NA_VALUES.has(v))) { continue; }
+		var x = typeof v === 'number' ? v : Number(v);
+		if (x === x) { vals.push(x); }
+	}
+	var n = vals.length, out;
+	if (fnName === 'count') {
+		out = n;
+	} else if (!n) {
+		out = NaN;
+	} else if (fnName === 'sum' || fnName === 'mean' || fnName === 'sd') {
+		var s = 0;
+		for (var j = 0; j < n; j++) { s += vals[j]; }
+		if (fnName === 'sum') { out = s; }
+		else if (fnName === 'mean') { out = s / n; }
+		else {
+			var mu = s / n, ss = 0;
+			for (var q = 0; q < n; q++) { var d = vals[q] - mu; ss += d * d; }
+			out = n > 1 ? Math.sqrt(ss / (n - 1)) : 0;
+		}
+	} else if (fnName === 'median') {
+		vals.sort(function(a, b) { return a - b; });
+		out = stats.quantile(vals, 0.5);
+	} else {
+		out = vals[0];
+		for (var w = 1; w < n; w++) {
+			if (fnName === 'colmin' ? vals[w] < out : vals[w] > out) { out = vals[w]; }
+		}
+	}
+	cache[key] = '(' + String(out) + ')';
+	return cache[key];
+}
+
+// cols maps column name -> 'num' | 'cat'; data is only read for aggregates
+function trCompile(formula, cols, data) {
+	var tokens = trTokenize(formula);
+	if (!tokens.length) { throw new Error('the formula is empty'); }
+	var aggCache = {};
+	function colExpr(name) {
+		var acc = 'row[' + JSON.stringify(name) + ']';
+		return cols[name] === 'num' ? 'FN.NUM(' + acc + ')' : acc;
+	}
+	var parts = [];
+	for (var i = 0; i < tokens.length; i++) {
+		var tk = tokens[i];
+		if (tk.t === 'str') {
+			parts.push(JSON.stringify(tk.v));
+		} else if (tk.t === 'num') {
+			parts.push(tk.v);
+		} else if (tk.t === 'op') {
+			parts.push(tk.v);
+		} else if (tk.t === 'col') {
+			if (!(tk.v in cols)) { throw new Error('unknown column [' + tk.v + ']'); }
+			parts.push(colExpr(tk.v));
+		} else {
+			var isCall = tokens[i + 1] && tokens[i + 1].t === 'op' && tokens[i + 1].v === '(';
+			if (isCall && TR_AGG_FUNCS[tk.v] === 1) {
+				var colTok = tokens[i + 2], closeTok = tokens[i + 3];
+				var cname = colTok && (colTok.t === 'col' || colTok.t === 'ident') ? colTok.v : null;
+				if (cname == null || !(cname in cols) || !closeTok || closeTok.v !== ')') {
+					throw new Error(tk.v + '(…) takes a single column, e.g. ' + tk.v + '(colname)');
+				}
+				parts.push(trAggregate(tk.v, cname, data, aggCache));
+				i += 3;
+			} else if (isCall && TR_MATH_FUNCS[tk.v]) {
+				parts.push(TR_MATH_FUNCS[tk.v]);
+			} else if (isCall && TR_ROW_FUNCS[tk.v]) {
+				parts.push('FN.' + TR_ROW_FUNCS[tk.v]);
+			} else if (tk.v in cols) {
+				parts.push(colExpr(tk.v));
+			} else if (TR_CONSTS[tk.v]) {
+				parts.push(TR_CONSTS[tk.v]);
+			} else {
+				throw new Error('unknown name "' + tk.v + '" — not a column or function');
+			}
+		}
+	}
+	try {
+		return new Function('row', 'FN', '"use strict"; return (' + parts.join(' ') + ');');
+	} catch (e) {
+		throw new Error('could not parse the formula (' + e.message + ')');
+	}
+}
+
+// Chunked so a formula over millions of rows never freezes the tab.
+// NaN/Infinity/undefined all become null, which the chart treats as missing.
+function trEvaluate(fn, data, name, onProgress, done) {
+	var CHUNK = 100000;
+	var i = 0, errors = 0, nonnull = 0;
+	function run() {
+		var end = Math.min(i + CHUNK, data.length);
+		for (; i < end; i++) {
+			var out;
+			try { out = fn(data[i], TR_HELPERS); } catch (e) { errors++; out = null; }
+			if (typeof out === 'number') {
+				if (!isFinite(out)) { out = null; }
+			} else if (out === undefined || out === '') {
+				out = null;
+			}
+			if (out !== null) { nonnull++; }
+			data[i][name] = out;
+		}
+		if (i < data.length) {
+			if (onProgress) { onProgress(Math.round(100 * i / data.length)); }
+			requestAnimationFrame(run);
+		} else {
+			done({ errors: errors, nonnull: nonnull });
+		}
+	}
+	run();
+}
+
+function trColRef(name) {
+	var bare = /^[A-Za-z_][A-Za-z0-9_]*$/.test(name) &&
+		!TR_MATH_FUNCS[name] && !TR_ROW_FUNCS[name] && TR_AGG_FUNCS[name] !== 1 && !TR_CONSTS[name];
+	return bare ? name : '[' + name + ']';
+}
+
+// Ready-to-edit example formulas built from the loaded data's own columns
+function trTemplates(cols) {
+	var nums = [], cats = [];
+	Object.keys(cols).forEach(function(c) { (cols[c] === 'num' ? nums : cats).push(c); });
+	var t = [];
+	var a = nums[0], b = nums[1];
+	if (a) {
+		var ra = trColRef(a);
+		t.push({ label: 'log10 of ' + a, name: 'log_' + a, formula: 'log10(' + ra + ')' });
+		t.push({ label: 'z-score of ' + a, name: 'z_' + a, formula: '(' + ra + ' - mean(' + ra + ')) / sd(' + ra + ')' });
+		t.push({ label: 'percent of total ' + a, name: 'pct_' + a, formula: '100 * ' + ra + ' / sum(' + ra + ')' });
+		t.push({ label: 'high/low split of ' + a, name: a + '_level', formula: ra + ' > median(' + ra + ') ? "high" : "low"' });
+	}
+	if (a && b) {
+		t.push({ label: b + ' / ' + a, name: 'ratio', formula: trColRef(b) + ' / ' + ra });
+		t.push({ label: b + ' - ' + a, name: 'diff', formula: trColRef(b) + ' - ' + ra });
+	}
+	if (cats.length >= 2) {
+		var rc0 = trColRef(cats[0]), rc1 = trColRef(cats[1]);
+		t.push({ label: cats[0] + ' + ' + cats[1] + ' combined', name: 'combo',
+			formula: 'if(' + rc0 + ' == null || ' + rc1 + ' == null, null, str(' + rc0 + ') + " · " + str(' + rc1 + '))' });
+	}
+	return t;
+}
+
+function trFail(msgEl, text) {
+	msgEl.className = 'cc_tr_msg';
+	msgEl.textContent = text;
+}
+
+// Register the column everywhere a column name can appear, then re-render:
+// dropdown option lists, the caller's .columns, and the per-dataset caches
+// (keyed by the mutated array, so they must be dropped explicitly).
+function finishTransform(element, name, formula, redefined) {
+	var data = _fullData[element];
+	var opts = _crossexOpts[element];
+	if (data.columns && data.columns.indexOf(name) < 0) { data.columns.push(name); }
+	((opts && opts.options) || []).forEach(function(sig) {
+		if (sig && sig.name && sig.bind && sig.bind.options && sig.bind.options.indexOf(name) < 0) {
+			sig.bind.options.push(name);
+		}
+	});
+	_typeCache.delete(data);
+	_overviewCache.delete(data);
+	var list = _transforms[element] = _transforms[element] || [];
+	if (redefined) {
+		list.forEach(function(t) { if (t.name === name) { t.formula = formula; } });
+	} else {
+		list.push({ name: name, formula: formula });
+	}
+	_reopenTab[element] = 'Transforms_tablinks';
+	crossexloader(element, true);
+	delay(30).then(function() { crossex(element, data, opts.options, opts.widthid); });
+}
+
+function removeTransform(element, name) {
+	var data = _fullData[element];
+	var opts = _crossexOpts[element];
+	_transforms[element] = (_transforms[element] || []).filter(function(t) { return t.name !== name; });
+	if (!data) { return; }
+	var i = 0, CHUNK = 200000;
+	(function chunk() {
+		var end = Math.min(i + CHUNK, data.length);
+		for (; i < end; i++) { delete data[i][name]; }
+		if (i < data.length) { requestAnimationFrame(chunk); return; }
+		if (data.columns) {
+			var ci = data.columns.indexOf(name);
+			if (ci >= 0) { data.columns.splice(ci, 1); }
+		}
+		((opts && opts.options) || []).forEach(function(sig) {
+			if (sig && sig.name && sig.bind && sig.bind.options) {
+				var oi = sig.bind.options.indexOf(name);
+				if (oi >= 0) { sig.bind.options.splice(oi, 1); }
+			}
+		});
+		_typeCache.delete(data);
+		_overviewCache.delete(data);
+		// a saved selection pointing at the removed column would draw an empty chart
+		var store = loadSignalsFromCookie('vegaSignals_' + element);
+		if (store) {
+			Object.keys(store).forEach(function(k) { if (store[k] === name) { delete store[k]; } });
+			saveSignalState('vegaSignals_' + element, store);
+		}
+		_reopenTab[element] = 'Transforms_tablinks';
+		crossexloader(element, true);
+		delay(30).then(function() { crossex(element, data, opts.options, opts.widthid); });
+	})();
+}
+
+function renderTransformList(element) {
+	var wrap = document.getElementById('cc_tr_list' + element);
+	if (!wrap) { return; }
+	var list = _transforms[element] || [];
+	wrap.innerHTML = list.map(function(t) {
+		return '<div class="cc_tr_item" data-tr-name="' + escapeHtml(t.name) + '">' +
+			'<span class="cc_tr_x" data-tr-remove="' + escapeHtml(t.name) + '" title="remove this column">✕</span>' +
+			'<b>' + escapeHtml(t.name) + '</b> = ' + escapeHtml(t.formula) + '</div>';
+	}).join('');
+	wrap.querySelectorAll('[data-tr-remove]').forEach(function(x) {
+		x.onclick = function(e) {
+			e.stopPropagation();
+			removeTransform(element, x.getAttribute('data-tr-remove'));
+		};
+	});
+	wrap.querySelectorAll('[data-tr-name]').forEach(function(item) {
+		item.onclick = function() {
+			var t = (_transforms[element] || []).find(function(x2) { return x2.name === item.getAttribute('data-tr-name'); });
+			if (!t) { return; }
+			document.getElementById('cc_tr_name' + element).value = t.name;
+			document.getElementById('cc_tr_formula' + element).value = t.formula;
+		};
+	});
+}
+
+function wireTransformTab(element, mycolumns) {
+	var nameIn = document.getElementById('cc_tr_name' + element);
+	if (!nameIn) { return; }
+	var formulaIn = document.getElementById('cc_tr_formula' + element);
+	var insertSel = document.getElementById('cc_tr_insert' + element);
+	var templateSel = document.getElementById('cc_tr_template' + element);
+	var applyBtn = document.getElementById('cc_tr_apply' + element);
+	var msg = document.getElementById('cc_tr_msg' + element);
+	var cols = {};
+	(mycolumns || []).forEach(function(c) {
+		if (c.feature && c.feature !== 'None') { cols[c.feature] = c.type; }
+	});
+	insertSel.innerHTML = '<option value="">insert column…</option>' +
+		Object.keys(cols).map(function(c) {
+			return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>';
+		}).join('');
+	insertSel.onchange = function() {
+		if (!this.value) { return; }
+		var ref = trColRef(this.value);
+		var s = formulaIn.selectionStart == null ? formulaIn.value.length : formulaIn.selectionStart;
+		var e = formulaIn.selectionEnd == null ? s : formulaIn.selectionEnd;
+		formulaIn.value = formulaIn.value.slice(0, s) + ref + formulaIn.value.slice(e);
+		formulaIn.focus();
+		formulaIn.selectionStart = formulaIn.selectionEnd = s + ref.length;
+		this.value = '';
+	};
+	var templates = trTemplates(cols);
+	templateSel.innerHTML = '<option value="">example formulas…</option>' +
+		templates.map(function(t, i) {
+			return '<option value="' + i + '">' + escapeHtml(t.label) + '</option>';
+		}).join('');
+	templateSel.onchange = function() {
+		var t = templates[this.value];
+		if (t) {
+			nameIn.value = t.name;
+			formulaIn.value = t.formula;
+		}
+		this.value = '';
+	};
+	applyBtn.onclick = function() {
+		var name = (nameIn.value || '').trim();
+		var formula = (formulaIn.value || '').trim();
+		msg.textContent = '';
+		var data = _fullData[element];
+		if (!data || !data.length) { return trFail(msg, 'no data loaded'); }
+		if (!name) { return trFail(msg, 'give the new column a name'); }
+		if (TR_RESERVED[name]) { return trFail(msg, '"' + name + '" is a reserved name'); }
+		var redefined = (_transforms[element] || []).some(function(t) { return t.name === name; });
+		if (cols[name] !== undefined && !redefined) {
+			return trFail(msg, '"' + name + '" already exists — pick a new name');
+		}
+		if (!formula) { return trFail(msg, 'enter a formula'); }
+		var fn;
+		try {
+			fn = trCompile(formula, cols, data);
+		} catch (e) {
+			return trFail(msg, e.message);
+		}
+		applyBtn.disabled = true;
+		applyBtn.textContent = 'Computing…';
+		trEvaluate(fn, data, name, function(pct) {
+			applyBtn.textContent = 'Computing… ' + pct + '%';
+		}, function(res) {
+			if (!res.nonnull) {
+				for (var r = 0; r < data.length; r++) { delete data[r][name]; }
+				applyBtn.disabled = false;
+				applyBtn.textContent = 'Add Column';
+				return trFail(msg, 'every row came out missing — check the formula' +
+					(res.errors ? ' (' + res.errors + ' rows errored)' : ''));
+			}
+			finishTransform(element, name, formula, redefined);
+		});
+	};
+	renderTransformList(element);
+}
+
+var _overviewSort = {};   // element -> chosen card ordering, kept across reopens
+var OVERVIEW_SORTS = [
+	['orig', 'data order'], ['name', 'by name'],
+	['type', 'numeric first'], ['missing', 'most missing']
+];
+
+function paintOverview(element, colStats, total) {
+	var container = document.getElementById('cc_overview' + element);
+	var mode = _overviewSort[element] || 'orig';
+	var rows = colStats.slice();
+	if (mode === 'name') {
+		rows.sort(function(a, b) { return String(a.col).localeCompare(String(b.col)); });
+	} else if (mode === 'type') {
+		rows.sort(function(a, b) { return a.type === b.type ? 0 : (a.type === 'num' ? -1 : 1); });
+	} else if (mode === 'missing') {
+		rows.sort(function(a, b) { return b.missing - a.missing; });
+	}
+	container.innerHTML = '<div class="cc_ovheader"><b>Column Overview</b>' +
+		'<select id="cc_ovsort' + element + '" class="cc_ovsort">' +
+		OVERVIEW_SORTS.map(function(s) {
+			return '<option value="' + s[0] + '"' + (s[0] === mode ? ' selected' : '') + '>' + s[1] + '</option>';
+		}).join('') + '</select>' +
+		'<span class="cc_ovhint">click a column to graph its distribution</span>' +
+		'<span class="cc_ovclose" id="cc_ovclose' + element + '">✕ close</span></div>' +
+		'<div class="cc_ovgrid">' + rows.map(function(r) { return overviewCardHtml(r, total); }).join('') + '</div>';
+	wireOverviewActions(element);
+	document.getElementById('cc_ovsort' + element).onchange = function() {
+		_overviewSort[element] = this.value;
+		paintOverview(element, colStats, total);
+	};
+}
+
 function renderOverview(element, data, mycolumns) {
 	var container = document.getElementById('cc_overview' + element);
 	if (!container) { return; }
-	var header = '<div class="cc_ovheader"><b>Column Overview</b>' +
-		'<span class="cc_ovhint">click a column to graph its distribution</span>' +
-		'<span class="cc_ovclose" id="cc_ovclose' + element + '">✕ close</span></div>';
 	if (!data || !data.length || !mycolumns || !mycolumns.length) {
-		container.innerHTML = header + '<div class="cc_ovmeta">No data loaded.</div>';
+		container.innerHTML = '<div class="cc_ovheader"><b>Column Overview</b>' +
+			'<span class="cc_ovclose" id="cc_ovclose' + element + '">✕ close</span></div>' +
+			'<div class="cc_ovmeta">No data loaded.</div>';
 		wireOverviewActions(element);
 		return;
 	}
 	var cached = _overviewCache.get(data);
 	if (cached) {
-		container.innerHTML = header + cached;
-		wireOverviewActions(element);
+		paintOverview(element, cached, data.length);
 		return;
 	}
-	container.innerHTML = header + '<div class="cc_ovmeta">Computing…</div>';
+	container.innerHTML = '<div class="cc_ovheader"><b>Column Overview</b>' +
+		'<span class="cc_ovclose" id="cc_ovclose' + element + '">✕ close</span></div>' +
+		'<div class="cc_ovmeta">Computing…</div>';
 	wireOverviewActions(element);
-	var cards = [];
+	var colStats = [];
 	var idx = 0;
 	function processColumn() {
 		var def = mycolumns[idx];
-		cards.push(overviewCardHtml(overviewColumn(data, def.feature, def.type === 'num'), data.length));
+		colStats.push(overviewColumn(data, def.feature, def.type === 'num'));
 		idx++;
 		if (idx < mycolumns.length) {
 			requestAnimationFrame(processColumn);
 		} else {
-			var html = '<div class="cc_ovgrid">' + cards.join('') + '</div>';
-			_overviewCache.set(data, html);
-			container.innerHTML = header + html;
-			wireOverviewActions(element);
+			_overviewCache.set(data, colStats);
+			paintOverview(element, colStats, data.length);
 		}
 	}
 	requestAnimationFrame(processColumn);
@@ -800,6 +1241,640 @@ function wireOverviewActions(element) {
 			container.style.display = 'none';
 		};
 	});
+}
+
+// ---- Dataset versions (brush keep/exclude, melt) ----------------------------
+// Replacing the dataset (subset or reshape) stacks the previous version so
+// "Restore Original Data" can always get back to the first one.
+var _dataHistory = {};
+
+function pushDataVersion(element, note) {
+	var h = _dataHistory[element] = _dataHistory[element] || [];
+	h.push({ data: _fullData[element], options: _crossexOpts[element].options,
+		transforms: (_transforms[element] || []).slice(), note: note });
+}
+
+function updateRestoreUi(element) {
+	var wrap = document.getElementById('cc_data_restore' + element);
+	if (!wrap) { return; }
+	var h = _dataHistory[element];
+	if (h && h.length) {
+		wrap.style.display = 'block';
+		document.getElementById('cc_data_note' + element).textContent =
+			'Working on a modified dataset: ' + h[h.length - 1].note + ' → ' +
+			((_fullData[element] || []).length).toLocaleString() + ' rows.';
+	} else {
+		wrap.style.display = 'none';
+	}
+}
+
+function replaceDataset(element, newData, newOptions, note, reopenTab, keepTransforms) {
+	pushDataVersion(element, note);
+	var opts = _crossexOpts[element];
+	var keepT = keepTransforms ? (_transforms[element] || []).slice() : [];
+	_reopenTab[element] = reopenTab || 'Interact_tablinks';
+	crossexloader(element, true);
+	delay(30).then(function() {
+		crossex(element, newData, newOptions || opts.options, opts.widthid);
+		_transforms[element] = keepT;
+	});
+}
+
+function restoreOriginalData(element) {
+	var h = _dataHistory[element];
+	if (!h || !h.length) { return; }
+	var first = h[0];
+	_dataHistory[element] = [];
+	var opts = _crossexOpts[element];
+	_reopenTab[element] = 'Interact_tablinks';
+	crossexloader(element, true);
+	delay(30).then(function() {
+		crossex(element, first.data, first.options, opts.widthid);
+		_transforms[element] = first.transforms;
+	});
+}
+
+// ---- Data table view ---------------------------------------------------------
+// Virtual scrolling over the full dataset: only the visible window of rows is
+// in the DOM, so millions of rows stay smooth. Sorting builds an index
+// permutation; a third click on the same header restores data order.
+var _dt = {};
+var DT_ROW_H = 20;
+var DT_OVERSCAN = 10;
+
+function dtColumns(element) {
+	var opts = _crossexOpts[element];
+	var cols = [];
+	var seen = new Set();
+	(((opts && opts.options) || [])).forEach(function(sig) {
+		if (sig && sig.bind && sig.bind.options) {
+			sig.bind.options.forEach(function(c) {
+				if (c !== 'None' && c !== 'Sum' && c !== 'Count' && !seen.has(c)) {
+					seen.add(c);
+					cols.push(c);
+				}
+			});
+		}
+	});
+	return cols;
+}
+
+function openDataTable(element, jumpToIndex) {
+	var overlay = document.getElementById('cc_table' + element);
+	if (!overlay) { return; }
+	hideOverlays(element, 'cc_table');
+	overlay.style.display = 'flex';
+	var data = _fullData[element] || [];
+	var st = _dt[element];
+	if (!st || st.data !== data) {
+		st = _dt[element] = { data: data, cols: dtColumns(element), order: null, sortKey: null, sortDir: 1, highlight: null };
+		dtRenderHead(element, st);
+	}
+	document.getElementById('cc_dt_info' + element).textContent =
+		data.length.toLocaleString() + ' rows × ' + st.cols.length + ' columns';
+	var scroll = document.getElementById('cc_dt_scroll' + element);
+	document.getElementById('cc_dt_spacer' + element).style.height = (data.length * DT_ROW_H) + 'px';
+	if (jumpToIndex != null) {
+		// jump targets a data index; drop any sort so position == index
+		st.order = null; st.sortKey = null; st.sortDir = 1;
+		st.highlight = jumpToIndex;
+		dtRenderHead(element, st);
+		scroll.scrollTop = Math.max(0, jumpToIndex * DT_ROW_H - scroll.clientHeight / 2);
+	}
+	dtRenderWindow(element);
+	if (!scroll.getAttribute('data-wired')) {
+		scroll.setAttribute('data-wired', '1');
+		scroll.addEventListener('scroll', function() {
+			document.getElementById('cc_dt_head' + element).scrollLeft = scroll.scrollLeft;
+			dtRenderWindow(element);
+		});
+	}
+}
+
+function dtRenderHead(element, st) {
+	var head = document.getElementById('cc_dt_head' + element);
+	head.innerHTML = '<div class="cc_dt_tr">' + st.cols.map(function(c) {
+		var arrow = st.sortKey === c ? (st.sortDir > 0 ? ' ▲' : ' ▼') : '';
+		return '<div class="cc_dt_th" data-col="' + escapeHtml(c) + '" title="sort by ' + escapeHtml(c) + '">' + escapeHtml(c) + arrow + '</div>';
+	}).join('') + '</div>';
+	head.querySelectorAll('.cc_dt_th').forEach(function(th) {
+		th.onclick = function() { dtSort(element, th.getAttribute('data-col')); };
+	});
+}
+
+function dtSort(element, col) {
+	var st = _dt[element];
+	if (st.sortKey === col) {
+		if (st.sortDir === 1) {
+			st.sortDir = -1;
+		} else {
+			st.sortKey = null; st.order = null; st.sortDir = 1;
+		}
+	} else {
+		st.sortKey = col; st.sortDir = 1;
+	}
+	st.highlight = null;
+	var info = document.getElementById('cc_dt_info' + element);
+	if (st.sortKey) {
+		info.textContent = 'sorting…';
+		// let the label paint before a potentially long sort
+		setTimeout(function() {
+			var data = st.data, n = data.length;
+			var order = new Array(n);
+			for (var i = 0; i < n; i++) { order[i] = i; }
+			var key = st.sortKey, dir = st.sortDir;
+			order.sort(function(a, b) {
+				var x = data[a][key], y = data[b][key];
+				var xm = x == null || x === '', ym = y == null || y === '';
+				if (xm && ym) { return a - b; }
+				if (xm) { return 1; }
+				if (ym) { return -1; }
+				var xn = typeof x === 'number' ? x : (isNumeric(x) ? +x : NaN);
+				var yn = typeof y === 'number' ? y : (isNumeric(y) ? +y : NaN);
+				if (xn === xn && yn === yn) { return dir * (xn - yn) || a - b; }
+				return dir * String(x).localeCompare(String(y)) || a - b;
+			});
+			st.order = order;
+			info.textContent = n.toLocaleString() + ' rows × ' + st.cols.length + ' columns';
+			dtRenderHead(element, st);
+			dtRenderWindow(element);
+		}, 30);
+	} else {
+		dtRenderHead(element, st);
+		dtRenderWindow(element);
+	}
+}
+
+function dtRenderWindow(element) {
+	var st = _dt[element];
+	if (!st) { return; }
+	var scroll = document.getElementById('cc_dt_scroll' + element);
+	var rowsEl = document.getElementById('cc_dt_rows' + element);
+	var n = st.data.length;
+	var first = Math.max(0, Math.floor(scroll.scrollTop / DT_ROW_H) - DT_OVERSCAN);
+	var count = Math.ceil(scroll.clientHeight / DT_ROW_H) + DT_OVERSCAN * 2;
+	var last = Math.min(n, first + count);
+	var html = '';
+	for (var i = first; i < last; i++) {
+		var di = st.order ? st.order[i] : i;
+		var row = st.data[di];
+		html += '<div class="cc_dt_tr' + (st.highlight === di ? ' cc_dt_hl' : '') + '">' +
+			st.cols.map(function(c) {
+				var v = row[c];
+				return '<div class="cc_dt_td">' + (v == null ? '' : escapeHtml(String(v))) + '</div>';
+			}).join('') + '</div>';
+	}
+	rowsEl.style.transform = 'translateY(' + (first * DT_ROW_H) + 'px)';
+	rowsEl.innerHTML = html;
+}
+
+// ---- Brush selection ---------------------------------------------------------
+// The dashed rectangle is a DOM overlay; pixel -> data conversion is
+// calibrated from the rendered scene itself: every scatter symbol knows both
+// its pixel position and its datum, so a least-squares line through
+// (pixel, value) pairs recovers each axis mapping without touching Vega's
+// group-scoped scales. Works on unfaceted linear-axis scatter plots.
+function brushCollectSymbols(view, xcol, ycol) {
+	var pts = [];
+	function walk(node, gx, gy) {
+		if (!node) { return; }
+		if (node.marktype === 'group') {
+			(node.items || []).forEach(function(g) {
+				(g.items || []).forEach(function(child) { walk(child, gx + (g.x || 0), gy + (g.y || 0)); });
+			});
+		} else if (node.marktype === 'symbol') {
+			(node.items || []).forEach(function(it) {
+				if (pts.length >= 400 || !it.datum) { return; }
+				var dx = +it.datum[xcol], dy = +it.datum[ycol];
+				if (dx === dx && dy === dy && it.x != null && it.y != null) {
+					pts.push({ px: gx + it.x, py: gy + it.y, dx: dx, dy: dy });
+				}
+			});
+		} else if (node.items) {
+			node.items.forEach(function(it) {
+				if (it.items) { walk(it, gx, gy); }
+			});
+		}
+	}
+	try { walk(view.scenegraph().root, 0, 0); } catch (e) {}
+	return pts;
+}
+
+// least-squares value = a + b * pixel; null when the pixels don't spread
+function brushFit(pts, pixKey, valKey) {
+	var n = pts.length, sp = 0, sv = 0, spp = 0, spv = 0;
+	for (var i = 0; i < n; i++) {
+		sp += pts[i][pixKey]; sv += pts[i][valKey];
+		spp += pts[i][pixKey] * pts[i][pixKey];
+		spv += pts[i][pixKey] * pts[i][valKey];
+	}
+	var denom = n * spp - sp * sp;
+	if (n < 2 || Math.abs(denom) < 1e-6) { return null; }
+	var b = (n * spv - sp * sv) / denom;
+	var a = (sv - b * sp) / n;
+	if (!isFinite(a) || !isFinite(b) || b === 0) { return null; }
+	return function(px) { return a + b * px; };
+}
+
+function wireBrush(element, view) {
+	var toggle = document.getElementById('cc_brush_toggle' + element);
+	if (!toggle) { return; }
+	var hint = document.getElementById('cc_brush_hint' + element);
+	var rect = document.getElementById('cc_brush_rect' + element);
+	var bar = document.getElementById('cc_brush_bar' + element);
+	var container = document.getElementById('cc_graph_container' + element);
+	function sigOr(name, dflt) {
+		try { return view.signal(name); } catch (e) { return dflt; }
+	}
+	function refreshAvail() {
+		var scatter = sigOr('show_scatter_graph', false);
+		var faceted = sigOr('Facet_Rows_By', 'None') !== 'None' || sigOr('Facet_Cols_By', 'None') !== 'None';
+		var interactive = sigOr('Interactive_', false);
+		var logAxes = sigOr('LogX_', false) || sigOr('LogY_', false);
+		var okay = scatter && !faceted && !interactive && !logAxes;
+		toggle.disabled = !okay;
+		if (!okay && toggle.checked) {
+			toggle.checked = false;
+			container.style.cursor = '';
+		}
+		hint.textContent = okay ?
+			'Drag a box on the chart, then keep, exclude, download, or zoom to the selection.' :
+			(interactive ? 'Turn off pan/zoom above to brush.' :
+				(!scatter ? 'Brush works on scatter plots (numeric X and Y).' :
+					(logAxes ? 'Brush works on linear axes — turn off log scale first.' :
+						'Brush works on unfaceted plots — clear the facets first.')));
+	}
+	['show_scatter_graph', 'Facet_Rows_By', 'Facet_Cols_By', 'Interactive_', 'LogX_', 'LogY_'].forEach(function(sig) {
+		try { view.addSignalListener(sig, refreshAvail); } catch (e) {}
+	});
+	refreshAvail();
+	toggle.onchange = function() {
+		container.style.cursor = toggle.checked ? 'crosshair' : '';
+		if (!toggle.checked) {
+			bar.style.display = 'none';
+			rect.style.display = 'none';
+		}
+	};
+	var dragging = false, sx = 0, sy = 0, vx0 = 0, vy0 = 0;
+	function canvasEl() { return container.querySelector('#view_crossex' + element + ' canvas'); }
+	container.addEventListener('mousedown', function(e) {
+		if (!toggle.checked) { return; }
+		var cv = canvasEl();
+		if (!cv) { return; }
+		var b = container.getBoundingClientRect();
+		var cb = cv.getBoundingClientRect();
+		dragging = true;
+		sx = e.clientX - b.left; sy = e.clientY - b.top;
+		vx0 = e.clientX - cb.left; vy0 = e.clientY - cb.top;
+		rect.style.left = sx + 'px'; rect.style.top = sy + 'px';
+		rect.style.width = '0px'; rect.style.height = '0px';
+		rect.style.display = 'block';
+		e.preventDefault();
+	});
+	container.addEventListener('mousemove', function(e) {
+		if (!dragging) { return; }
+		var b = container.getBoundingClientRect();
+		var cx = e.clientX - b.left, cy = e.clientY - b.top;
+		rect.style.left = Math.min(sx, cx) + 'px';
+		rect.style.top = Math.min(sy, cy) + 'px';
+		rect.style.width = Math.abs(cx - sx) + 'px';
+		rect.style.height = Math.abs(cy - sy) + 'px';
+	});
+	window.addEventListener('mouseup', function(e) {
+		if (!dragging) { return; }
+		dragging = false;
+		setTimeout(function() { rect.style.display = 'none'; }, 150);
+		var cv = canvasEl();
+		if (!cv) { return; }
+		var cb = cv.getBoundingClientRect();
+		var vx1 = e.clientX - cb.left, vy1 = e.clientY - cb.top;
+		if (Math.abs(vx1 - vx0) < 6 || Math.abs(vy1 - vy0) < 6) { return; }
+		var xcol = sigOr('X_Axis', null), ycol = sigOr('Y_Axis', null);
+		if (!xcol || !ycol) { return; }
+		var pts = brushCollectSymbols(view, xcol, ycol);
+		var fx = brushFit(pts, 'px', 'dx');
+		var fy = brushFit(pts, 'py', 'dy');
+		if (!fx || !fy) {
+			bar.innerHTML = 'Could not map the selection — enable Points and try again. <span class="cc_ovclose" onclick="this.parentNode.style.display=\'none\'">✕</span>';
+			bar.style.display = 'block';
+			return;
+		}
+		var x0 = Math.min(fx(vx0), fx(vx1)), x1 = Math.max(fx(vx0), fx(vx1));
+		var y0 = Math.min(fy(vy0), fy(vy1)), y1 = Math.max(fy(vy0), fy(vy1));
+		window._ccBrushDebug = [x0, x1, y0, y1, pts.length];
+		showBrushSelection(element, view, x0, x1, y0, y1);
+	});
+}
+
+function showBrushSelection(element, view, x0, x1, y0, y1) {
+	var xcol, ycol;
+	try { xcol = view.signal('X_Axis'); ycol = view.signal('Y_Axis'); } catch (e) { return; }
+	var data = _fullData[element] || [];
+	var sel = [];
+	for (var i = 0; i < data.length; i++) {
+		var vx = data[i][xcol], vy = data[i][ycol];
+		if (vx == null || vx === '' || vy == null || vy === '') { continue; }
+		vx = +vx; vy = +vy;
+		if (vx >= x0 && vx <= x1 && vy >= y0 && vy <= y1) { sel.push(data[i]); }
+	}
+	var bar = document.getElementById('cc_brush_bar' + element);
+	bar.innerHTML = '<b>' + sel.length.toLocaleString() + '</b> of ' + data.length.toLocaleString() + ' rows selected&nbsp;' +
+		'<button type="button" class="cc_3d_btn" data-br="keep">Keep</button>' +
+		'<button type="button" class="cc_3d_btn" data-br="exclude">Exclude</button>' +
+		'<button type="button" class="cc_3d_btn" data-br="csv">CSV</button>' +
+		'<button type="button" class="cc_3d_btn" data-br="zoom">Zoom</button>' +
+		'<span class="cc_ovclose" data-br="close">✕</span>';
+	bar.style.display = 'block';
+	bar.querySelectorAll('[data-br]').forEach(function(btn) {
+		btn.onclick = function() {
+			var act = btn.getAttribute('data-br');
+			if (act === 'close') { bar.style.display = 'none'; return; }
+			if (act === 'csv') {
+				if (sel.length) { json2csv('crossex.' + element + '.selection.csv', sel); }
+				return;
+			}
+			if (act === 'zoom') {
+				var lims = { X_Lower_Lim: x0, X_Upper_Lim: x1, Y_Lower_Lim: y0, Y_Upper_Lim: y1 };
+				Object.keys(lims).forEach(function(sig) {
+					try { view.signal(sig, String(+lims[sig].toPrecision(6))); } catch (e) {}
+				});
+				view.runAsync();
+				bar.style.display = 'none';
+				return;
+			}
+			if (act === 'keep' && !sel.length) { return; }
+			var next;
+			if (act === 'keep') {
+				next = sel.slice();
+			} else {
+				var selSet = new Set(sel);
+				next = data.filter(function(r) { return !selSet.has(r); });
+			}
+			next.columns = data.columns;
+			bar.style.display = 'none';
+			replaceDataset(element, next,
+				null, (act === 'keep' ? 'kept' : 'excluded') + ' brush selection', 'Interact_tablinks', true);
+		};
+	});
+}
+
+// ---- Saved views ---------------------------------------------------------------
+// Named snapshots of the full signal state, per widget, in localStorage.
+function wireViews(element) {
+	var nameIn = document.getElementById('cc_views_name' + element);
+	if (!nameIn) { return; }
+	var saveBtn = document.getElementById('cc_views_save' + element);
+	var msg = document.getElementById('cc_views_msg' + element);
+	var listEl = document.getElementById('cc_views_list' + element);
+	var key = 'crossexViews_' + element;
+	function readViews() {
+		try { return JSON.parse(window.localStorage.getItem(key)) || {}; } catch (e) { return {}; }
+	}
+	function writeViews(v) {
+		try { window.localStorage.setItem(key, JSON.stringify(v)); } catch (e) {}
+	}
+	function refresh() {
+		var views = readViews();
+		listEl.innerHTML = Object.keys(views).sort().map(function(n) {
+			return '<div class="cc_tr_item" data-view="' + escapeHtml(n) + '" title="open this view">' +
+				'<span class="cc_tr_x" data-view-del="' + escapeHtml(n) + '" title="delete this view">✕</span>' +
+				'<b>' + escapeHtml(n) + '</b></div>';
+		}).join('');
+		listEl.querySelectorAll('[data-view-del]').forEach(function(x) {
+			x.onclick = function(e) {
+				e.stopPropagation();
+				var views2 = readViews();
+				delete views2[x.getAttribute('data-view-del')];
+				writeViews(views2);
+				refresh();
+			};
+		});
+		listEl.querySelectorAll('[data-view]').forEach(function(item) {
+			item.onclick = function() {
+				var v = readViews()[item.getAttribute('data-view')];
+				if (!v) { return; }
+				saveSignalState('vegaSignals_' + element, v);
+				var opts = _crossexOpts[element];
+				_reopenTab[element] = 'Interact_tablinks';
+				crossexloader(element, true);
+				delay(30).then(function() { crossex(element, _fullData[element], opts.options, opts.widthid); });
+			};
+		});
+	}
+	saveBtn.onclick = function() {
+		var name = (nameIn.value || '').trim();
+		msg.className = 'cc_tr_msg';
+		msg.textContent = '';
+		if (!name) { msg.textContent = 'name the view first'; return; }
+		var views = readViews();
+		views[name] = loadSignalsFromCookie('vegaSignals_' + element) || {};
+		writeViews(views);
+		nameIn.value = '';
+		msg.className = 'cc_tr_msg cc_ok';
+		msg.textContent = 'saved — click it below anytime';
+		refresh();
+	};
+	refresh();
+}
+
+// ---- Reshape: melt wide -> long -------------------------------------------------
+function wireReshape(element, mycolumns) {
+	var colSel = document.getElementById('cc_melt_cols' + element);
+	if (!colSel) { return; }
+	var varIn = document.getElementById('cc_melt_var' + element);
+	var valIn = document.getElementById('cc_melt_val' + element);
+	var btn = document.getElementById('cc_melt_apply' + element);
+	var msg = document.getElementById('cc_melt_msg' + element);
+	var all = (mycolumns || []).map(function(c) { return c.feature; })
+		.filter(function(f) { return f && f !== 'None'; });
+	colSel.innerHTML = all.map(function(c) {
+		return '<option>' + escapeHtml(c) + '</option>';
+	}).join('');
+	btn.onclick = function() {
+		msg.className = 'cc_tr_msg';
+		msg.textContent = '';
+		var chosen = Array.prototype.map.call(colSel.selectedOptions, function(o) { return o.value; });
+		if (chosen.length < 2) { msg.textContent = 'select at least two columns to melt'; return; }
+		var varName = (varIn.value || '').trim() || 'variable';
+		var valName = (valIn.value || '').trim() || 'value';
+		var keep = all.filter(function(c) { return chosen.indexOf(c) < 0; });
+		if (keep.indexOf(varName) >= 0 || keep.indexOf(valName) >= 0 || varName === valName) {
+			msg.textContent = 'variable/value names collide with a kept column';
+			return;
+		}
+		var data = _fullData[element] || [];
+		var outN = data.length * chosen.length;
+		if (outN > 3000000) {
+			msg.textContent = 'melting would produce ' + outN.toLocaleString() + ' rows — filter or sample first';
+			return;
+		}
+		btn.disabled = true;
+		btn.textContent = 'Reshaping…';
+		var out = [];
+		out.columns = keep.concat([varName, valName]);
+		var i = 0, CHUNK = 50000;
+		(function chunk() {
+			var end = Math.min(i + CHUNK, data.length);
+			for (; i < end; i++) {
+				var row = data[i];
+				for (var c = 0; c < chosen.length; c++) {
+					var nr = {};
+					for (var k = 0; k < keep.length; k++) { nr[keep[k]] = row[keep[k]]; }
+					nr[varName] = chosen[c];
+					nr[valName] = row[chosen[c]];
+					out.push(nr);
+				}
+			}
+			if (i < data.length) { requestAnimationFrame(chunk); return; }
+			var opts = _crossexOpts[element];
+			var newOptions = (opts.options || []).map(function(sig) {
+				if (sig && sig.name && sig.bind && sig.bind.options) {
+					var preset = sig.name === 'X_Axis' || sig.name === 'Search_By' ? varName :
+						(sig.name === 'Y_Axis' ? valName : 'None');
+					return { name: sig.name, value: preset, bind: { options: out.columns.slice() } };
+				}
+				return sig;
+			});
+			var store = loadSignalsFromCookie('vegaSignals_' + element) || {};
+			store.X_Axis = varName;
+			store.Y_Axis = valName;
+			store.Color_By = 'None';
+			store.Facet_Rows_By = 'None';
+			store.Facet_Cols_By = 'None';
+			store.Sum_By = 'None';
+			saveSignalState('vegaSignals_' + element, store);
+			replaceDataset(element, out, newOptions,
+				'melted ' + chosen.length + ' columns into ' + varName + '/' + valName,
+				'Transforms_tablinks', false);
+		})();
+	};
+}
+
+// ---- Stats annotations ----------------------------------------------------------
+// p-values for group differences shown while the Stats toggle is on:
+// Welch t-test for two groups, one-way ANOVA for three or more. The F/t tail
+// probabilities come from the regularized incomplete beta function.
+function gammaln(x) {
+	var cof = [76.18009172947146, -86.50532032941677, 24.01409824083091,
+		-1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5];
+	var y = x, tmp = x + 5.5;
+	tmp -= (x + 0.5) * Math.log(tmp);
+	var ser = 1.000000000190015;
+	for (var j = 0; j < 6; j++) { ser += cof[j] / ++y; }
+	return -tmp + Math.log(2.5066282746310005 * ser / x);
+}
+
+function betacf(a, b, x) {
+	var MAXIT = 200, EPS = 3e-12, FPMIN = 1e-300;
+	var qab = a + b, qap = a + 1, qam = a - 1;
+	var c = 1, d = 1 - qab * x / qap;
+	if (Math.abs(d) < FPMIN) { d = FPMIN; }
+	d = 1 / d;
+	var h = d;
+	for (var m = 1; m <= MAXIT; m++) {
+		var m2 = 2 * m;
+		var aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+		d = 1 + aa * d; if (Math.abs(d) < FPMIN) { d = FPMIN; }
+		c = 1 + aa / c; if (Math.abs(c) < FPMIN) { c = FPMIN; }
+		d = 1 / d;
+		h *= d * c;
+		aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+		d = 1 + aa * d; if (Math.abs(d) < FPMIN) { d = FPMIN; }
+		c = 1 + aa / c; if (Math.abs(c) < FPMIN) { c = FPMIN; }
+		d = 1 / d;
+		var del = d * c;
+		h *= del;
+		if (Math.abs(del - 1) < EPS) { break; }
+	}
+	return h;
+}
+
+// regularized incomplete beta I_x(a, b)
+function ibeta(a, b, x) {
+	if (x <= 0) { return 0; }
+	if (x >= 1) { return 1; }
+	var bt = Math.exp(gammaln(a + b) - gammaln(a) - gammaln(b) + a * Math.log(x) + b * Math.log(1 - x));
+	if (x < (a + 1) / (a + b + 2)) { return bt * betacf(a, b, x) / a; }
+	return 1 - bt * betacf(b, a, 1 - x) / b;
+}
+
+function fTailP(F, d1, d2) { return ibeta(d2 / 2, d1 / 2, d2 / (d2 + d1 * F)); }
+function tTailP2(t, df) { return ibeta(df / 2, 0.5, df / (df + t * t)); }  // two-sided
+
+function fmtP(p) {
+	if (p !== p) { return '—'; }
+	if (p < 1e-16) { return '< 1e-16'; }
+	return String(parseFloat(p.toPrecision(2)));
+}
+
+function meanVar(vals) {
+	var n = vals.length, m = 0, M2 = 0;
+	for (var a = 0; a < n; a++) { m += vals[a]; }
+	m /= n;
+	for (var b = 0; b < n; b++) { var e = vals[b] - m; M2 += e * e; }
+	return { n: n, mean: m, varr: n > 1 ? M2 / (n - 1) : 0 };
+}
+
+function welchTest(g1, g2) {
+	var a = meanVar(g1), b = meanVar(g2);
+	var se2 = a.varr / a.n + b.varr / b.n;
+	if (se2 <= 0) { return { t: NaN, df: NaN, p: NaN }; }
+	var t = (a.mean - b.mean) / Math.sqrt(se2);
+	var df = se2 * se2 / (Math.pow(a.varr / a.n, 2) / (a.n - 1) + Math.pow(b.varr / b.n, 2) / (b.n - 1));
+	return { t: t, df: df, p: tTailP2(Math.abs(t), df) };
+}
+
+function anovaTest(groups) {
+	var k = groups.length, N = 0, grand = 0;
+	groups.forEach(function(g) { g.forEach(function(v) { grand += v; N++; }); });
+	grand /= N;
+	var ssb = 0, ssw = 0;
+	groups.forEach(function(g) {
+		var mv = meanVar(g);
+		ssb += g.length * Math.pow(mv.mean - grand, 2);
+		ssw += mv.varr * (g.length - 1);
+	});
+	var d1 = k - 1, d2 = N - k;
+	if (d2 <= 0 || ssw <= 0) { return { F: NaN, d1: d1, d2: d2, p: NaN }; }
+	var F = (ssb / d1) / (ssw / d2);
+	return { F: F, d1: d1, d2: d2, p: fTailP(F, d1, d2) };
+}
+
+function updateStatsBadge(element, view) {
+	var badge = document.getElementById('cc_stats_badge' + element);
+	if (!badge) { return; }
+	var on = false, box = false, hz = false, xcol, ycol;
+	try {
+		on = view.signal('Stats_');
+		box = view.signal('show_box_graphs');
+		hz = view.signal('show_hzbox_graphs');
+		xcol = view.signal('X_Axis');
+		ycol = view.signal('Y_Axis');
+	} catch (e) {}
+	if (!on || (!box && !hz)) { badge.style.display = 'none'; return; }
+	var catCol = box ? xcol : ycol;
+	var numCol = box ? ycol : xcol;
+	var data = _fullData[element] || [];
+	var groups = Object.create(null);
+	for (var i = 0; i < data.length; i++) {
+		var g = data[i][catCol], v = data[i][numCol];
+		if (g == null || g === '' || v == null || v === '') { continue; }
+		var x = +v;
+		if (x !== x) { continue; }
+		(groups[g] = groups[g] || []).push(x);
+	}
+	var keys = Object.keys(groups).filter(function(k) { return groups[k].length > 1; });
+	if (keys.length < 2 || keys.length > 100) { badge.style.display = 'none'; return; }
+	var text;
+	if (keys.length === 2) {
+		var w = welchTest(groups[keys[0]], groups[keys[1]]);
+		text = 'Welch t-test: t = ' + w.t.toFixed(2) + ', p = ' + fmtP(w.p);
+	} else {
+		var an = anovaTest(keys.map(function(k) { return groups[k]; }));
+		text = 'ANOVA: F(' + an.d1 + ', ' + an.d2 + ') = ' + an.F.toFixed(2) + ', p = ' + fmtP(an.p);
+	}
+	badge.textContent = text + '  ·  ' + numCol + ' by ' + catCol;
+	badge.style.display = 'block';
 }
 
 // ---- Normal QQ plot --------------------------------------------------------
@@ -845,6 +1920,48 @@ function computeQQ(view) {
 	view.change('qq_data', vega.changeset().remove(function() { return true; }).insert(rows)).runAsync();
 }
 
+// Sortable, downloadable rendering of the computed summary rows
+function paintSummary(container, element, rows) {
+	var sort = { key: null, dir: 1 };
+	function paint() {
+		var sorted = rows.slice();
+		if (sort.key) {
+			sorted.sort(function(a, b) {
+				var x = a[sort.key], y = b[sort.key];
+				// missing values group at the bottom in either direction
+				var xm = x == null || x !== x, ym = y == null || y !== y;
+				if (xm && ym) { return 0; }
+				if (xm) { return 1; }
+				if (ym) { return -1; }
+				if (typeof x === 'string' || typeof y === 'string') {
+					return sort.dir * String(x).localeCompare(String(y));
+				}
+				return sort.dir * (x - y);
+			});
+		}
+		container.innerHTML = '<div class="cc_summary_bar">' +
+			'<button type="button" class="cc_3d_btn" data-sum-csv>Download CSV</button>' +
+			'<span class="cc_summary_hint">click a header to sort</span></div>' +
+			summaryTableHtml(sorted, sort);
+		container.querySelectorAll('th[data-key]').forEach(function(th) {
+			th.onclick = function() {
+				var k = th.getAttribute('data-key');
+				sort.dir = sort.key === k ? -sort.dir : 1;
+				sort.key = k;
+				paint();
+			};
+		});
+		container.querySelector('[data-sum-csv]').onclick = function() {
+			json2csv('crossex.' + element + '.summary.csv', rows.map(function(r) {
+				return { column: r.col, type: r.type, n: r.n, missing: r.missing,
+					distinct: r.distinct, min: r.min, median: r.median, mean: r.mean,
+					sd: r.sd, max: r.max, top_value: r.top };
+			}));
+		};
+	}
+	paint();
+}
+
 // Lazily fills the Summary tab; one column per frame so wide data can't freeze the UI
 function renderSummary(element, data, mycolumns) {
 	var container = document.getElementById('Summary_Table' + element);
@@ -864,7 +1981,7 @@ function renderSummary(element, data, mycolumns) {
 		if (idx < mycolumns.length) {
 			requestAnimationFrame(processColumn);
 		} else {
-			container.innerHTML = summaryTableHtml(rows);
+			paintSummary(container, element, rows);
 		}
 	}
 	requestAnimationFrame(processColumn);
@@ -940,8 +2057,36 @@ function computeColInfo(data, headers, callback) {
 	requestAnimationFrame(chunk);
 }
 
+// ---- Dark theme ---------------------------------------------------------------
+// The page/panel side is CSS (.cc-dark on <html>); the chart side is a Vega
+// config merged in at embed time plus the Background_Color signal default.
+function ccDarkMode() {
+	try { return window.localStorage.getItem('ccDarkMode') === '1'; } catch (e) { return false; }
+}
+var CC_DARK_VEGA_CONFIG = {
+	background: '#191a21',
+	axis: { labelColor: '#b7bcc7', titleColor: '#d5d9e0', gridColor: '#2c2f38', domainColor: '#565b66', tickColor: '#565b66' },
+	legend: { labelColor: '#b7bcc7', titleColor: '#d5d9e0' },
+	title: { color: '#e6e8ec' }
+};
+
+var _views = {};
+
 var crossex = function crossex(element, data, options,widthid) {
+	// a different dataset invalidates the session's transform list; re-renders
+	// of the same array (sample change, transform apply) keep it
+	if (data && _fullData[element] !== data) { _transforms[element] = []; }
 	_crossexOpts[element] = {options: options, widthid: widthid};
+	document.documentElement.classList.toggle('cc-dark', ccDarkMode());
+	// release the previous Vega view (timers, handlers, dataflow) before the
+	// container's DOM is replaced — re-renders must not stack live views
+	if (_views[element]) {
+		try { _views[element].finalize(); } catch (e) {}
+		delete _views[element];
+	}
+	// a pending debounced signal-save from the old view would clobber state
+	// seeded for this render (e.g. melt presetting X/Y)
+	clearTimeout(_cookieDebounceTimers['vegaSignals_' + element]);
 	// re-rendering wipes the container's DOM; free any prior 3D GL context first
 	if (_3d[element]) {
 		if (_3d[element].inst) { try { _3d[element].inst.dispose(); } catch (e) {} }
@@ -1155,8 +2300,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 	document.getElementById('Overview_btn' + element).addEventListener('click', function() {
 		var ov = document.getElementById('cc_overview' + element);
 		if (ov.style.display === 'none') {
-			var td = document.getElementById('cc_3d' + element);
-			if (td) { td.style.display = 'none'; }
+			hideOverlays(element, 'cc_overview');
 			renderOverview(element, _fullData[element] || spec.data[dataMap['mydata']].values, spec.data[dataMap['mycolumns']].values);
 			ov.style.display = 'block';
 		} else {
@@ -1167,11 +2311,23 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 	document.getElementById('ThreeD_btn' + element).addEventListener('click', function() {
 		var td = document.getElementById('cc_3d' + element);
 		if (td.style.display === 'none' || !td.style.display) {
-			document.getElementById('cc_overview' + element).style.display = 'none';
+			hideOverlays(element, 'cc_3d');
 			open3dView(element, _fullData[element] || spec.data[dataMap['mydata']].values, spec.data[dataMap['mycolumns']].values);
 		} else {
 			td.style.display = 'none';
 		}
+	});
+	// Data table overlay: full rows, virtual scrolled
+	document.getElementById('Table_btn' + element).addEventListener('click', function() {
+		var t = document.getElementById('cc_table' + element);
+		if (t.style.display === 'none' || !t.style.display) {
+			openDataTable(element);
+		} else {
+			t.style.display = 'none';
+		}
+	});
+	document.getElementById('cc_dt_close' + element).addEventListener('click', function() {
+		document.getElementById('cc_table' + element).style.display = 'none';
 	});
 	document.getElementById('cc_3d_close' + element).addEventListener('click', function() {
 		document.getElementById('cc_3d' + element).style.display = 'none';
@@ -1206,6 +2362,18 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 			delay(30).then(function() { crossex(element, full, opts.options, opts.widthid); });
 		}, true);
 	});
+	wireTransformTab(element, spec.data[dataMap['mycolumns']].values);
+	wireReshape(element, spec.data[dataMap['mycolumns']].values);
+	wireViews(element);
+	updateRestoreUi(element);
+	var restoreBtn = document.getElementById('cc_restore_btn' + element);
+	if (restoreBtn) { restoreBtn.onclick = function() { restoreOriginalData(element); }; }
+	// re-select a tab after a re-render it triggered (e.g. applying a transform)
+	if (_reopenTab[element]) {
+		var reopenBtn = document.getElementById(_reopenTab[element] + element);
+		delete _reopenTab[element];
+		if (reopenBtn) { reopenBtn.click(); }
+	}
 	var cookieName = 'vegaSignals_' + element;
 	var savedSignals = loadSignalsFromCookie(cookieName);
 	var firstVisit = !savedSignals;
@@ -1223,13 +2391,13 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 		});
 	}
 
-	vegaEmbed('#view_crossex' + element, spec, {
+	var embedOpts = {
 		renderer: 'canvas',
 		width: setWidth_smart(element,widthNode),
 		tooltip: true,
 		warn: false,
 		actions: {
-			export: exportable,
+			export: exportable,   // menu offers both PNG and SVG downloads
 			csv:exportable,
 			source: false,
 			editor: true,
@@ -1237,8 +2405,21 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 			scaleFactor: 2
 		},
 		defaultStyle: true
-	}).then(function(result) {
+	};
+	if (ccDarkMode()) {
+		embedOpts.config = CC_DARK_VEGA_CONFIG;
+		// only override the chart background when the user hasn't customized it
+		var bgIdx = signalMap['Background_Color'];
+		if (bgIdx !== undefined) {
+			var bg = spec.signals[bgIdx].value;
+			if (!bg || bg === '#FFF' || bg === '#FFFFFF' || String(bg).toLowerCase() === 'white' || bg === '#ffffff') {
+				spec.signals[bgIdx].value = CC_DARK_VEGA_CONFIG.background;
+			}
+		}
+	}
+	vegaEmbed('#view_crossex' + element, spec, embedOpts).then(function(result) {
 		myview = result.view.run();
+		_views[element] = result.view;
 		// Save initial signal state to cookie if it doesn't exist
 		if (!loadSignalsFromCookie(cookieName)) {
 			saveSignalsToCookie(spec.signals, cookieName);
@@ -1272,10 +2453,14 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 			if (_panelObservers[element]) {
 				_panelObservers[element].disconnect();
 			}
-			var lastPanelW = -1;
+			var lastPanelW = -1, prevPanelW = -1;
 			_panelObservers[element] = new ResizeObserver(function(entries) {
 				var w = entries[0].contentRect.width;
 				if (w === lastPanelW) { return; }
+				// bouncing between two widths (scrollbar feedback) must not
+				// re-trigger renders forever
+				if (w === prevPanelW) { return; }
+				prevPanelW = lastPanelW;
 				lastPanelW = w;
 				clearTimeout(_panelResizeTimers[element]);
 				_panelResizeTimers[element] = setTimeout(function() {
@@ -1294,6 +2479,31 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 			result.view.addSignalListener(sig, function() { computeQQ(result.view); });
 		});
 		computeQQ(result.view);
+		// Brush selection, zoom reset, and the group-difference stats badge
+		wireBrush(element, result.view);
+		var resetZoomBtn = document.getElementById('cc_reset_zoom' + element);
+		if (resetZoomBtn) {
+			resetZoomBtn.onclick = function() {
+				['X_Lower_Lim', 'X_Upper_Lim', 'Y_Lower_Lim', 'Y_Upper_Lim'].forEach(function(sig) {
+					try { result.view.signal(sig, ''); } catch (e) {}
+				});
+				result.view.runAsync();
+			};
+		}
+		['Stats_', 'X_Axis', 'Y_Axis'].forEach(function(sig) {
+			try {
+				result.view.addSignalListener(sig, function() { updateStatsBadge(element, result.view); });
+			} catch (e) {}
+		});
+		updateStatsBadge(element, result.view);
+		// double-clicking a mark opens the data table scrolled to that row
+		result.view.addEventListener('dblclick', function(event, item) {
+			if (!item || !item.datum) { return; }
+			var full = _fullData[element];
+			if (!full) { return; }
+			var idx = full.indexOf(item.datum);
+			if (idx >= 0) { openDataTable(element, idx); }
+		});
 		// Correlation matrix cells click through to the underlying pair
 		result.view.addEventListener('click', function(event, item) {
 			if (!item || !item.datum || item.datum.var1 === undefined || item.datum.var2 === undefined) { return; }

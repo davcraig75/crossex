@@ -291,7 +291,128 @@ document.getElementById("large_demo").onclick = function fun() {
 
 document.getElementById("clear_cookies").onclick = function fun() {
 	clearAllCookies();
+	ccToast('Saved settings cleared');
 };
+
+// ---- Small toast for button feedback ----------------------------------------
+function ccToast(text) {
+	var t = document.getElementById('cc_toast');
+	if (!t) { return; }
+	t.textContent = text;
+	t.className = 'show';
+	clearTimeout(t._t);
+	t._t = setTimeout(function() { t.className = ''; }, 2600);
+}
+
+// ---- Dark theme toggle -------------------------------------------------------
+function setDarkMode(on) {
+	try { window.localStorage.setItem('ccDarkMode', on ? '1' : '0'); } catch (e) {}
+	document.documentElement.classList.toggle('cc-dark', on);
+	document.getElementById('dark_toggle').innerHTML = on ? 'Light Mode' : 'Dark Mode';
+	// re-render the current chart so the dark Vega config applies
+	if (_fullData.smartplot_id && _crossexOpts.smartplot_id) {
+		crossexloader('smartplot_id', true);
+		delay(30).then(function() {
+			crossex('smartplot_id', _fullData.smartplot_id,
+				_crossexOpts.smartplot_id.options, _crossexOpts.smartplot_id.widthid);
+		});
+	}
+}
+document.getElementById('dark_toggle').onclick = function() { setDarkMode(!ccDarkMode()); };
+if (ccDarkMode()) {
+	document.documentElement.classList.add('cc-dark');
+	document.getElementById('dark_toggle').innerHTML = 'Light Mode';
+}
+
+// ---- Shareable state via URL hash --------------------------------------------
+// The link carries the full signal state, transform definitions, and (when it
+// fits) the raw input data, lz-compressed into the fragment. Opening such a
+// link rebuilds the exact view; nothing is sent to any server.
+var _lastRawText = null;
+var SHARE_TEXT_MAX = 250000;   // raw chars; compressed links stay well under browser limits
+var SHARE_HASH_MAX = 60000;
+
+function waitLoaderIdle(cb, tries) {
+	tries = tries || 0;
+	if (tries > 300) { return; }
+	var l = document.getElementById('cc_loadersmartplot_id');
+	if (l && l.style.display === 'none') { cb(); }
+	else { setTimeout(function() { waitLoaderIdle(cb, tries + 1); }, 150); }
+}
+
+document.getElementById('share_link').onclick = function() {
+	if (!_lastStruct) { ccToast('Graph some data first, then share'); return; }
+	var payload = {
+		v: 1,
+		s: loadSignalsFromCookie('vegaSignals_smartplot_id') || {},
+		t: (typeof _transforms !== 'undefined' && _transforms.smartplot_id) ? _transforms.smartplot_id : []
+	};
+	var note = '';
+	if (_lastRawText) {
+		payload.d = _lastRawText;
+	} else {
+		note = ' (settings only — dataset too large for a link)';
+	}
+	var hash = '#cc=' + itgz.compressToEncodedURIComponent(JSON.stringify(payload));
+	if (hash.length > SHARE_HASH_MAX && payload.d) {
+		delete payload.d;
+		note = ' (settings only — dataset too large for a link)';
+		hash = '#cc=' + itgz.compressToEncodedURIComponent(JSON.stringify(payload));
+	}
+	try { history.replaceState(null, '', hash); } catch (e) {}
+	var url = location.href.split('#')[0] + hash;
+	// no prompt() fallback: it blocks the main thread, and the link is already
+	// in the address bar thanks to replaceState
+	if (navigator.clipboard && navigator.clipboard.writeText) {
+		navigator.clipboard.writeText(url).then(function() {
+			ccToast('Link copied to clipboard' + note);
+		}, function() {
+			ccToast('Link is in the address bar — copy it from there' + note);
+		});
+	} else {
+		ccToast('Link is in the address bar — copy it from there' + note);
+	}
+};
+
+function applySharedTransforms(list, idx) {
+	idx = idx || 0;
+	if (idx >= list.length) { return; }
+	waitLoaderIdle(function() {
+		var nameIn = document.getElementById('cc_tr_namesmartplot_id');
+		var formulaIn = document.getElementById('cc_tr_formulasmartplot_id');
+		var apply = document.getElementById('cc_tr_applysmartplot_id');
+		if (!nameIn || !formulaIn || !apply) { return; }
+		nameIn.value = list[idx].name;
+		formulaIn.value = list[idx].formula;
+		apply.click();
+		setTimeout(function() { applySharedTransforms(list, idx + 1); }, 500);
+	});
+}
+
+// Deferred one tick: this section sits above the graph-button handler in the
+// bundle, and clicking it during evaluation would hit an unattached handler.
+setTimeout(function restoreFromHash() {
+	var m = location.hash.match(/^#cc=(.+)$/);
+	if (!m) { return; }
+	var payload = null;
+	try { payload = JSON.parse(itgz.decompressFromEncodedURIComponent(m[1])); } catch (e) {}
+	if (!payload || payload.v !== 1) { return; }
+	if (payload.s) {
+		var store = loadSignalsFromCookie('vegaSignals_smartplot_id') || {};
+		Object.assign(store, payload.s);
+		saveSignalState('vegaSignals_smartplot_id', store);
+	}
+	if (payload.d) {
+		var input = document.getElementById('myccinput');
+		input.value = payload.d;
+		input.style.display = 'block';
+		var btn = document.getElementById('graph_button');
+		btn.innerHTML = 'Graph Data';
+		btn.click();
+		if (payload.t && payload.t.length) { applySharedTransforms(payload.t); }
+		ccToast('Restored shared view');
+	}
+}, 0);
 
 // Pivot table (PivotTable.js) over the loaded dataset. The app itself has no
 // jQuery dependency, so the jQuery/jQuery-UI/pivot stack (~410KB) loads
@@ -362,10 +483,13 @@ document.getElementById("graph_button").onclick = function clicks() {
 	var btn = document.getElementById("graph_button");
 	// rows already parsed (large file re-graph, or generated demo) — reuse them
 	if (_loadedFile && _loadedFile.struct) {
+		_lastRawText = null;
 		graphStruct(_loadedFile.struct);
 		return;
 	}
 	var string = _loadedFile ? _loadedFile.text : document.getElementById("myccinput").value;
+	// keep small raw inputs so Share Link can embed the data in the URL
+	_lastRawText = (!_loadedFile && string && string.length <= SHARE_TEXT_MAX) ? string : null;
 	if (!string || !string.trim()) {
 		return;
 	}
@@ -425,6 +549,9 @@ var _lastStruct = null;
 function graphStruct(struct) {
 	convertDates(struct);
 	_lastStruct = struct;
+	// the gallery start page only belongs to the empty state
+	var gal = document.getElementById('cc_gallery');
+	if (gal) { gal.style.display = 'none'; }
 	// new data invalidates any open pivot or 3D view
 	var pivotWrap = document.getElementById('cc_pivot_wrap');
 	if (pivotWrap) { pivotWrap.style.display = 'none'; }
@@ -528,5 +655,74 @@ function graphStruct(struct) {
 		}
 	],"About");
 }
+
+// ---- Gallery: start-page example launcher -----------------------------------
+// Each card seeds the saved signal state for the demo dataset (penguins) and
+// then graphs it, so the example opens exactly as pictured. The widget
+// restores signals from localStorage after render, which is why seeding
+// works; overlays (3D, overview) and the correlation matrix need a real
+// click after the chart is up, handled by galleryAfterRender.
+var GALLERY_BASE_SIGNALS = {
+	X_Axis: 'flipper_length_mm', Y_Axis: 'body_mass_g', Color_By: 'None',
+	Size_By: 'None', Stroke_By: 'None', Opacity_By: 'None', SortX_By: 'None',
+	Facet_Rows_By: 'None', Facet_Cols_By: 'None', Sum_By: 'None',
+	Filter_Out_From: 'None', Filter_Additional: 'None', Filter_By_Value: 'None',
+	Include_Only: ' ', Term: '-',
+	Line_: false, Boxplot_: true, Violin_: false, Outliers_: false,
+	Histogram_: false, Contours_: false, Regression_: false, Jitter_: false,
+	ECDF_: false, QQNorm_: false, Show_Covariance: false
+};
+
+var GALLERY_PRESETS = {
+	scatter:   { signals: { Color_By: 'species' } },
+	line:      { signals: { X_Axis: 'year', Color_By: 'species', Line_: true } },
+	histogram: { signals: { X_Axis: 'body_mass_g', Y_Axis: 'None', Color_By: 'species' } },
+	box:       { signals: { X_Axis: 'species', Color_By: 'species' } },
+	violin:    { signals: { X_Axis: 'species', Color_By: 'species', Violin_: true, Boxplot_: false } },
+	stacked:   { signals: { X_Axis: 'island', Y_Axis: 'Count', Color_By: 'species' } },
+	heatmap:   { signals: { X_Axis: 'island', Y_Axis: 'species' } },
+	facet:     { signals: { X_Axis: 'bill_length_mm', Y_Axis: 'bill_depth_mm', Color_By: 'species', Facet_Cols_By: 'island' } },
+	corr:      { click: 'covariance' },
+	threed:    { signals: { Color_By: 'species' }, click: 'ThreeD_btn' },
+	overview:  { click: 'Overview_btn' }
+};
+
+function galleryAfterRender(action) {
+	var tries = 0;
+	(function poll() {
+		tries++;
+		if (tries > 120) { return; }
+		var loader = document.getElementById('cc_loadersmartplot_id');
+		if (!loader || loader.style.display !== 'none') { setTimeout(poll, 120); return; }
+		if (action === 'covariance') {
+			var cb = document.querySelector('#Show_Covariancesmartplot_id input[type=checkbox]');
+			if (cb && !cb.checked) { cb.click(); }
+		} else {
+			var btn = document.getElementById(action + 'smartplot_id');
+			if (btn) { btn.click(); }
+		}
+	})();
+}
+
+function launchGalleryExample(key) {
+	var preset = GALLERY_PRESETS[key];
+	if (!preset) { return; }
+	var store = loadSignalsFromCookie('vegaSignals_smartplot_id') || {};
+	Object.assign(store, GALLERY_BASE_SIGNALS, preset.signals || {});
+	saveSignalState('vegaSignals_smartplot_id', store);
+	document.getElementById('default_data').click();
+	// normalize the show/hide toggle so the graph click always graphs
+	document.getElementById('myccinput').style.display = 'block';
+	var btn = document.getElementById('graph_button');
+	btn.innerHTML = 'Graph Data';
+	btn.click();
+	if (preset.click) { setTimeout(function() { galleryAfterRender(preset.click); }, 250); }
+}
+
+document.querySelectorAll('#cc_gallery [data-gallery]').forEach(function(card) {
+	card.addEventListener('click', function() {
+		launchGalleryExample(card.getAttribute('data-gallery'));
+	});
+});
 
 

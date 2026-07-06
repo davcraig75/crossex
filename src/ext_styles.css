@@ -38,3 +38,96 @@ textarea#myccinput.cc_dragover {
 	outline-offset: -4px;
 	background: #f7eef5;
 }
+
+/* Gallery start page –––––––––––––––––––––––––––––––––––––––––––––––––– */
+#cc_gallery {
+	margin-top: 14px;
+}
+.cc_gallery_head {
+	font-size: 12px;
+	color: #444;
+	margin-bottom: 10px;
+	max-width: 860px;
+}
+.cc_gallery_grid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+.cc_gcard {
+	width: 138px;
+	border: 1px solid #ddd;
+	border-radius: 5px;
+	background: #fff;
+	cursor: pointer;
+	padding: 7px 7px 6px 7px;
+	text-align: center;
+	transition: box-shadow 0.08s, border-color 0.08s;
+}
+.cc_gcard:hover {
+	border-color: #830862;
+	box-shadow: 0 1px 5px rgba(0, 0, 0, 0.14);
+}
+.cc_gcard svg {
+	width: 100%;
+	height: auto;
+	display: block;
+	background: #fdfdfd;
+	border-radius: 3px;
+}
+.cc_gname {
+	font-weight: bold;
+	font-size: 11px;
+	margin-top: 4px;
+	color: #1c1f2a;
+}
+.cc_gdesc {
+	font-size: 10px;
+	color: #888;
+	line-height: 1.25;
+}
+
+/* Tagline + toast –––––––––––––––––––––––––––––––––––––––––––––––––– */
+.cc_tagline {
+	font-size: 12px;
+	font-weight: normal;
+	color: #999;
+	margin-left: 8px;
+	letter-spacing: 0.4px;
+}
+#cc_toast {
+	position: fixed;
+	bottom: 22px;
+	left: 50%;
+	transform: translateX(-50%) translateY(20px);
+	background: #1c1f2a;
+	color: #fff;
+	padding: 8px 18px;
+	border-radius: 5px;
+	font-size: 12px;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.2s, transform 0.2s;
+	z-index: 3000;
+}
+#cc_toast.show {
+	opacity: 0.95;
+	transform: translateX(-50%) translateY(0);
+}
+
+/* Dark theme for the site chrome –––––––––––––––––––––––––––––––––––– */
+html.cc-dark .cc_gcard,
+html.cc-dark .cc_gcard svg {
+	background: #22242c;
+	border-color: #3a3d47;
+}
+html.cc-dark .cc_gname {
+	color: #d5d9e0;
+}
+html.cc-dark .cc_gallery_head,
+html.cc-dark .cc_gdesc {
+	color: #8b909b;
+}
+html.cc-dark h1.cc {
+	color: #d5d9e0;
+}

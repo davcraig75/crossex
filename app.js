@@ -152,6 +152,11 @@ if (process.argv[2] == "build") {
     console.log("Built crossex.js -> root");
     fs.writeFileSync("public/" + app_name + ".js", javascript);
     console.log("Built crossex.js -> public/");
+    // keep the R package's bundled library in sync
+    var rlib = "r/crossex/inst/htmlwidgets/lib/crossex";
+    fs.mkdirSync(rlib, { recursive: true });
+    fs.writeFileSync(path.join(rlib, app_name + ".js"), javascript);
+    console.log("Built crossex.js -> " + rlib + "/");
   }).catch(function(err) {
     console.error(err);
     process.exitCode = 1;
