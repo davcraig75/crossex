@@ -25,7 +25,7 @@ Built on [Vega](https://vega.github.io/vega/), a declarative visualization gramm
 - [Control Panel Reference](#control-panel-reference)
 - [Project Structure](#project-structure)
 - [Building the Library](#building-the-library)
-- [Browser Support](#browser-support)
+- [Browser & Device Support](#browser--device-support)
 - [License](#license)
 
 ---

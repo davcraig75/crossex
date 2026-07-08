@@ -4,7 +4,7 @@
 
 **Crossex** is a data visualization tool for interactive exploration of tabular datasets. It enables dynamic chart creation with linked filtering, faceting, and statistical views. The project supports both web-based (Express.js) and Electron desktop deployments.
 
-**Current version:** 1.20260120
+**Current version:** 1.20260225
 
 ## Architecture
 
@@ -33,16 +33,19 @@ views/ (templates with embedded JS/CSS/assets)
 
 | Command | Output | Purpose |
 |---------|--------|---------|
-| `npm test` or `node app.js` | Express server on :8080 | Live development |
-| `node app.js build` | `crossex.js` | Standalone script for embedding |
-| `node app.js build_site` | `crossex_site.js` | Optimized for web hosting |
-| `electron-builder --mac` | `.app` bundle | Desktop application |
+| `npm start` or `node app.js` | Express server on :8080 | Live development |
+| `npm run dev` | Express server on :8080 (nodemon) | Auto-reload dev loop |
+| `node app.js build` | `crossex.js` (root + `public/` + R package lib) | Embeddable library, Vega bundled |
+| `node app.js build_site` | `crossex_site.js` (root + `public/`), `electron/index.html` | Full standalone site/UI |
+| `node app.js build_pages` | `docs/index.html` + local libs | GitHub Pages static demo |
+| `npx electron-builder` (from `electron/`) | packaged desktop app | Electron distributable |
 
 Routes:
-- `/` → `stand_alone.ejs` (full app page)
-- `/template` → `template.ejs` (embedded widget)
+- `/` → `stand_alone.ejs` (full app page, self-contained)
 - `/public/*` → Static assets
 - `/src/*` → Data files & libraries
+
+There is no `/template` route — `template.ejs` is an embedding-sample template rendered at build time, not served live.
 
 ## Key Patterns & Conventions
 
@@ -59,7 +62,7 @@ Example: `data.crossex_spec = itg_comp("views/crossex."+pjson.version+".vg.json"
 
 Chart behavior is controlled by Vega signals (interactive inputs):
 ```javascript
-// In crossex.1.20260120.vg.json
+// In crossex.1.20260225.vg.json (single-line minified spec; ~156 top-level signals)
 "signals": [
   {"name": "X_Axis", "value": "island", "bind": {"input": "select", ...}},
   {"name": "Y_Axis", "value": "...", "bind": {...}},
@@ -67,14 +70,14 @@ Chart behavior is controlled by Vega signals (interactive inputs):
 ]
 ```
 
-These drive data transforms and encodings in the Vega spec.
+These drive data transforms and encodings in the Vega spec. The figure that actually renders is emergent — chosen from the X/Y column types plus toggle signals (`Boxplot_`, `Violin_`, `Barplot_`, `Line_`, `Contours_`, `Regression_`, `Histogram_`, `ECDF_`, `QQNorm_`, `Map_XY_Cat_`, …) — there is no single "chart type" dropdown.
 
 ### Data Type Inference
 
-In `crossex_base.js` (lines 266-376), the system auto-detects column types:
+Column type detection lives in `stats.js` (`infer()`, `typeAll()`, `inferAll()`), not in `crossex_base.js`:
 - **Numeric**: Parsed float values, treated as quantitative
 - **Categorical**: String/mixed values, treated as ordinal/nominal
-- **Optimization**: `optimize_axis()` (crossex_ext.js) auto-assigns axes based on cardinality and type
+- **Optimization**: `optimize_axis()` (`crossex_ext.js`) auto-assigns axes based on cardinality and type
 
 Logic: fewer unique values → facet rows; more values → color/detail; most numerous numeric → Y-axis.
 
@@ -95,25 +98,27 @@ This enables embedding the entire app in a single script tag with minimal payloa
 
 ### UI Interaction Model
 
-Tabbed interface in `crossex_base.js::ccOpenCity()`:
+Tabbed interface, driven by the button strip in `crossex_html.ejs` (`*_tablinks`/`*_btn` elements):
 1. **None** (default) - chart view
-2. **Search** - filter data
-3. **Charts** - chart type selector
-4. **Axis** - axis bindings
-5. **Marks** - mark encoding options
-6. **Fonts** - typography control
-7. **Filtering** - dynamic filters
-8. **Coloring** - color scale mapping
-9. **Margins** - layout adjustment
+2. **Search** - filter/highlight data
+3. **Charts** - axes, facets, chart-type sub-panels (Scatter/Violin-Box/Grid/Stacked)
+4. **Interact** - pan/zoom, tooltips, brush-select, saved views
+5. **Axis** - log/reverse/sort/manual limits
+6. **Marks** - points, regression, jitter, shape, stroke, contours
+7. **Fonts** - typography control
+8. **Filtering** - dynamic filters, render-sample cap
+9. **Coloring** - palette, color scale mapping, opacity
+10. **Margins** - layout adjustment
+11. **Summary** - per-column statistics table
+12. **Transforms** - formula-based derived columns, reshape/melt
 
-Each tab updates Vega spec signals, triggering reactive re-render.
+Plus three panel-level overlays outside the tab strip: **Table** (virtual-scrolling data grid), **Overview** (per-column distribution cards), and **3D** (WebGL unit view). Each tab/overlay updates Vega spec signals or swaps the panel content, triggering a reactive re-render.
 
 ### CSV/JSON Export
 
-Export function (`json2csv`, crossex_base.js:45-70):
-- Filters out internal columns (Y_Value, X_Value, Row_Value, Col_Value, Count, etc.)
-- Exports user-visible data only
-- Uses `Blob` + download link pattern (IE-compatible)
+The export menu (top-right of the chart) offers PNG, SVG, CSV, and "open in Vega Editor":
+- CSV export filters out internal computed columns (Y_Value, X_Value, Row_Value, Col_Value, Count, etc.) and exports only user-visible data
+- Uses the standard `Blob` + download-link pattern
 
 ## Development Workflows
 
@@ -140,7 +145,7 @@ Export function (`json2csv`, crossex_base.js:45-70):
 
 ### Debugging
 
-- **Server-side**: Modify `app.js`, restart with `npm test`
+- **Server-side**: Modify `app.js`, restart with `npm start` (there is no `npm test` script)
 - **Client-side**: Browser DevTools on `http://localhost:8080`
 - **Vega specs**: Validate against https://vega.github.io/editor/ (copy spec JSON)
 - **Type detection**: Add console logs in `stats.js::infer()` to trace inference
@@ -161,15 +166,17 @@ Export function (`json2csv`, crossex_base.js:45-70):
 
 ### Core Entry Points
 - [app.js](../app.js) - Express server, build pipeline
-- [views/crossex_base.js](../views/crossex_base.js) - Main rendering & interaction (547 lines)
-- [views/crossex_ext.js](../views/crossex_ext.js) - UI extensions (271 lines)
-- [views/stats.js](../views/stats.js) - Type inference & profiling
+- [views/crossex_base.js](../views/crossex_base.js) - Main rendering & interaction (~2,600 lines)
+- [views/crossex_ext.js](../views/crossex_ext.js) - UI extensions, axis optimizer, gallery (~730 lines)
+- [views/stats.js](../views/stats.js) - Type inference & profiling (~1,300 lines)
+- [src/lib/crossex3d.js](../src/lib/crossex3d.js) - Dependency-free WebGL 3D unit view
 
 ### Templates & Specs
 - [views/crossex_base.ejs](../views/crossex_base.ejs) - Main app wrapper
-- [views/crossex.1.20260120.vg.json](../views/crossex.1.20260120.vg.json) - Current Vega spec (6068 lines)
+- [views/crossex.1.20260225.vg.json](../views/crossex.1.20260225.vg.json) - Current Vega spec (single-line minified JSON; keep the filename's version suffix in sync with `package.json`)
 - [views/wrapper.ejs](../views/wrapper.ejs) - Standalone script builder
-- [views/body.ejs](../views/body.ejs) - UI component HTML
+- [views/body.ejs](../views/body.ejs) - UI component HTML (landing page, chart gallery)
+- [views/crossex_html.ejs](../views/crossex_html.ejs) - Control panel tabs & widget chrome
 
 ### Data & Styles
 - [src/penguins.csv](../src/penguins.csv) - Demo dataset
@@ -180,7 +187,7 @@ Export function (`json2csv`, crossex_base.js:45-70):
 
 **Task: Add a new filter type**
 - Add signal to Vega spec `.vg.json`
-- Implement UI control in `crossex_base.js::ccOpenCity()`
+- Add the control's markup to `crossex_html.ejs` and wire its signal binding in `crossex_base.js`
 - Add transform logic in Vega `transform` array
 - Rebuild & test
 
@@ -194,9 +201,13 @@ Export function (`json2csv`, crossex_base.js:45-70):
 - Update variable name in `app.js` data object
 - Rebuild templates
 
+## Browser & Device Support
+
+Verified (2026-07-07) across all three rendering engines — Blink (Chrome/Edge), WebKit (Safari), Gecko (Firefox) — desktop and mobile (iPhone/iPad/Android), for every figure type including the WebGL 3D view: identical rendering, zero console/page errors, no layout overflow. See the README's [Browser & Device Support](../README.md#browser--device-support) section for the full matrix. The app is a single self-contained page with no server calls at runtime, so compatibility risk is low and concentrated in the WebGL 3D view and canvas-based Vega rendering — re-check both after touching `src/lib/crossex3d.js` or the Vega spec's mark/encoding definitions.
+
 ## Notes for Next Developer
 
-1. **Version matching**: File versions in `.vg.json` filename (`crossex.1.20260120.vg.json`) must match `package.json` version. Update both when rolling new releases.
+1. **Version matching**: File versions in `.vg.json` filename (`crossex.1.20260225.vg.json`) must match `package.json` version. Update both when rolling new releases.
 2. **Compression trade-off**: LZ compression saves ~60-70% payload but adds client-side decompression latency. Monitor with prod builds.
 3. **Signal binding**: Vega signals automatically sync with UI controls via `bind` property. Any new interactive feature must follow this pattern.
 4. **Type inference**: The `stats.js` type detection is critical for auto-axis assignment. If adding new data types (e.g., dates), extend `infer()` and `typeAll()` functions.
