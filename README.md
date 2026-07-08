@@ -5,7 +5,7 @@
 **[▶ Try the live demo](https://davcraig75.github.io/crossex/)** — the full app runs client-side on GitHub Pages; paste your own data or load the demos.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.20260125-green.svg)](https://github.com/davcraig75/crossex)
+[![Version](https://img.shields.io/badge/version-1.20260225-green.svg)](https://github.com/davcraig75/crossex)
 
 Crossex lets users paste or load tabular data and instantly explore it through dynamically configurable charts. Drop a CSV into the tool and start dragging variables onto axes, facets, colors, and filters -- no code required. Embed it on any web page with a single `<script>` tag, or run the full interactive designer locally.
 
@@ -94,7 +94,6 @@ Starts an Express server on port **8080** (configurable via `API_PORT` environme
 | Route | Description |
 |-------|-------------|
 | `http://localhost:8080/` | Standalone graph designer with data input |
-| `http://localhost:8080/template` | Bootstrap dashboard template |
 
 ### Run in development mode
 
@@ -447,7 +446,7 @@ crossex/
 │   ├── crossex_base.ejs      # EJS template that produces crossex.js
 │   ├── wrapper.ejs           # EJS template that produces crossex_site.js
 │   ├── stand_alone.ejs       # Full HTML page served at /
-│   ├── template.ejs          # Bootstrap dashboard template at /template
+│   ├── template.ejs          # Bootstrap dashboard template (embedding sample)
 │   ├── crossex_html.ejs      # UI component: tabs, panels, controls
 │   ├── body.ejs              # Data input: textarea, buttons
 │   ├── stats.js              # Statistics: correlation, z-tests, formatting
@@ -525,11 +524,22 @@ For Shiny use `crossexOutput("id")` / `renderCrossex(crossex(df))`. The package 
 
 ---
 
-## Browser Support
+## Browser & Device Support
 
-All browsers supporting ES6: Chrome, Firefox, Safari, Edge, and Opera (2016+).
+Crossex is a single self-contained page with no build step and no server calls — everything runs client-side, so it behaves the same anywhere a modern (ES6, 2017+) engine is available.
 
-Touch support is included for mobile devices (pan, pinch-to-zoom).
+The full figure set — scatter, line, histogram, box, violin, bar, grid/heatmap, ECDF, QQ, correlation matrix, column overview, and the WebGL 3D unit view — was rendered on every major engine and checked for visually identical output, correct axes, and a clean console:
+
+| Engine | Desktop | Mobile |
+|--------|---------|--------|
+| Blink (Chrome, Edge, Opera, Brave) | ✅ | ✅ Android Chrome |
+| WebKit (Safari) | ✅ | ✅ iOS Safari — iPhone & iPad |
+| Gecko (Firefox) | ✅ | ✅ |
+
+- **Identical rendering across engines** — Vega's canvas output and the dependency-free WebGL 3D view render the same in Blink, WebKit, and Gecko, with no console or page errors.
+- **Responsive layout** — the start-page gallery reflows from four columns down to one, buttons wrap, and charts scale to the viewport with no horizontal scrolling, from 320 px phones through tablets to desktops.
+- **Touch** — pan, pinch-to-zoom, and tap-to-open controls work on phones and tablets; the config panel opens as an overlay, so the chart keeps full width when closed.
+- **No runtime dependency** except D3 (CSV/TSV parsing) when embedding; the standalone page bundles everything, including the Vega engine.
 
 ---
 
