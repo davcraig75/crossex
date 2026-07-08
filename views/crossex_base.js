@@ -1,6 +1,19 @@
 <%- include('../src/lz-string.js') %>
 
 var add_css=true;
+// Injects the core widget stylesheet (incl. all dark-mode rules) once. Normally
+// lazy — first chart draw pulls it in — but the standalone page's empty landing
+// state (hero + gallery, no chart yet) needs it too if dark mode is toggled early.
+function ensureCoreCss() {
+	if (!add_css) { return; }
+	var css = itgz.decompressFromEncodedURIComponent("<%=cc_css%>");
+	var head = document.head || document.getElementsByTagName('head')[0];
+	var style = document.createElement('style');
+	style.type = 'text/css';
+	style.appendChild(document.createTextNode(css));
+	head.appendChild(style);
+	add_css = false;
+}
 var crossex_spec = JSON.parse(itgz.decompressFromEncodedURIComponent("<%-crossex_spec%>"));
 // crossex() needs the spec as a string on every call (for the element-id
 // substitution); stringifying the ~350KB object once here instead of per
@@ -301,9 +314,9 @@ function ccOpenCity(evt, cityName,element) {
 	hideOverlays(element);
 }
 
-// The chart area hosts mutually-exclusive overlays (overview, 3D, table)
+// The chart area hosts mutually-exclusive overlays (overview, 3D, table, pivot)
 function hideOverlays(element, except) {
-	['cc_overview', 'cc_3d', 'cc_table'].forEach(function(id) {
+	['cc_overview', 'cc_3d', 'cc_table', 'cc_pivot'].forEach(function(id) {
 		if (id === except) { return; }
 		var el = document.getElementById(id + element);
 		if (el) { el.style.display = 'none'; }
@@ -406,29 +419,7 @@ var CORR_MAX_ROWS = 20000;
 
 // The matrix is symmetric with a constant diagonal (rank corr of a column with
 // itself is always 1), so only the upper triangle is computed and then mirrored.
-var corrmatrix = function (df, cols) {
-	if (!cols) {
-		cols = Object.keys(df[0]);
-	}
-	if (df.length > CORR_MAX_ROWS) {
-		df = sampleRows(df, CORR_MAX_ROWS);
-	}
-	var colTypes = corrColTypes(df, cols);
-	var corr = [];
-	for (var ci = 0; ci < cols.length; ++ci) {
-		var col1 = cols[ci];
-		corr.push({"var1": col1, "var2": col1, "% Variance": 1});
-		for (var cj = ci + 1; cj < cols.length; ++cj) {
-			var col2 = cols[cj];
-			var r2 = corrPairR2(df, col1, col2, colTypes[col1] === "num", colTypes[col2] === "num");
-			corr.push({"var1": col1, "var2": col2, "% Variance": r2});
-			corr.push({"var1": col2, "var2": col1, "% Variance": r2});
-		}
-	}
-	return corr;
-};
-
-// Async version - processes column pairs in chunks to avoid UI freeze
+// Processes column pairs in chunks (one frame per ~5% of pairs) to avoid UI freeze.
 var corrmatrixAsync = function (df, cols, callback) {
 	if (!cols) {
 		cols = Object.keys(df[0]);
@@ -1920,6 +1911,15 @@ function computeQQ(view) {
 	view.change('qq_data', vega.changeset().remove(function() { return true; }).insert(rows)).runAsync();
 }
 
+function setQQFacetDisabled(element, disabled) {
+	['Facet_Rows_By', 'Facet_Cols_By'].forEach(function(sig) {
+		var sel = document.querySelector('#' + sig + element + ' select');
+		if (!sel) { return; }
+		sel.disabled = disabled;
+		sel.title = disabled ? 'Not available for Normal QQ plots' : '';
+	});
+}
+
 // Sortable, downloadable rendering of the computed summary rows
 function paintSummary(container, element, rows) {
 	var sort = { key: null, dir: 1 };
@@ -2127,15 +2127,7 @@ var crossex = function crossex(element, data, options,widthid) {
 	// Create index maps for O(1) lookups
 	var signalMap = createIndexMap(spec.signals);
 	var dataMap = createIndexMap(spec.data);
-	if (add_css) {
-		var css = itgz.decompressFromEncodedURIComponent("<%=cc_css%>"),
-		head = document.head || document.getElementsByTagName('head')[0],
-		style = document.createElement('style');
-		head.appendChild(style);
-		style.type = 'text/css';
-		style.appendChild(document.createTextNode(css));
-		add_css=false;
-	}
+	ensureCoreCss();
 	crossexloader(element,true);
 	
 
@@ -2275,6 +2267,91 @@ var crossex = function crossex(element, data, options,widthid) {
 	});
 };
 
+// Pivot table (PivotTable.js) over the loaded dataset, rendered into the same
+// chart-area overlay tabs use. The jQuery/jQuery-UI/pivot stack (~410KB) has
+// no place in the base widget payload, so it loads lazily on first use.
+var PIVOT_LIBS = [
+	'src/lib/jquery-3.6.0.min.js',
+	'src/lib/jquery-ui.min.js',
+	'src/lib/jquery.ui.touch-punch.min.js',
+	'src/lib/pivot.js'
+];
+var PIVOT_HIDDEN_ATTRS = ["X_Value", "Col_Value", "Y_Value", "Row_Value", "Count", "None", "O_Value", "Color_Value", "Cstr", "Xstr", "Ystr", "Size_Value", "jitter", "xfocus", "yfocus", "Stroke_Value", "ecdf_rank", "ecdf_n", "ecdf_p", "SortX_Value", "Term"];
+var _pivotLibsPromise = null;
+var _pivotCssInjected = false;
+var _pivotInited = {};
+
+function loadScriptsSequentially(urls) {
+	return urls.reduce(function(chain, url) {
+		return chain.then(function() {
+			return new Promise(function(resolve, reject) {
+				var s = document.createElement('script');
+				s.src = url;
+				s.onload = resolve;
+				s.onerror = function() { reject(new Error('could not load ' + url)); };
+				document.head.appendChild(s);
+			});
+		});
+	}, Promise.resolve());
+}
+
+function ensurePivotLibs() {
+	if (!_pivotCssInjected) {
+		_pivotCssInjected = true;
+		var pvtCss = itgz.decompressFromEncodedURIComponent("<%=pvt_css%>");
+		var head = document.head || document.getElementsByTagName('head')[0];
+		var style = document.createElement('style');
+		style.type = 'text/css';
+		style.appendChild(document.createTextNode(pvtCss));
+		head.appendChild(style);
+	}
+	if (window.jQuery && jQuery.fn.pivotUI) { return Promise.resolve(); }
+	if (!_pivotLibsPromise) {
+		_pivotLibsPromise = loadScriptsSequentially(PIVOT_LIBS);
+	}
+	return _pivotLibsPromise;
+}
+
+// Pivot overlay: same mutual-exclusion + full-container real estate as the
+// Data Table / Overview / 3D View tabs (see hideOverlays).
+function openPivotView(element, data) {
+	var overlay = document.getElementById('cc_pivot' + element);
+	var note = document.getElementById('cc_pivot_info' + element);
+	var body = document.getElementById('cc_pivot_body' + element);
+	if (!overlay) { return; }
+	hideOverlays(element, 'cc_pivot');
+	overlay.style.display = 'flex';
+	if (!data || !data.length) {
+		note.textContent = '';
+		body.innerHTML = '<div class="cc_ovmeta">No data loaded.</div>';
+		return;
+	}
+	// a full re-render (dark mode, sample change, restore view) rebuilds this
+	// container from scratch even when the underlying data array is unchanged
+	if (_pivotInited[element] === data && body.querySelector('table.pvtTable')) { return; }
+	note.textContent = 'Loading pivot libraries…';
+	body.innerHTML = '';
+	ensurePivotLibs().then(function() {
+		// re-query rather than close over `body`: a full re-render (dark mode,
+		// sample change) while libs were still loading would have replaced it
+		var liveBody = document.getElementById('cc_pivot_body' + element);
+		var liveNote = document.getElementById('cc_pivot_info' + element);
+		if (!liveBody || liveBody.querySelector('table.pvtTable')) { return; }
+		_pivotInited[element] = data;
+		var rows = data.length > 50000 ? sampleRows(data, 50000) : data;
+		if (liveNote) {
+			liveNote.textContent = 'Pivot over ' + rows.length.toLocaleString() + ' rows' +
+				(rows.length < data.length ? ' (uniform sample of ' + data.length.toLocaleString() + ')' : '') +
+				' — drag fields to rows/columns.';
+		}
+		jQuery(liveBody).pivotUI(rows, {
+			hiddenAttributes: PIVOT_HIDDEN_ATTRS
+		}, true);
+	}).catch(function(err) {
+		var liveNote = document.getElementById('cc_pivot_info' + element);
+		if (liveNote) { liveNote.textContent = 'Pivot table unavailable: ' + err.message; }
+	});
+}
 
 function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable) {
 	if (myview) {
@@ -2333,6 +2410,18 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 		document.getElementById('cc_3d' + element).style.display = 'none';
 		var tip = document.getElementById('cc_3d_tip');
 		if (tip) { tip.style.display = 'none'; }
+	});
+	// Pivot table overlay: drag-and-drop PivotTable.js over the full dataset
+	document.getElementById('Pivot_btn' + element).addEventListener('click', function() {
+		var p = document.getElementById('cc_pivot' + element);
+		if (p.style.display === 'none' || !p.style.display) {
+			openPivotView(element, _fullData[element] || spec.data[dataMap['mydata']].values);
+		} else {
+			p.style.display = 'none';
+		}
+	});
+	document.getElementById('cc_pivot_close' + element).addEventListener('click', function() {
+		document.getElementById('cc_pivot' + element).style.display = 'none';
 	});
 	// Facet changes rebuild every cell's scaffolding inside Vega — on large
 	// rendered data that freezes or crashes the tab. Intercept the dropdown
@@ -2479,6 +2568,11 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 			result.view.addSignalListener(sig, function() { computeQQ(result.view); });
 		});
 		computeQQ(result.view);
+		// computeQQ only groups by Color_By (Vega has no normal-quantile
+		// expression to facet natively) — grey out the facet dropdowns while
+		// QQNorm_ is active so the UI never implies a split that isn't drawn
+		result.view.addSignalListener('QQNorm_', function(name, value) { setQQFacetDisabled(element, value); });
+		setQQFacetDisabled(element, result.view.signal('QQNorm_'));
 		// Brush selection, zoom reset, and the group-difference stats badge
 		wireBrush(element, result.view);
 		var resetZoomBtn = document.getElementById('cc_reset_zoom' + element);

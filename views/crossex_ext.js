@@ -309,6 +309,10 @@ function setDarkMode(on) {
 	try { window.localStorage.setItem('ccDarkMode', on ? '1' : '0'); } catch (e) {}
 	document.documentElement.classList.toggle('cc-dark', on);
 	document.getElementById('dark_toggle').innerHTML = on ? 'Light Mode' : 'Dark Mode';
+	// the core stylesheet (all dark-mode rules) is normally injected on first
+	// chart draw — on the empty landing state (hero, no chart yet) it may not
+	// exist yet, so make sure it's there before relying on .cc-dark selectors
+	ensureCoreCss();
 	// re-render the current chart so the dark Vega config applies
 	if (_fullData.smartplot_id && _crossexOpts.smartplot_id) {
 		crossexloader('smartplot_id', true);
@@ -322,6 +326,9 @@ document.getElementById('dark_toggle').onclick = function() { setDarkMode(!ccDar
 if (ccDarkMode()) {
 	document.documentElement.classList.add('cc-dark');
 	document.getElementById('dark_toggle').innerHTML = 'Light Mode';
+	// returning in dark mode with no chart drawn yet (still on the hero/gallery
+	// landing state) — same lazy-css gap as setDarkMode() above
+	ensureCoreCss();
 }
 
 // ---- Shareable state via URL hash --------------------------------------------
@@ -414,71 +421,6 @@ setTimeout(function restoreFromHash() {
 	}
 }, 0);
 
-// Pivot table (PivotTable.js) over the loaded dataset. The app itself has no
-// jQuery dependency, so the jQuery/jQuery-UI/pivot stack (~410KB) loads
-// lazily the first time the button is used instead of blocking every page load.
-function loadScriptsSequentially(urls) {
-	return urls.reduce(function(chain, url) {
-		return chain.then(function() {
-			return new Promise(function(resolve, reject) {
-				var s = document.createElement('script');
-				s.src = url;
-				s.onload = resolve;
-				s.onerror = function() { reject(new Error('could not load ' + url)); };
-				document.head.appendChild(s);
-			});
-		});
-	}, Promise.resolve());
-}
-
-var PIVOT_LIBS = [
-	'src/lib/jquery-3.6.0.min.js',
-	'src/lib/jquery-ui.min.js',
-	'src/lib/jquery.ui.touch-punch.min.js',
-	'src/lib/pivot.js'
-];
-var _pivotLibsPromise = null;
-
-function ensurePivotLibs() {
-	if (window.jQuery && jQuery.fn.pivotUI) { return Promise.resolve(); }
-	if (!_pivotLibsPromise) {
-		_pivotLibsPromise = loadScriptsSequentially(PIVOT_LIBS);
-	}
-	return _pivotLibsPromise;
-}
-
-var _pivotInited = null;
-document.getElementById("pivot_button").onclick = function fun() {
-	var wrap = document.getElementById('cc_pivot_wrap');
-	var note = document.getElementById('cc_pivot_note');
-	if (wrap.style.display !== 'none') {
-		wrap.style.display = 'none';
-		return;
-	}
-	wrap.style.display = 'block';
-	if (!_lastStruct || !_lastStruct.length) {
-		note.textContent = 'Load or paste data first, then click Graph Data.';
-		return;
-	}
-	if (_pivotInited === _lastStruct) { return; }
-	note.textContent = 'Loading pivot libraries…';
-	ensurePivotLibs().then(function() {
-		if (_pivotInited === _lastStruct) { return; }
-		_pivotInited = _lastStruct;
-		var rows = _lastStruct.length > 50000 ? sampleRows(_lastStruct, 50000) : _lastStruct;
-		note.textContent = 'Pivot over ' + rows.length.toLocaleString() + ' rows' +
-			(rows.length < _lastStruct.length ? ' (uniform sample of ' + _lastStruct.length.toLocaleString() + ')' : '') +
-			' — drag fields to rows/columns.';
-		// Vega's formula transforms annotate the raw rows in place — hide those
-		// derived fields (same set the CSV export filters out)
-		jQuery('#cc_pivot').pivotUI(rows, {
-			hiddenAttributes: ["X_Value", "Col_Value", "Y_Value", "Row_Value", "Count", "None", "O_Value", "Color_Value", "Cstr", "Xstr", "Ystr", "Size_Value", "jitter", "xfocus", "yfocus", "Stroke_Value", "ecdf_rank", "ecdf_n", "ecdf_p", "SortX_Value", "Term"]
-		}, true);
-	}).catch(function(err) {
-		note.textContent = 'Pivot table unavailable: ' + err.message;
-	});
-};
-
 document.getElementById("graph_button").onclick = function clicks() {
 	var btn = document.getElementById("graph_button");
 	// rows already parsed (large file re-graph, or generated demo) — reuse them
@@ -549,13 +491,11 @@ var _lastStruct = null;
 function graphStruct(struct) {
 	convertDates(struct);
 	_lastStruct = struct;
-	// the gallery start page only belongs to the empty state
+	// the gallery start page and the marketing hero only belong to the empty state
 	var gal = document.getElementById('cc_gallery');
 	if (gal) { gal.style.display = 'none'; }
-	// new data invalidates any open pivot or 3D view
-	var pivotWrap = document.getElementById('cc_pivot_wrap');
-	if (pivotWrap) { pivotWrap.style.display = 'none'; }
-	_pivotInited = null;
+	var hero = document.getElementById('cc_hero');
+	if (hero) { hero.style.display = 'none'; }
 	toggle("myccinput");
 	var headers = struct.columns;
 	var axis = optimize_axis(headers, struct);
@@ -677,6 +617,8 @@ var GALLERY_PRESETS = {
 	scatter:   { signals: { Color_By: 'species' } },
 	line:      { signals: { X_Axis: 'year', Color_By: 'species', Line_: true } },
 	histogram: { signals: { X_Axis: 'body_mass_g', Y_Axis: 'None', Color_By: 'species' } },
+	ecdf:      { signals: { X_Axis: 'body_mass_g', Y_Axis: 'None', Color_By: 'species', ECDF_: true } },
+	qqnorm:    { signals: { X_Axis: 'body_mass_g', Y_Axis: 'None', Color_By: 'species', QQNorm_: true } },
 	box:       { signals: { X_Axis: 'species', Color_By: 'species' } },
 	violin:    { signals: { X_Axis: 'species', Color_By: 'species', Violin_: true, Boxplot_: false } },
 	stacked:   { signals: { X_Axis: 'island', Y_Axis: 'Count', Color_By: 'species' } },
@@ -724,5 +666,25 @@ document.querySelectorAll('#cc_gallery [data-gallery]').forEach(function(card) {
 		launchGalleryExample(card.getAttribute('data-gallery'));
 	});
 });
+
+// Hero CTAs: one loads the demo straight away, the other jumps to the paste box
+var heroDemoBtn = document.getElementById('hero_demo_btn');
+if (heroDemoBtn) {
+	heroDemoBtn.addEventListener('click', function() {
+		document.getElementById('default_data').click();
+		document.getElementById('myccinput').style.display = 'block';
+		var btn = document.getElementById('graph_button');
+		btn.innerHTML = 'Graph Data';
+		btn.click();
+	});
+}
+var heroPasteBtn = document.getElementById('hero_paste_btn');
+if (heroPasteBtn) {
+	heroPasteBtn.addEventListener('click', function() {
+		var input = document.getElementById('myccinput');
+		input.scrollIntoView({behavior: 'smooth', block: 'center'});
+		input.focus();
+	});
+}
 
 

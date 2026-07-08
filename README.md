@@ -22,6 +22,7 @@ Built on [Vega](https://vega.github.io/vega/), a declarative visualization gramm
 - [API Reference](#api-reference)
 - [User Guide](#user-guide)
 - [Chart Types](#chart-types)
+- [Performance](#performance)
 - [Control Panel Reference](#control-panel-reference)
 - [Project Structure](#project-structure)
 - [Building the Library](#building-the-library)
@@ -271,7 +272,7 @@ Missing values (`"NA"`, `"null"`, `"N/A"`, `"unknown"`, `""`) are automatically 
 
 **In the standalone app** (`http://localhost:8080/`):
 
-The start page shows a **chart gallery** — one card per chart type (scatter, line, histogram, box, violin, stacked bar, heatmap, correlation matrix, faceted grid, 3D unit view, column overview). Clicking a card loads the demo dataset pre-configured to that example, so you can see every chart type in one click. The gallery disappears as soon as a graph is drawn.
+The start page shows a **chart gallery** — one card per chart type (scatter, line, histogram, ECDF, normal QQ plot, box, violin, stacked bar, heatmap, correlation matrix, faceted grid, 3D unit view, column overview). Clicking a card loads the demo dataset pre-configured to that example, so you can see every chart type in one click. The gallery (and the hero banner above it) disappears as soon as a graph is drawn.
 
 To use your own data:
 
@@ -283,7 +284,14 @@ Or click **Load Demo Data** to load a sample dataset, or **Load 5M Demo** to syn
 
 **Share Link** copies a URL that encodes the current settings, transform definitions, and (for inputs up to ~250 KB) the data itself, lz-compressed into the fragment — opening it rebuilds the exact view with nothing sent to any server. **Dark Mode** switches the whole app (panels, overlays, and the chart itself) to a dark palette; the choice persists.
 
-**Pivot Table** opens a drag-and-drop PivotTable.js view of the loaded data below the chart (capped at a uniform 50,000-row sample for very large datasets). The **Data Table** button (grid icon in the chart's tab strip) opens a virtual-scrolling raw-row grid over the full dataset — click a header to sort (third click restores data order), and double-click any chart point to jump to its row. The **3D View** (cube icon in the chart's tab strip, alongside the other panel buttons) opens a SandDance-style unit visualization *in the chart area* — every row is one WebGL mark — with animated transitions between a 3D scatter and stacked unit columns, orbit/zoom camera, per-column color, a point-size slider, and click-for-details, up to 100,000 points. The dependency-free renderer is bundled into the widget, so it also works in embedded `crossex()` instances. Picking any panel tab returns to the Vega chart. Date-like columns parsed from CSV/TSV are converted to decimal years (e.g. 2023.4521) so they behave as quantitative axes; combine with the **Line** toggle for time-series charts.
+A second row of icons in the chart's tab strip switches the *entire chart area* between views — each one replaces the Vega chart in place rather than opening a separate panel, and clicking any config tab (or the chart icon itself) switches back:
+
+- **Data Table** opens a virtual-scrolling raw-row grid over the full dataset — click a header to sort (third click restores data order), and double-click any chart point to jump to its row.
+- **Overview** opens the [Column Overview](#overview) described below.
+- **3D View** opens a SandDance-style unit visualization — every row is one WebGL mark — with animated transitions between a 3D scatter and stacked unit columns, orbit/zoom camera, per-column color, a point-size slider, and click-for-details, up to 100,000 points. The dependency-free renderer is bundled into the widget, so it also works in embedded `crossex()` instances.
+- **Pivot Table** opens a drag-and-drop [PivotTable.js](https://github.com/nicolaskruchten/pivottable) view of the loaded data (capped at a uniform 50,000-row sample for very large datasets); its jQuery/jQuery-UI/PivotTable.js stack (~410 KB) loads lazily the first time you open it, so it costs nothing until you use it.
+
+Date-like columns parsed from CSV/TSV are converted to decimal years (e.g. 2023.4521) so they behave as quantitative axes; combine with the **Line** toggle for time-series charts.
 
 Large inputs are handled without freezing the page: big delimited files parse in chunks with a progress indicator, files larger than a few MB are held in memory and only previewed in the text area (parsed once, reused for re-graphs), and column typing runs incrementally on very wide/tall tables. Datasets over 150,000 rows are rendered from a uniform 100,000-row sample by default, and faceted views render at most 10,000 rows (rebuilding every facet cell is expensive inside the Vega dataflow) — a banner always shows exactly what is displayed, and you can change the cap under **Filtering ▸ Render sample**. The Summary tab and CSV export always use the full dataset — tested through 5 million rows.
 
@@ -340,6 +348,27 @@ Click **Clear Settings** to reset everything to defaults.
 | **Stacked Bar** | Categorical axes with Sum_By | Sum column selection |
 | **Grid / Heatmap** | Two categorical axes | Cells colored by row count by default (hover for the count); map Color_By/Size_By or enable Jitter for per-row views |
 | **Correlation Matrix** | All numeric columns | Show Covariance toggle; click any cell to open that pair's plot |
+
+---
+
+## Performance
+
+Crossex runs entirely in the browser's main thread — no server, no build step at runtime — so every code path that can touch a large dataset is chunked to yield between frames instead of blocking the tab:
+
+| Path | Behavior |
+|------|----------|
+| Delimited (CSV/TSV) parsing | Files parse in ~8 MB slices via `requestAnimationFrame`, with a progress indicator; JSON and quoted-field CSVs parse in one shot |
+| Column type detection | One synchronous pass under ~20M cells; above that, one column scanned per frame |
+| Chart rendering | Datasets over 150,000 rows render from a uniform 100,000-row sample by default; faceted views cap at 10,000 rows (rebuilding every facet cell is expensive inside the Vega dataflow) |
+| Correlation matrix | Computed over a 20,000-row sample, in chunks of column pairs (~20 frames) |
+| 3D Unit View | Up to 100,000 points, one WebGL draw call |
+| Pivot Table | Aggregated over a uniform 50,000-row sample |
+| Formula columns (Transforms tab) | Compiled once, evaluated in 100,000-row chunks per frame |
+| "Load 5M Demo" | Synthesizes 5,000,000 rows in 250,000-row batches per frame |
+
+The Summary tab and CSV export always operate on the full, unsampled dataset — a sample only ever affects what's *drawn*. A banner above the chart always shows exactly what's being rendered, and the render sample size is adjustable under **Filtering ▸ Render sample**.
+
+All of the above yields via `requestAnimationFrame` rather than a Web Worker, so it stays on the main thread — heavy individual frames (e.g. the largest parsing chunks) can still cause brief, recoverable jank on slower machines rather than a hard freeze. Moving parsing and column typing to a Web Worker is the next architectural step for very large files; it isn't done yet.
 
 ---
 

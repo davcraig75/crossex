@@ -87,6 +87,124 @@ textarea#myccinput.cc_dragover {
 	line-height: 1.25;
 }
 
+/* Hero / value-prop section –––––––––––––––––––––––––––––––––––––––––––––––––– */
+.cc_hero {
+	margin-bottom: 22px;
+	padding-bottom: 20px;
+	border-bottom: 1px solid #e7e7e7;
+}
+.cc_hero_top {
+	max-width: 760px;
+}
+.cc_hero_badge {
+	display: inline-block;
+	font-size: 10px;
+	font-weight: bold;
+	letter-spacing: 0.4px;
+	text-transform: uppercase;
+	color: #830862;
+	background: #f7eef5;
+	border-radius: 999px;
+	padding: 4px 10px;
+	margin-bottom: 10px;
+}
+.cc_hero_title {
+	font-size: 27px;
+	line-height: 1.2;
+	font-weight: 800;
+	color: #1c1f2a;
+	margin: 0 0 8px 0;
+	letter-spacing: -0.3px;
+}
+.cc_hero_sub {
+	font-size: 13.5px;
+	line-height: 1.55;
+	color: #444;
+	margin: 0 0 16px 0;
+	max-width: 700px;
+}
+.cc_hero_cta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 18px;
+}
+.cc_hero_btn {
+	border-radius: 5px;
+	font-size: 12px;
+	font-weight: bold;
+	padding: 9px 16px;
+	cursor: pointer;
+	border: 1.5px solid #830862;
+}
+.cc_hero_btn_primary {
+	background: #830862;
+	color: #fff;
+}
+.cc_hero_btn_primary:hover {
+	background: #650150;
+}
+.cc_hero_btn_secondary {
+	background: transparent;
+	color: #830862;
+}
+.cc_hero_btn_secondary:hover {
+	background: #f7eef5;
+}
+.cc_hero_stats {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 22px;
+}
+.cc_hero_stat {
+	display: flex;
+	flex-direction: column;
+}
+.cc_hero_stat b {
+	font-size: 17px;
+	color: #1c1f2a;
+}
+.cc_hero_stat span {
+	font-size: 10px;
+	color: #888;
+	text-transform: uppercase;
+	letter-spacing: 0.3px;
+}
+.cc_hero_features {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+	gap: 12px;
+	margin-top: 20px;
+}
+.cc_hf_card {
+	border: 1px solid #e4e4e4;
+	border-radius: 6px;
+	padding: 12px 13px;
+	background: #fcfcfd;
+}
+.cc_hf_card svg {
+	display: block;
+	margin-bottom: 6px;
+}
+.cc_hf_card b {
+	display: block;
+	font-size: 12px;
+	color: #1c1f2a;
+	margin-bottom: 4px;
+}
+.cc_hf_card p {
+	font-size: 11px;
+	line-height: 1.5;
+	color: #666;
+	margin: 0;
+}
+.cc_hf_card code {
+	background: #eee;
+	border-radius: 3px;
+	padding: 0 3px;
+	font-size: 10px;
+}
+
 /* Tagline + toast –––––––––––––––––––––––––––––––––––––––––––––––––– */
 .cc_tagline {
 	font-size: 12px;
@@ -129,5 +247,47 @@ html.cc-dark .cc_gdesc {
 	color: #8b909b;
 }
 html.cc-dark h1.cc {
+	color: #d5d9e0;
+}
+html.cc-dark .cc_hero {
+	border-color: #3a3d47;
+}
+html.cc-dark .cc_hero_badge {
+	background: #33202f;
+	color: #e6a8d6;
+}
+html.cc-dark .cc_hero_title {
+	color: #e6e8ec;
+}
+html.cc-dark .cc_hero_sub {
+	color: #b7bcc7;
+}
+html.cc-dark .cc_hero_btn_primary:hover {
+	background: #9c1a80;
+}
+html.cc-dark .cc_hero_btn_secondary {
+	color: #e6a8d6;
+}
+html.cc-dark .cc_hero_btn_secondary:hover {
+	background: #33202f;
+}
+html.cc-dark .cc_hero_stat b {
+	color: #e6e8ec;
+}
+html.cc-dark .cc_hero_stat span {
+	color: #8b909b;
+}
+html.cc-dark .cc_hf_card {
+	background: #22242c;
+	border-color: #3a3d47;
+}
+html.cc-dark .cc_hf_card b {
+	color: #e6e8ec;
+}
+html.cc-dark .cc_hf_card p {
+	color: #9aa0ab;
+}
+html.cc-dark .cc_hf_card code {
+	background: #33353f;
 	color: #d5d9e0;
 }

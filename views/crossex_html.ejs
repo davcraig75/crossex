@@ -54,6 +54,9 @@
                 <button aria-label="3D Unit View" data-crossextip-position="right" role="tooltip" class="cc_tablinks" id="ThreeD_btn-ccnm">
                     <svg viewBox="0 0 24 24" width="14" height="14" style="opacity:0.75"><path d="M12 2.5 L20.5 7 L20.5 17 L12 21.5 L3.5 17 L3.5 7 Z" fill="none" stroke="#333" stroke-width="1.4"/><path d="M12 2.5 L12 12 M12 12 L20.5 7 M12 12 L3.5 7" fill="none" stroke="#333" stroke-width="1.1"/></svg>
                 </button>
+                <button aria-label="Pivot Table" data-crossextip-position="right" role="tooltip" class="cc_tablinks" id="Pivot_btn-ccnm">
+                    <svg viewBox="0 0 24 24" width="14" height="14" style="opacity:0.75"><rect x="3" y="3" width="18" height="18" fill="none" stroke="#333" stroke-width="1.5"/><rect x="3" y="3" width="18" height="5" fill="#333" opacity="0.55"/><rect x="3" y="3" width="5" height="18" fill="#333" opacity="0.55"/><line x1="3" y1="14" x2="21" y2="14" stroke="#333"/><line x1="14" y1="3" x2="14" y2="21" stroke="#333"/></svg>
+                </button>
             </div>
         </div>
         <div id="cc_tabscontent-ccnm" class="cc_tabscontent">
@@ -337,6 +340,15 @@
                 <div id="cc_3d_stage-ccnm" class="cc_3d_stage_fill"></div>
                 <div id="cc_3d_legend-ccnm" class="cc_3d_legend"></div>
                 <div id="cc_3d_note-ccnm" class="cc_3d_note"></div>
+            </div>
+            <div id="cc_pivot-ccnm" class="cc_pivot_overlay" style="display:none">
+                <div class="cc_dt_bar">
+                    <b>Pivot Table</b>
+                    <span id="cc_pivot_info-ccnm" class="cc_dt_info"></span>
+                    <span class="cc_ovhint">drag fields to rows/columns</span>
+                    <span class="cc_ovclose" id="cc_pivot_close-ccnm">✕ close</span>
+                </div>
+                <div id="cc_pivot_body-ccnm" class="cc_pivot_body"></div>
             </div>
             <div class="cc_container" id="view_crossex-ccnm" style="position: absolute;"></div>
         </div>

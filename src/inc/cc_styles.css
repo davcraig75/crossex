@@ -492,7 +492,7 @@ table.cc_summary td:first-child, table.cc_summary th:first-child {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	z-index: 60;
+	z-index: 1060;
 	background: #fff;
 	overflow: auto;
 	padding: 8px 12px;
@@ -614,7 +614,7 @@ table.cc_summary td:first-child, table.cc_summary th:first-child {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	z-index: 61;
+	z-index: 1061;
 	background: #fff;
 	display: flex;
 	flex-direction: column;
@@ -882,7 +882,7 @@ table.cc_summary th {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	z-index: 62;
+	z-index: 1062;
 	background: #fff;
 	display: flex;
 	flex-direction: column;
@@ -961,6 +961,28 @@ table.cc_summary th {
 	outline: 1px solid #830862;
 }
 
+/* Pivot table overlay  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+.cc_pivot_overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 1063;
+	background: #fff;
+	display: flex;
+	flex-direction: column;
+	padding: 6px 8px;
+	box-sizing: border-box;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.cc_pivot_body {
+	flex: 1 1 auto;
+	overflow: auto;
+	min-height: 0;
+	margin-top: 6px;
+}
+
 /* Dark theme  –––––––––––––––––––––––––––––––––––––––––––––––––– */
 html.cc-dark body,
 html.cc-dark #crossex_app {
@@ -974,9 +996,41 @@ html.cc-dark #crossex {
 html.cc-dark .cc_graph_container,
 html.cc-dark .cc_overview,
 html.cc-dark .cc_3d_overlay,
-html.cc-dark .cc_dt_overlay {
+html.cc-dark .cc_dt_overlay,
+html.cc-dark .cc_pivot_overlay {
 	background: #191a21;
 	border-color: #3a3d47;
+}
+html.cc-dark .pvtUi,
+html.cc-dark .pvtUi td,
+html.cc-dark .pvtUi tr {
+	color: #c8ccd4;
+}
+html.cc-dark table.pvtTable thead tr th,
+html.cc-dark table.pvtTable tbody tr th {
+	background-color: #2a2c35;
+	border-color: #3a3d47;
+	color: #d5d9e0;
+}
+html.cc-dark table.pvtTable tbody tr td {
+	background-color: #191a21;
+	border-color: #3a3d47;
+	color: #c8ccd4;
+}
+html.cc-dark .pvtAxisContainer,
+html.cc-dark .pvtVals {
+	background: #2a2c35;
+	border-color: #3a3d47;
+}
+html.cc-dark .pvtAxisContainer li span.pvtAttr {
+	background: #33353f;
+	border-color: #3a3d47;
+	color: #d5d9e0;
+}
+html.cc-dark .pvtFilterBox {
+	background-color: #191a21;
+	border-color: #3a3d47;
+	color: #c8ccd4;
 }
 html.cc-dark .cc_tab,
 html.cc-dark p.cc-emph {
