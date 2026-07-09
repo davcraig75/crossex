@@ -7887,7 +7887,7 @@ function trTokenize(src) {
 
 // Whole-column statistic, numeric-coerced, NA-skipped; emitted as a literal
 function trAggregate(fnName, col, data, cache) {
-	var key = fnName + ' ' + col;
+	var key = fnName + '\u0000' + col;
 	if (cache[key] !== undefined) { return cache[key]; }
 	var vals = [];
 	for (var i = 0; i < data.length; i++) {
