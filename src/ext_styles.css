@@ -170,6 +170,58 @@ textarea#myccinput.cc_dragover {
 	text-transform: uppercase;
 	letter-spacing: 0.3px;
 }
+.cc_hero_steps {
+	display: flex;
+	align-items: stretch;
+	gap: 10px;
+	margin-top: 20px;
+	padding: 14px 16px;
+	border: 1px solid #ecdfe9;
+	border-radius: 8px;
+	background: linear-gradient(180deg, #fdf8fc, #fcfcfd);
+}
+.cc_hs_step {
+	display: flex;
+	gap: 10px;
+	flex: 1 1 0;
+	min-width: 0;
+}
+.cc_hs_num {
+	flex: 0 0 auto;
+	width: 22px;
+	height: 22px;
+	border-radius: 50%;
+	background: #830862;
+	color: #fff;
+	font-size: 12px;
+	font-weight: 700;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-top: 1px;
+}
+.cc_hs_step b {
+	font-size: 13px;
+	color: #1c1f2a;
+	display: block;
+	margin-bottom: 2px;
+}
+.cc_hs_step p {
+	font-size: 12px;
+	color: #555;
+	margin: 0;
+	line-height: 1.45;
+}
+.cc_hs_arrow {
+	align-self: center;
+	color: #c9a3bf;
+	font-size: 18px;
+	flex: 0 0 auto;
+}
+@media (max-width: 760px) {
+	.cc_hero_steps { flex-direction: column; }
+	.cc_hs_arrow { display: none; }
+}
 .cc_hero_features {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
@@ -276,6 +328,19 @@ html.cc-dark .cc_hero_stat b {
 }
 html.cc-dark .cc_hero_stat span {
 	color: #8b909b;
+}
+html.cc-dark .cc_hero_steps {
+	background: #22242c;
+	border-color: #3a3d47;
+}
+html.cc-dark .cc_hs_step b {
+	color: #e6e8ec;
+}
+html.cc-dark .cc_hs_step p {
+	color: #9aa0ab;
+}
+html.cc-dark .cc_hs_arrow {
+	color: #6b5566;
 }
 html.cc-dark .cc_hf_card {
 	background: #22242c;

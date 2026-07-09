@@ -983,6 +983,116 @@ table.cc_summary th {
 	margin-top: 6px;
 }
 
+/* PivotTable.js chrome, modernized. Scoped under .cc_pivot_body so these
+   rules outrank the lib's own pivot.css, which is injected into <head>
+   *after* this sheet (lazy load on first pivot open). */
+.cc_pivot_body .pvtUi {
+	color: #333;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 13px;
+	border-collapse: separate;
+	border-spacing: 6px;
+}
+.cc_pivot_body .pvtUi select {
+	font-size: 12px;
+	padding: 4px 6px;
+	border: 1px solid #c9ced8;
+	border-radius: 6px;
+	background: #fff;
+	color: #333;
+}
+.cc_pivot_body .pvtAxisContainer,
+.cc_pivot_body .pvtVals {
+	background: #f6f7fa;
+	border: 1px solid #dfe3ea;
+	border-radius: 8px;
+	padding: 6px;
+}
+.cc_pivot_body .pvtAxisContainer li {
+	padding: 4px;
+}
+.cc_pivot_body .pvtAxisContainer li span.pvtAttr {
+	display: inline-block;
+	background: #fff;
+	border: 1px solid #d5dae3;
+	border-radius: 999px;
+	padding: 3px 10px;
+	font-size: 12px;
+	line-height: 1.35;
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+	transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.cc_pivot_body .pvtAxisContainer li span.pvtAttr:hover {
+	border-color: #830862;
+	box-shadow: 0 2px 6px rgba(131, 8, 98, 0.15);
+}
+.cc_pivot_body .pvtTriangle {
+	color: #9aa3b2;
+	margin-left: 2px;
+}
+.cc_pivot_body .pvtAxisContainer li.pvtPlaceholder {
+	border: 1px dashed #b7bfcc;
+	border-radius: 999px;
+	background: transparent;
+}
+.cc_pivot_body table.pvtTable {
+	font-size: 12.5px;
+	margin-top: 2px;
+}
+.cc_pivot_body table.pvtTable thead tr th,
+.cc_pivot_body table.pvtTable tbody tr th {
+	background: #f2f4f8;
+	border: 1px solid #e2e6ee;
+	font-size: 12px;
+	padding: 5px 10px;
+	color: #40485a;
+}
+.cc_pivot_body table.pvtTable tbody tr td {
+	border: 1px solid #eceff5;
+	padding: 4px 10px;
+	color: #2c3446;
+	font-variant-numeric: tabular-nums;
+}
+.cc_pivot_body table.pvtTable tbody tr:hover td {
+	background: #faf7fb;
+}
+.cc_pivot_body .pvtFilterBox {
+	border: 1px solid #d5dae3;
+	border-radius: 10px;
+	box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+	font-size: 13px;
+	padding-bottom: 8px;
+}
+.cc_pivot_body .pvtFilterBox h4 {
+	margin: 10px;
+	font-size: 13px;
+}
+.cc_pivot_body .pvtFilterBox button {
+	border: 1px solid #c9ced8;
+	background: #fff;
+	color: #333;
+	border-radius: 6px;
+	padding: 3px 10px;
+	margin: 0 3px;
+	cursor: pointer;
+	font-size: 12px;
+}
+.cc_pivot_body .pvtFilterBox button:hover {
+	border-color: #830862;
+	color: #830862;
+}
+.cc_pivot_body .pvtFilterBox input[type='text'] {
+	border: 1px solid #c9ced8;
+	border-radius: 6px;
+	padding: 4px 8px;
+}
+.cc_pivot_body .pvtCheckContainer {
+	border-color: #e2e6ee;
+}
+.cc_pivot_body .pvtCheckContainer p {
+	margin: 3px 6px;
+}
+
 /* Dark theme  –––––––––––––––––––––––––––––––––––––––––––––––––– */
 html.cc-dark body,
 html.cc-dark #crossex_app {
@@ -1031,6 +1141,32 @@ html.cc-dark .pvtFilterBox {
 	background-color: #191a21;
 	border-color: #3a3d47;
 	color: #c8ccd4;
+}
+html.cc-dark .cc_pivot_body .pvtUi select {
+	background: #2a2c35;
+	border-color: #3a3d47;
+	color: #d5d9e0;
+}
+html.cc-dark .cc_pivot_body .pvtAxisContainer li span.pvtAttr {
+	box-shadow: none;
+}
+html.cc-dark .cc_pivot_body .pvtAxisContainer li.pvtPlaceholder {
+	border-color: #4a4e5c;
+}
+html.cc-dark .cc_pivot_body table.pvtTable tbody tr:hover td {
+	background: #22242d;
+}
+html.cc-dark .cc_pivot_body .pvtFilterBox button,
+html.cc-dark .cc_pivot_body .pvtFilterBox input[type='text'] {
+	background: #2a2c35;
+	border-color: #3a3d47;
+	color: #d5d9e0;
+}
+html.cc-dark .cc_pivot_body .pvtCheckContainer {
+	border-color: #3a3d47;
+}
+html.cc-dark .cc_pivot_body .pvtTriangle {
+	color: #7b8294;
 }
 html.cc-dark .cc_tab,
 html.cc-dark p.cc-emph {

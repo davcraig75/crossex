@@ -2314,6 +2314,31 @@ function ensurePivotLibs() {
 
 // Pivot overlay: same mutual-exclusion + full-container real estate as the
 // Data Table / Overview / 3D View tabs (see hideOverlays).
+// Seed the pivot with a live cross-tab instead of a bare grand total: the
+// first two low-cardinality non-numeric columns become rows x cols.
+function pickPivotCategoricals(rows) {
+	var hidden = new Set(PIVOT_HIDDEN_ATTRS);
+	var scan = rows.slice(0, 500);
+	var picks = [];
+	if (!scan.length) { return picks; }
+	var colNames = Object.keys(scan[0]);
+	for (var c = 0; c < colNames.length && picks.length < 2; c++) {
+		var name = colNames[c];
+		if (hidden.has(name)) { continue; }
+		var distinct = new Set();
+		var categorical = true;
+		for (var i = 0; i < scan.length; i++) {
+			var v = scan[i][name];
+			if (v == null || v === '') { continue; }
+			if (typeof v === 'number' || (typeof v === 'string' && v !== '' && !isNaN(+v))) { categorical = false; break; }
+			distinct.add(String(v));
+			if (distinct.size > 24) { categorical = false; break; }
+		}
+		if (categorical && distinct.size >= 2) { picks.push(name); }
+	}
+	return picks;
+}
+
 function openPivotView(element, data) {
 	var overlay = document.getElementById('cc_pivot' + element);
 	var note = document.getElementById('cc_pivot_info' + element);
@@ -2341,11 +2366,13 @@ function openPivotView(element, data) {
 		var rows = data.length > 50000 ? sampleRows(data, 50000) : data;
 		if (liveNote) {
 			liveNote.textContent = 'Pivot over ' + rows.length.toLocaleString() + ' rows' +
-				(rows.length < data.length ? ' (uniform sample of ' + data.length.toLocaleString() + ')' : '') +
-				' — drag fields to rows/columns.';
+				(rows.length < data.length ? ' (uniform sample of ' + data.length.toLocaleString() + ')' : '');
 		}
+		var cats = pickPivotCategoricals(rows);
 		jQuery(liveBody).pivotUI(rows, {
-			hiddenAttributes: PIVOT_HIDDEN_ATTRS
+			hiddenAttributes: PIVOT_HIDDEN_ATTRS,
+			rows: cats.slice(0, 1),
+			cols: cats.slice(1, 2)
 		}, true);
 	}).catch(function(err) {
 		var liveNote = document.getElementById('cc_pivot_info' + element);
