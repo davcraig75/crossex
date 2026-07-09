@@ -17,7 +17,6 @@
   "author": "GitHub",
   "license": "CC0-1.0",
   "devDependencies": {
-    "@electron-forge/cli": "^7.6.1",
     "electron": "^40.2.0",
     "electron-builder": "^26.6.3"
   }
