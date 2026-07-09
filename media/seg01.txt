@@ -1,0 +1,1 @@
+Meet crossex — a free, browser-based tool that turns any table of data into an interactive chart in seconds. There is nothing to install, and nothing is uploaded: every calculation happens right here, in your browser.

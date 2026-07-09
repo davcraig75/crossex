@@ -1,0 +1,1 @@
+And that's it. crossex reads each column, works out which hold numbers and which hold categories, and draws a sensible chart straight away. No chart-type menus to fight.

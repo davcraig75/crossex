@@ -1,0 +1,1 @@
+When you're done, crossex embeds in any web page with three lines of code — and an R package brings the same widget to R Studio and Shiny. It's free, and open source. Load your own data — and start exploring.

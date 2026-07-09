@@ -1,0 +1,1 @@
+Getting started couldn't be simpler. Paste a spreadsheet, a C S V, or JSON straight into the box — or drag and drop a file. Here, we'll load the demo dataset: measurements of three hundred and forty four penguins.

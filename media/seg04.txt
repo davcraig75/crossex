@@ -1,0 +1,1 @@
+Choose bill length for the X axis, and body mass for Y, and you have a scatter plot. Add a colour — species — and the clusters leap out immediately.

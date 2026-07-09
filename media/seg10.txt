@@ -1,0 +1,1 @@
+The three-D view maps any three columns into a rotatable WebGL cube — every row of your data becomes a point in space.

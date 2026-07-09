@@ -1,0 +1,1 @@
+It's built for real data, too. Chunked parsing and smart sampling keep even five million rows responsive — with a banner that always tells you exactly what's being rendered.

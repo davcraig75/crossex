@@ -1,0 +1,1 @@
+The icon strip on the left holds the power tools: a sortable data table, and an overview that profiles every column at a glance.

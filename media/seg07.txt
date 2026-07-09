@@ -1,0 +1,1 @@
+Faceting splits any chart into small multiples. One dropdown gives you a panel for every island; a second breaks it out by sex as well.

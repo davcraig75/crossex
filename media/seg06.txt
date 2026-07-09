@@ -1,0 +1,1 @@
+Pick a single numeric column, and crossex draws its histogram — with density and cumulative views just a click away.

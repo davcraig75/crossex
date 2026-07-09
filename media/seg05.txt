@@ -1,0 +1,1 @@
+Swap the X axis to a category, and those very same dropdowns now give you box plots — or violins — comparing distributions across groups.

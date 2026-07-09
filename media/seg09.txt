@@ -1,0 +1,1 @@
+Need more? Column summaries give you means, medians, and missing-value counts. Filters carve the data down without touching your file. And a built-in formula engine creates brand-new columns on the fly — standardise, take logs, or combine fields.

@@ -1,0 +1,1 @@
+And the pivot table gives you drag-and-drop cross-tabulation over the full dataset. Drag a field onto rows or columns, pick an aggregation, and explore your data the spreadsheet way.
