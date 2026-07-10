@@ -91,11 +91,19 @@
     <div style="display:inline-flex;flex-wrap:wrap;gap:2px">
         <div id="graph_button" class="cc_button active">Graph Data</div>
         <div id="load_file" class="cc_button">Load File</div>
+        <div id="load_url" class="cc_button">Load URL</div>
+        <div id="build_dashboard" class="cc_button">Dashboard</div>
         <div id="default_data" class="cc_button">Load Demo Data</div>
         <div id="large_demo" class="cc_button">Load 5M Demo</div>
         <div id="share_link" class="cc_button">Share Link</div>
         <div id="dark_toggle" class="cc_button">Dark Mode</div>
         <div id="clear_cookies" class="cc_button">Clear Settings</div>
+    </div>
+    <div id="cc_url_bar" class="cc_url_bar" style="display:none">
+        <input type="text" id="cc_url_field" class="cc_url_field"
+            placeholder="https://example.com/data.csv — a CSV, TSV, or JSON table">
+        <div id="cc_url_go" class="cc_button active">Fetch &amp; Graph</div>
+        <div id="cc_url_cancel" class="cc_button">Cancel</div>
     </div>
 </form>
 <div id="cc_toast"></div>
@@ -175,3 +183,6 @@
 <div class="accd jsa" id="About" style="width: 100%;margin: 0 auto">
   <div id="smartplot_id" ></div>
 </div>
+<!-- Dashboard builder: a grid of independent crossex charts over one or more
+     datasets. Built entirely by crossex_dash.js; hidden until entered. -->
+<div id="cc_dashboard" class="cc_dashboard" style="display:none"></div>

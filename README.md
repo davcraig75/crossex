@@ -21,6 +21,7 @@ Built on [Vega](https://vega.github.io/vega/), a declarative visualization gramm
 - [Embedding on a Web Page](#embedding-on-a-web-page)
 - [API Reference](#api-reference)
 - [User Guide](#user-guide)
+- [Dashboards](#dashboards)
 - [Chart Types](#chart-types)
 - [Performance](#performance)
 - [Control Panel Reference](#control-panel-reference)
@@ -276,11 +277,13 @@ The start page shows a **chart gallery** — one card per chart type (scatter, l
 
 To use your own data:
 
-1. Paste CSV, TSV, or a JSON array of row objects into the text area — or click **Load File**, or drag and drop a file onto the text area
+1. Paste CSV, TSV, or a JSON array of row objects into the text area — or click **Load File**, drag and drop a file onto the text area, or click **Load URL** and paste a link to a CSV/TSV/JSON file
 2. Click **Graph Data**
 3. The tool auto-detects delimiters (tab vs comma) and column types (numeric vs categorical)
 
 Or click **Load Demo Data** to load a sample dataset, or **Load 5M Demo** to synthesize a 5,000,000-row mixed-type dataset in the browser (no download) and explore the large-data path.
+
+**Load URL** fetches a remote table directly in the browser: paste a link to a `.csv`, `.tsv`, or `.json` file and the format is detected from the response body (the extension doesn't matter). The fetch is client-side, so the URL must allow cross-origin reads (raw-file hosts like GitHub raw, gists, and most open-data portals do); the same button is available inside the dashboard's data loader.
 
 **Share Link** copies a URL that encodes the current settings, transform definitions, and (for inputs up to ~250 KB) the data itself, lz-compressed into the fragment — opening it rebuilds the exact view with nothing sent to any server. **Dark Mode** switches the whole app (panels, overlays, and the chart itself) to a dark palette; the choice persists.
 
@@ -333,6 +336,38 @@ Click the export icon (top-right of the chart) to:
 All settings (axis selections, filters, palettes, etc.) are saved to browser localStorage and restored automatically on your next visit. Saved column selections that don't exist in the currently loaded dataset are ignored, so switching datasets always produces a valid chart.
 
 Click **Clear Settings** to reset everything to defaults.
+
+---
+
+## Dashboards
+
+Beyond the single-chart explorer, the **Dashboard** button turns crossex into a lightweight dashboard builder: a grid of independent charts, each a full crossex widget, driven from one or more datasets.
+
+Click **Dashboard** in the button row to enter. If a dataset is already loaded it becomes "Dataset 1" and a first chart is added automatically; otherwise the empty canvas walks you through adding data.
+
+**Building a dashboard**
+
+- **+ Add chart** drops a new tile onto the grid, laid out in the first free slot (no overlaps). Every tile is a real crossex chart, so it gets the full engine — automatic chart-type selection, sampling for large data, and its own PNG/SVG/CSV export menu.
+- **Reposition** a chart by dragging its title bar; **resize** it by dragging the bottom-right corner. Tiles snap to a column grid (6/8/12/16 columns, selectable), and resizing re-fits the chart to its new size. **Tidy** repacks every tile into a clean, gap-free layout.
+- **Configure** a chart with the ⚙ button. The **Chart** tab sets the title, chart type (scatter, line, regression, histogram, box, violin, bar, heatmap), X/Y columns, color, size, facets, palette, and a stats overlay. Changes apply live.
+- **⧉ duplicate** and **✕ remove** are on each tile's header.
+
+**Viewing and replacing a chart's data**
+
+The ⚙ config popover's **Data** tab shows the dataset behind that chart — its name, row/column counts, and a preview of the first rows — and lets you **replace** it in place: paste new data, upload a file, or fetch a URL (CSV/TSV/JSON). Replacing re-derives valid axis choices for the new columns. When more than one dataset is loaded, a picker points the chart at any of them, so a single dashboard can mix several sources.
+
+**Data sources**
+
+- **+ Add data** loads a dataset into the dashboard (paste, file, URL, the built-in demo, or the data already open in the single-chart view). Each source appears as a chip in the **Data sources** bar; click a chip to add a chart from it.
+- Different charts can read different datasets, so one board can combine, say, a live CSV feed and a pasted table.
+
+**Saving and sharing**
+
+- The layout, every chart's configuration, and small/URL datasets **auto-save to the browser** and restore on your next visit (URL datasets are re-fetched).
+- **Export** downloads the whole dashboard — layout, configs, and all rows — as a `.json` file; **Import** restores it. Nothing is sent to any server.
+- **Dark** switches the whole board (and every chart) to the dark palette.
+
+Like the rest of crossex, the dashboard runs entirely client-side; it's part of the standalone site (`crossex_site.js`), not the embeddable `crossex.js` library.
 
 ---
 
@@ -471,7 +506,8 @@ crossex/
 │
 ├── views/
 │   ├── crossex_base.js       # Core: data loading, signal wiring, Vega handoff
-│   ├── crossex_ext.js        # Extensions: drag resize, axis optimizer, data input
+│   ├── crossex_ext.js        # Extensions: axis optimizer, data input, URL loading
+│   ├── crossex_dash.js       # Dashboard builder (site-only): grid of chart tiles
 │   ├── crossex_base.ejs      # EJS template that produces crossex.js
 │   ├── wrapper.ejs           # EJS template that produces crossex_site.js
 │   ├── stand_alone.ejs       # Full HTML page served at /

@@ -232,6 +232,64 @@ document.getElementById("default_data").onclick = function fun() {
 	document.getElementById("myccinput").value = itg_decomp("<%=demo%>");
 };
 
+// ---- Load data from a URL (CSV / TSV / JSON) --------------------------------
+// Fetches a remote table and resolves to parsed rows (with a .columns array).
+// The delimiter/format is detected from the response body by parseInputData(),
+// so the URL's file extension doesn't matter. Cross-origin URLs must return
+// permissive CORS headers (raw file hosts and most open-data portals do); when
+// they don't the browser blocks the read and the caller shows a clear message.
+function ccFetchData(url) {
+	return fetch(url, { redirect: 'follow' }).then(function(res) {
+		if (!res.ok) { throw new Error('HTTP ' + res.status + ' ' + res.statusText); }
+		return res.text();
+	}).then(function(text) {
+		var struct = parseInputData(text);
+		if (!struct || !struct.length) { throw new Error('no rows parsed from the response'); }
+		return struct;
+	});
+}
+
+// Load URL button on the main input: reveals an inline URL field, then fetches
+// and graphs it through the normal single-chart path.
+(function wireLoadUrl() {
+	var btn = document.getElementById('load_url');
+	var bar = document.getElementById('cc_url_bar');
+	var field = document.getElementById('cc_url_field');
+	var go = document.getElementById('cc_url_go');
+	var cancel = document.getElementById('cc_url_cancel');
+	if (!btn || !bar) { return; }
+	btn.onclick = function() {
+		var show = bar.style.display === 'none';
+		bar.style.display = show ? 'block' : 'none';
+		if (show) { field.focus(); }
+	};
+	cancel.onclick = function() { bar.style.display = 'none'; };
+	function run() {
+		var url = field.value.trim();
+		if (!url) { return; }
+		var label = go.innerHTML;
+		go.innerHTML = 'Fetching…';
+		ccFetchData(url).then(function(struct) {
+			go.innerHTML = label;
+			bar.style.display = 'none';
+			_loadedFile = null;
+			_lastRawText = null; // remote data isn't embedded in share links
+			var input = document.getElementById('myccinput');
+			input.value = '[Loaded from URL: ' + url + ' — ' + struct.length.toLocaleString() + ' rows. Editing this box discards it.]';
+			input.style.display = 'block';
+			graphStruct(struct);
+			ccToast('Loaded ' + struct.length.toLocaleString() + ' rows from URL');
+		}).catch(function(err) {
+			go.innerHTML = label;
+			ccToast('Could not load URL: ' + err.message);
+		});
+	}
+	go.onclick = run;
+	field.addEventListener('keydown', function(e) {
+		if (e.key === 'Enter') { e.preventDefault(); run(); }
+	});
+})();
+
 // Synthesizes a 5,000,000-row mixed-type dataset in the browser (no download,
 // no CSV parse) and graphs it directly — a stress-test/demo for the
 // large-data path. Generation is chunked so the UI stays responsive.
@@ -487,10 +545,15 @@ function convertDates(struct) {
 }
 
 var _lastStruct = null;
+// The clean column list captured before crossex/Vega renders: Vega injects
+// derived fields (X_Value, Color_Value, …) onto the shared row objects, so
+// Object.keys(row) is unreliable afterwards. The dashboard reads this.
+var _lastColumns = null;
 
 function graphStruct(struct) {
 	convertDates(struct);
 	_lastStruct = struct;
+	_lastColumns = (struct.columns || (struct[0] ? Object.keys(struct[0]) : [])).slice();
 	// the gallery start page and the marketing hero only belong to the empty state
 	var gal = document.getElementById('cc_gallery');
 	if (gal) { gal.style.display = 'none'; }
