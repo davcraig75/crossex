@@ -4,12 +4,16 @@
 var pjson = require('./package.json');
 const express = require("express");
 const compression = require("compression");
-const bodyParser = require("body-parser");
 const path = require("path");
 const http = require("http");
 const dotenv = require("dotenv");
 var debug = require("debug")("ripple:server");
 const fs = require("fs");
+
+const projectRoot = __dirname;
+const fromRoot = function() {
+  return path.join.apply(path, [projectRoot].concat(Array.prototype.slice.call(arguments)));
+};
 
 dotenv.config();
 
@@ -19,12 +23,23 @@ app.set("port", port);
 
 // View engine
 app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
+app.set("views", fromRoot("views"));
 
 // Middleware - compression first for best effect
 app.use(compression());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+
+// The server has no write API: keep the middleware surface intentionally
+// small and add the baseline headers expected from a production static app.
+// A CSP is not sent here because the distributable intentionally contains an
+// inline, self-contained script; deployment owners can use a nonce/hash CSP.
+app.disable("x-powered-by");
+app.use(function(req, res, next) {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=()");
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  next();
+});
 
 var app_name = "crossex";
 
@@ -40,14 +55,14 @@ app.use(function(req, res, next) {
 
 // Static files (cache for 1 hour; browsers revalidate with ETag after that)
 var static_opts = { maxAge: "1h" };
-app.use(express.static(path.join(__dirname, 'public'), static_opts));
-app.use('/public', express.static(path.join(__dirname, 'public'), static_opts));
-app.use('/src', express.static(path.join(__dirname, 'src'), static_opts));
+app.use(express.static(fromRoot('public'), static_opts));
+app.use('/public', express.static(fromRoot('public'), static_opts));
+app.use('/src', express.static(fromRoot('src'), static_opts));
 
 // Compression utilities
 var itgz = require("./src/lz-string.js");
 var itg_comp = function(file) {
-  return itgz.compressToEncodedURIComponent(fs.readFileSync(file, "utf8"));
+  return itgz.compressToEncodedURIComponent(fs.readFileSync(fromRoot(file), "utf8"));
 };
 var itg_engz = function(data) {
   return itgz.compressToEncodedURIComponent(JSON.stringify(data)).toString();
@@ -71,7 +86,7 @@ var data = {
   itgversion: pjson.version
 };
 
-var file_str = fs.readFileSync("src/penguins.csv", "utf8");
+var file_str = fs.readFileSync(fromRoot("src/penguins.csv"), "utf8");
 var dat_json = d3.csvParse(file_str, d3.autoType);
 
 
@@ -79,7 +94,13 @@ var dat_json = d3.csvParse(file_str, d3.autoType);
 // Webpage From Node
 //////////////////////////////////////////////////////////////////////////////////
 app.get("/", function(req, res) {
+  res.setHeader("Cache-Control", "no-cache");
   res.render("stand_alone", data);
+});
+
+app.get("/healthz", function(req, res) {
+  res.setHeader("Cache-Control", "no-store");
+  res.json({ status: "ok", version: pjson.version });
 });
 
 
@@ -100,9 +121,9 @@ var page_assets = [
 ];
 function copyPageAssets(destRoot) {
   page_assets.forEach(function(asset) {
-    var destDir = path.join(destRoot, asset[1]);
+    var destDir = fromRoot(destRoot, asset[1]);
     fs.mkdirSync(destDir, { recursive: true });
-    fs.copyFileSync(asset[0], path.join(destDir, path.basename(asset[0])));
+    fs.copyFileSync(fromRoot(asset[0]), path.join(destDir, path.basename(asset[0])));
   });
 }
 
@@ -116,13 +137,14 @@ function renderToString(view) {
 
 if (process.argv[2] == "build_site") {
   renderToString("wrapper").then(function(javascript) {
-    fs.writeFileSync("public/" + app_name + "_site.js", javascript);
+    javascript = javascript.trimEnd() + "\n";
+    fs.writeFileSync(fromRoot("public", app_name + "_site.js"), javascript);
     console.log("Built crossex_site.js -> public/");
-    fs.writeFileSync(app_name + "_site.js", javascript);
+    fs.writeFileSync(fromRoot(app_name + "_site.js"), javascript);
     console.log("Built crossex_site.js -> root");
     return renderToString("stand_alone");
   }).then(function(html) {
-    fs.writeFileSync("electron/index.html", html);
+    fs.writeFileSync(fromRoot("electron", "index.html"), html);
     copyPageAssets("electron");
     console.log("Built index.html + libs -> electron/");
   }).catch(function(err) {
@@ -134,10 +156,10 @@ if (process.argv[2] == "build_site") {
 // Static GitHub Pages demo: the whole app as ~6 files under docs/
 if (process.argv[2] == "build_pages") {
   renderToString("stand_alone").then(function(html) {
-    fs.rmSync("docs", { recursive: true, force: true });
-    fs.mkdirSync("docs", { recursive: true });
-    fs.writeFileSync("docs/index.html", html);
-    fs.writeFileSync("docs/.nojekyll", "");
+    fs.rmSync(fromRoot("docs"), { recursive: true, force: true });
+    fs.mkdirSync(fromRoot("docs"), { recursive: true });
+    fs.writeFileSync(fromRoot("docs", "index.html"), html);
+    fs.writeFileSync(fromRoot("docs", ".nojekyll"), "");
     copyPageAssets("docs");
     console.log("Built GitHub Pages demo -> docs/");
   }).catch(function(err) {
@@ -148,12 +170,15 @@ if (process.argv[2] == "build_pages") {
 
 if (process.argv[2] == "build") {
   renderToString("crossex_base").then(function(javascript) {
-    fs.writeFileSync(app_name + ".js", javascript);
+    javascript = javascript.trimEnd() + "\n";
+    fs.writeFileSync(fromRoot(app_name + ".js"), javascript);
     console.log("Built crossex.js -> root");
-    fs.writeFileSync("public/" + app_name + ".js", javascript);
+    fs.writeFileSync(fromRoot("public", app_name + ".js"), javascript);
     console.log("Built crossex.js -> public/");
+    fs.writeFileSync(fromRoot("electron", app_name + ".js"), javascript);
+    console.log("Built crossex.js -> electron/");
     // keep the R package's bundled library in sync
-    var rlib = "r/crossex/inst/htmlwidgets/lib/crossex";
+    var rlib = fromRoot("r", "crossex", "inst", "htmlwidgets", "lib", "crossex");
     fs.mkdirSync(rlib, { recursive: true });
     fs.writeFileSync(path.join(rlib, app_name + ".js"), javascript);
     console.log("Built crossex.js -> " + rlib + "/");
@@ -197,17 +222,31 @@ function normalizePort(val) {
 }
 
 function onListening() {
-  var addr = server.address();
+  var addr = this.address();
   var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
   debug("Listening on " + bind);
 }
 
-if (!build_mode) {
+function startServer(listenPort) {
   var server = http.createServer(app);
-  server.listen(port);
+  listenPort = listenPort === undefined ? port : listenPort;
+  server.listen(listenPort);
   server.on("error", onError);
   server.on("listening", onListening);
-  console.log("ITG RESTful API server started on: " + port);
+  return server;
 }
+
+if (require.main === module && !build_mode) {
+  var server = startServer(port);
+  console.log("ITG RESTful API server started on: " + port);
+
+  ["SIGINT", "SIGTERM"].forEach(function(signal) {
+    process.once(signal, function() {
+      server.close(function() { process.exit(0); });
+    });
+  });
+}
+
+module.exports = { app: app, startServer: startServer };
 
 //////////////////////////////////////////////////////////////////////////////////

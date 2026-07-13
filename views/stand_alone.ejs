@@ -3,10 +3,20 @@
 <head>
     <!-- Authorship Viewport
     –––––––––––––––––––––––––––––––––––––––––––––––––– -->  
-    <title>Graph Designer</title>
-    <meta content="Institute of Translational Genomics, USC 2020 David W. Craig" name="author">
+    <title>Crossex | Private, no-code data explorer</title>
+    <meta content="Explore CSV, TSV, and JSON data with interactive charts, filters, statistics, pivot tables, and dashboards—all in your browser." name="description">
+    <meta content="David W. Craig" name="author">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#830862">
+    <link rel="canonical" href="https://davcraig75.github.io/crossex/">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://davcraig75.github.io/crossex/">
+    <meta property="og:title" content="Crossex | Turn any table into an analysis workspace">
+    <meta property="og:description" content="Private, no-code exploration for CSV, TSV, and JSON—with adaptive charts, data quality, transformations, statistics, and reproducible projects.">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Crossex | Browser-native data exploration">
+    <meta name="twitter:description" content="From raw rows to interactive charts and reproducible analysis, entirely in your browser.">
             <!-- The app itself needs no jQuery: the jQuery/jQuery-UI/PivotTable
                  stack lazy-loads on first use of the Pivot Table tab.
                  d3-dsv (3KB) covers everything the page uses from d3
@@ -15,8 +25,9 @@
             <link rel="icon" type="image/png" href="crossex.120.png">
 </head>
 <body>
+    <a class="cc_skip_link" href="#crossex_app">Skip to data explorer</a>
     <script src="src/d3-dsv.v1.min.js"></script>
-    <div id="crossex_app" style="position:inherit;max-width:100%;margin:0 auto;padding:10px;background:#FFF;"></div>
+    <main id="crossex_app" tabindex="-1" style="position:inherit;max-width:100%;margin:0 auto;padding:10px;background:#FFF;"></main>
     <script type="text/javascript" settings="{}"><%- include('wrapper.ejs') %></script>
 </body>
 </html>

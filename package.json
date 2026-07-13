@@ -8,19 +8,28 @@
     "build": "node ./app.js build",
     "build:site": "node ./app.js build_site",
     "start": "node ./app.js",
-    "build:pages": "node ./app.js build_pages"
+    "build:pages": "node ./app.js build_pages",
+    "build:all": "npm run build && npm run build:site && npm run build:pages",
+    "test": "node --test test/*.test.js",
+    "test:e2e": "playwright test",
+    "verify": "npm run build:all && npm test && npm run test:e2e && node ./scripts/verify-build.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/davcraig75/crossex.git"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
-    "body-parser": "^1.20.3",
     "compression": "^1.7.4",
     "debug": "^4.1.1",
     "dotenv": "^8.0.0",
     "ejs": "^3.1.10",
     "express": "^4.21.2"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@playwright/test": "^1.61.1"
+  }
 }

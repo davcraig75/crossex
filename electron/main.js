@@ -5,15 +5,32 @@ const path = require('path')
 function createWindow () {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    title: 'Crossex',
+    width: 1280,
+    height: 800,
+    minWidth: 760,
+    minHeight: 560,
+    backgroundColor: '#ffffff',
+    autoHideMenuBar: true,
+    icon: path.join(__dirname, 'crossex.120.png'),
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js')
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      webSecurity: true
     }
   })
 
   // and load the index.html of the app.
   mainWindow.loadFile('index.html')
+
+  // The desktop build is a local, client-only application. Keep imported
+  // data and untrusted links from navigating the privileged app window or
+  // opening surprise child windows.
+  mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (!url.startsWith('file://')) event.preventDefault()
+  })
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()

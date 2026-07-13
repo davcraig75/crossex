@@ -97,33 +97,7 @@ function optimize_axis(headers, struct) {
 // Accepts CSV, TSV, or a JSON array of row objects; returns rows with a
 // .columns property (same shape d3.csvParse produces)
 function parseInputData(string) {
-	var trimmed = string.trim();
-	if (trimmed[0] == '[' || trimmed[0] == '{') {
-		try {
-			var parsed = JSON.parse(trimmed);
-			if (!Array.isArray(parsed)) {
-				parsed = [parsed];
-			}
-			// union keys across the first rows in case some are sparse
-			var cols = [];
-			var seen = new Set();
-			var limit = Math.min(parsed.length, 100);
-			for (var i = 0; i < limit; i++) {
-				for (var k in parsed[i]) {
-					if (!seen.has(k)) {
-						seen.add(k);
-						cols.push(k);
-					}
-				}
-			}
-			parsed.columns = cols;
-			return parsed;
-		} catch (e) { /* not valid JSON — fall through to delimited parsing */ }
-	}
-	if (string.search(/\t/) > 0) {
-		return d3.tsvParse(string, d3.autoType);
-	}
-	return d3.csvParse(string, d3.autoType);
+	return CrossexData.parseInput(string, d3);
 }
 
 // Large delimited text parses in ~8MB slices with a frame between each, so
@@ -131,11 +105,12 @@ function parseInputData(string) {
 // may contain newlines, so anything containing a quote falls back to one
 // monolithic parse; JSON always parses in one shot.
 var CHUNK_PARSE_BYTES = 8 * 1024 * 1024;
-function parseInputDataAsync(string, onProgress, callback) {
+function parseInputDataAsync(string, onProgress, callback, onError) {
 	var trimmed = string.trim();
 	if (trimmed[0] == '[' || trimmed[0] == '{' ||
 		string.length < CHUNK_PARSE_BYTES || string.indexOf('"') !== -1) {
-		callback(parseInputData(string));
+		try { callback(parseInputData(string)); }
+		catch (error) { if (onError) { onError(error); } }
 		return;
 	}
 	var parseFn = string.search(/\t/) > 0 ? d3.tsvParse : d3.csvParse;
@@ -145,23 +120,27 @@ function parseInputDataAsync(string, onProgress, callback) {
 	var pos = headerEnd + 1;
 	var totalLen = string.length;
 	function parseChunk() {
-		var end = Math.min(pos + CHUNK_PARSE_BYTES, totalLen);
-		if (end < totalLen) {
-			end = string.indexOf('\n', end);
-			if (end === -1) { end = totalLen; }
-		}
-		var part = parseFn(header + '\n' + string.slice(pos, end), d3.autoType);
-		if (rows === null) {
-			rows = part; // keeps .columns from the first chunk
-		} else {
-			for (var i = 0; i < part.length; i++) { rows.push(part[i]); }
-		}
-		pos = end + 1;
-		if (pos < totalLen) {
-			if (onProgress) { onProgress(Math.round(100 * pos / totalLen)); }
-			requestAnimationFrame(parseChunk);
-		} else {
-			callback(rows);
+		try {
+			var end = Math.min(pos + CHUNK_PARSE_BYTES, totalLen);
+			if (end < totalLen) {
+				end = string.indexOf('\n', end);
+				if (end === -1) { end = totalLen; }
+			}
+			var part = parseFn(header + '\n' + string.slice(pos, end), d3.autoType);
+			if (rows === null) {
+				rows = part; // keeps .columns from the first chunk
+			} else {
+				for (var i = 0; i < part.length; i++) { rows.push(part[i]); }
+			}
+			pos = end + 1;
+			if (pos < totalLen) {
+				if (onProgress) { onProgress(Math.round(100 * pos / totalLen)); }
+				requestAnimationFrame(parseChunk);
+			} else {
+				callback(CrossexData.validateRows(rows));
+			}
+		} catch (error) {
+			if (onError) { onError(error); }
 		}
 	}
 	parseChunk();
@@ -171,9 +150,14 @@ function parseInputDataAsync(string, onProgress, callback) {
 // a 50MB string in a DOM textarea costs seconds of layout time and doubles
 // the memory held. Editing the textarea discards the loaded file.
 var LARGE_FILE_BYTES = 4 * 1024 * 1024;
+var MAX_FILE_BYTES = 512 * 1024 * 1024;
 var _loadedFile = null;
 
 function loadFileIntoInput(file) {
+	if (file.size > MAX_FILE_BYTES) {
+		showDataNotice('That file is larger than the 512 MB safety limit.', true);
+		return;
+	}
 	var reader = new FileReader();
 	reader.onload = function(e) {
 		var input = document.getElementById("myccinput");
@@ -239,13 +223,30 @@ document.getElementById("default_data").onclick = function fun() {
 // permissive CORS headers (raw file hosts and most open-data portals do); when
 // they don't the browser blocks the read and the caller shows a clear message.
 function ccFetchData(url) {
-	return fetch(url, { redirect: 'follow' }).then(function(res) {
+	var parsedUrl;
+	try { parsedUrl = new URL(url, window.location.href); }
+	catch (e) { return Promise.reject(new Error('enter a valid URL')); }
+	if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+		return Promise.reject(new Error('only http:// and https:// URLs are supported'));
+	}
+	var maxBytes = 256 * 1024 * 1024;
+	var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+	var timeout = controller ? setTimeout(function() { controller.abort(); }, 30000) : null;
+	return fetch(parsedUrl.href, { redirect: 'follow', signal: controller ? controller.signal : undefined }).then(function(res) {
 		if (!res.ok) { throw new Error('HTTP ' + res.status + ' ' + res.statusText); }
+		var declared = Number(res.headers.get('content-length'));
+		if (declared && declared > maxBytes) { throw new Error('response exceeds the 256 MB safety limit'); }
 		return res.text();
 	}).then(function(text) {
+		if (text.length > maxBytes) { throw new Error('response exceeds the 256 MB safety limit'); }
 		var struct = parseInputData(text);
 		if (!struct || !struct.length) { throw new Error('no rows parsed from the response'); }
 		return struct;
+	}).catch(function(error) {
+		if (error && error.name === 'AbortError') { throw new Error('request timed out after 30 seconds'); }
+		throw error;
+	}).finally(function() {
+		if (timeout) { clearTimeout(timeout); }
 	});
 }
 
@@ -260,18 +261,24 @@ function ccFetchData(url) {
 	if (!btn || !bar) { return; }
 	btn.onclick = function() {
 		var show = bar.style.display === 'none';
-		bar.style.display = show ? 'block' : 'none';
+		bar.style.display = show ? 'flex' : 'none';
+		btn.setAttribute('aria-expanded', show ? 'true' : 'false');
 		if (show) { field.focus(); }
 	};
-	cancel.onclick = function() { bar.style.display = 'none'; };
+	cancel.onclick = function() { bar.style.display = 'none'; btn.setAttribute('aria-expanded', 'false'); btn.focus(); };
 	function run() {
 		var url = field.value.trim();
 		if (!url) { return; }
 		var label = go.innerHTML;
 		go.innerHTML = 'Fetching…';
+		go.disabled = true;
+		bar.setAttribute('aria-busy', 'true');
 		ccFetchData(url).then(function(struct) {
 			go.innerHTML = label;
+			go.disabled = false;
+			bar.removeAttribute('aria-busy');
 			bar.style.display = 'none';
+			btn.setAttribute('aria-expanded', 'false');
 			_loadedFile = null;
 			_lastRawText = null; // remote data isn't embedded in share links
 			var input = document.getElementById('myccinput');
@@ -281,7 +288,9 @@ function ccFetchData(url) {
 			ccToast('Loaded ' + struct.length.toLocaleString() + ' rows from URL');
 		}).catch(function(err) {
 			go.innerHTML = label;
-			ccToast('Could not load URL: ' + err.message);
+			go.disabled = false;
+			bar.removeAttribute('aria-busy');
+			showDataNotice('Could not load URL: ' + err.message, true);
 		});
 	}
 	go.onclick = run;
@@ -362,11 +371,155 @@ function ccToast(text) {
 	t._t = setTimeout(function() { t.className = ''; }, 2600);
 }
 
+// Persistent data status and quality report. Errors remain visible until the
+// user dismisses them; transient toasts are reserved for completed actions.
+function showDataNotice(text, isError) {
+	var notice = document.getElementById('cc_data_notice');
+	var message = document.getElementById('cc_data_notice_text');
+	if (!notice || !message) { return; }
+	message.textContent = text;
+	notice.classList.toggle('is-error', !!isError);
+	notice.setAttribute('role', isError ? 'alert' : 'status');
+	notice.hidden = false;
+}
+
+var dataNoticeClose = document.getElementById('cc_data_notice_close');
+if (dataNoticeClose) {
+	dataNoticeClose.onclick = function() { document.getElementById('cc_data_notice').hidden = true; };
+}
+
+var _lastProfile = null;
+var qualityPanel = document.getElementById('cc_quality');
+var qualityButton = document.getElementById('data_quality');
+var qualityClose = document.getElementById('cc_quality_close');
+if (qualityButton) {
+	qualityButton.onclick = function() {
+		if (!_lastProfile || !qualityPanel) { return; }
+		qualityPanel.hidden = !qualityPanel.hidden;
+		qualityButton.setAttribute('aria-expanded', qualityPanel.hidden ? 'false' : 'true');
+		if (!qualityPanel.hidden) { document.getElementById('cc_quality_title').focus && document.getElementById('cc_quality_title').focus(); }
+	};
+}
+if (qualityClose) {
+	qualityClose.onclick = function() {
+		qualityPanel.hidden = true;
+		qualityButton.setAttribute('aria-expanded', 'false');
+		qualityButton.focus();
+	};
+}
+
+function formatQualityNumber(value) {
+	if (value === null || value === undefined || value !== value) { return '—'; }
+	return Number(value).toLocaleString(undefined, { maximumFractionDigits: 3 });
+}
+
+function renderDataQuality(struct, profile) {
+	_lastProfile = profile;
+	if (!qualityButton || !qualityPanel) { return; }
+	qualityButton.disabled = false;
+	qualityButton.setAttribute('aria-expanded', qualityPanel.hidden ? 'false' : 'true');
+	qualityButton.textContent = profile.issues.length ? 'Data Quality (' + profile.issues.length + ')' : 'Data Quality';
+	var summary = document.getElementById('cc_quality_summary');
+	summary.textContent = profile.rowCount.toLocaleString() + ' rows × ' + profile.columnCount.toLocaleString() +
+		' columns · scanned ' + profile.scannedRows.toLocaleString() + (profile.partial ? ' rows for this report' : ' rows');
+
+	var issues = document.getElementById('cc_quality_issues');
+	issues.innerHTML = '';
+	if (!profile.issues.length) {
+		var ok = document.createElement('span');
+		ok.className = 'cc_quality_ok';
+		ok.textContent = 'No obvious structural issues found.';
+		issues.appendChild(ok);
+	} else {
+		profile.issues.slice(0, 16).forEach(function(issue) {
+			var chip = document.createElement('span');
+			chip.className = 'cc_quality_issue ' + issue.severity;
+			chip.textContent = issue.message;
+			issues.appendChild(chip);
+		});
+		if (profile.issues.length > 16) {
+			var more = document.createElement('span');
+			more.className = 'cc_quality_issue';
+			more.textContent = '+ ' + (profile.issues.length - 16) + ' more';
+			issues.appendChild(more);
+		}
+	}
+
+	var tbody = document.getElementById('cc_quality_columns');
+	tbody.innerHTML = '';
+	profile.columns.forEach(function(column, index) {
+		var tr = document.createElement('tr');
+		[column.name, column.type, Math.round(column.missingRate * 100) + '%',
+			(column.distinctCapped ? '≥' : '') + column.distinct.toLocaleString()].forEach(function(value) {
+			var td = document.createElement('td');
+			td.textContent = value;
+			tr.appendChild(td);
+		});
+		var sampleTd = document.createElement('td');
+		sampleTd.className = 'cc_quality_samples';
+		sampleTd.textContent = column.samples.join(' · ') || '—';
+		if (column.type === 'numeric' && column.min !== null) {
+			sampleTd.title = 'Range ' + formatQualityNumber(column.min) + ' to ' + formatQualityNumber(column.max) +
+				'; mean ' + formatQualityNumber(column.mean);
+		}
+		tr.appendChild(sampleTd);
+		var typeTd = document.createElement('td');
+		var select = document.createElement('select');
+		select.setAttribute('data-quality-column', String(index));
+		select.setAttribute('aria-label', 'Use ' + column.name + ' as');
+		[['automatic', 'Automatic'], ['numeric', 'Number'], ['text', 'Text'], ['date', 'Date']].forEach(function(option) {
+			var node = document.createElement('option');
+			node.value = option[0]; node.textContent = option[1];
+			select.appendChild(node);
+		});
+		typeTd.appendChild(select);
+		tr.appendChild(typeTd);
+		tbody.appendChild(tr);
+	});
+}
+
+var qualityApply = document.getElementById('cc_quality_apply');
+if (qualityApply) {
+	qualityApply.onclick = function() {
+		if (!_lastStruct || !_lastProfile) { return; }
+		var changes = [];
+		document.querySelectorAll('#cc_quality_columns [data-quality-column]').forEach(function(select) {
+			if (select.value === 'automatic') { return; }
+			var column = _lastProfile.columns[Number(select.getAttribute('data-quality-column'))];
+			if (column) { changes.push({ column: column.name, type: select.value }); }
+		});
+		var changed = changes.length;
+		if (!changed) { showDataNotice('Choose a type override before applying changes.', true); return; }
+		qualityApply.disabled = true;
+		qualityApply.textContent = 'Copying data…';
+		cloneRowsForAnalysis(_lastStruct, function(pct) {
+			qualityApply.textContent = 'Copying… ' + pct + '%';
+		}, function(output) {
+			changes.forEach(function(change) { CrossexData.convertColumn(output, change.column, change.type); });
+			var profile = CrossexData.profile(output);
+			renderDataQuality(output, profile);
+			convertDates(output);
+			_lastStruct = output;
+			_lastColumns = output.columns.slice();
+			_lastRawText = null;
+			qualityPanel.hidden = true;
+			qualityApply.disabled = false;
+			qualityApply.textContent = 'Apply type changes and regraph';
+			replaceDataset('smartplot_id', output, null,
+				'applied ' + changed + ' column type ' + (changed === 1 ? 'override' : 'overrides'),
+				'Transforms_tablinks', true, { type: 'type-override', changes: changes });
+			ccToast('Applied ' + changed + ' column type ' + (changed === 1 ? 'change' : 'changes'));
+		});
+	};
+}
+
 // ---- Dark theme toggle -------------------------------------------------------
 function setDarkMode(on) {
 	try { window.localStorage.setItem('ccDarkMode', on ? '1' : '0'); } catch (e) {}
 	document.documentElement.classList.toggle('cc-dark', on);
-	document.getElementById('dark_toggle').innerHTML = on ? 'Light Mode' : 'Dark Mode';
+	var darkToggle = document.getElementById('dark_toggle');
+	darkToggle.innerHTML = on ? 'Light Mode' : 'Dark Mode';
+	darkToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
 	// the core stylesheet (all dark-mode rules) is normally injected on first
 	// chart draw — on the empty landing state (hero, no chart yet) it may not
 	// exist yet, so make sure it's there before relying on .cc-dark selectors
@@ -384,6 +537,7 @@ document.getElementById('dark_toggle').onclick = function() { setDarkMode(!ccDar
 if (ccDarkMode()) {
 	document.documentElement.classList.add('cc-dark');
 	document.getElementById('dark_toggle').innerHTML = 'Light Mode';
+	document.getElementById('dark_toggle').setAttribute('aria-pressed', 'true');
 	// returning in dark mode with no chart drawn yet (still on the hero/gallery
 	// landing state) — same lazy-css gap as setDarkMode() above
 	ensureCoreCss();
@@ -491,17 +645,19 @@ document.getElementById("graph_button").onclick = function clicks() {
 	// keep small raw inputs so Share Link can embed the data in the URL
 	_lastRawText = (!_loadedFile && string && string.length <= SHARE_TEXT_MAX) ? string : null;
 	if (!string || !string.trim()) {
+		showDataNotice('Paste data or choose a file, URL, or demo before graphing.', true);
 		return;
 	}
 	var prevLabel = btn.innerHTML;
 	btn.innerHTML = "Working…";
 	// let the label paint before parsing starts
 	setTimeout(function() {
-		parseInputDataAsync(string, function(pct) {
+	parseInputDataAsync(string, function(pct) {
 			btn.innerHTML = "Parsing… " + pct + "%";
 		}, function(struct) {
 			if (!struct || !struct.length) {
 				btn.innerHTML = prevLabel;
+				ccToast('No data rows were found');
 				return;
 			}
 			if (_loadedFile) {
@@ -511,6 +667,9 @@ document.getElementById("graph_button").onclick = function clicks() {
 				_loadedFile.text = null;
 			}
 			graphStruct(struct);
+		}, function(error) {
+			btn.innerHTML = prevLabel;
+			showDataNotice('Could not parse data: ' + error.message, true);
 		});
 	}, 30);
 };
@@ -550,7 +709,23 @@ var _lastStruct = null;
 // Object.keys(row) is unreliable afterwards. The dashboard reads this.
 var _lastColumns = null;
 
+window.ccAnalysisDatasetChanged = function(element, data, label) {
+	if (element !== 'smartplot_id' || !data) { return; }
+	_lastStruct = data;
+	_lastColumns = (data.columns || (data[0] ? Object.keys(data[0]) : [])).slice();
+	try {
+		var profile = CrossexData.profile(data);
+		renderDataQuality(data, profile);
+		showDataNotice((label || 'Updated dataset') + ': ' + data.length.toLocaleString() + ' rows × ' +
+			_lastColumns.length.toLocaleString() + ' columns.', false);
+	} catch (e) {}
+};
+
 function graphStruct(struct) {
+	var profile;
+	try { profile = CrossexData.profile(struct); }
+	catch (error) { showDataNotice('Could not inspect data: ' + error.message, true); return; }
+	renderDataQuality(struct, profile);
 	convertDates(struct);
 	_lastStruct = struct;
 	_lastColumns = (struct.columns || (struct[0] ? Object.keys(struct[0]) : [])).slice();
@@ -559,8 +734,12 @@ function graphStruct(struct) {
 	if (gal) { gal.style.display = 'none'; }
 	var hero = document.getElementById('cc_hero');
 	if (hero) { hero.style.display = 'none'; }
+	var startIntro = document.getElementById('cc_start_intro');
+	if (startIntro) { startIntro.style.display = 'none'; }
 	toggle("myccinput");
 	var headers = struct.columns;
+	showDataNotice('Loaded ' + struct.length.toLocaleString() + ' rows × ' + headers.length.toLocaleString() +
+		' columns' + (profile.issues.length ? '; review ' + profile.issues.length + ' data-quality flag' + (profile.issues.length === 1 ? '' : 's') + '.' : '.'), false);
 	var axis = optimize_axis(headers, struct);
 	var init_val=headers[1];
 	if (headers.length<4) {init_val="None"}
@@ -725,29 +904,41 @@ function launchGalleryExample(key) {
 }
 
 document.querySelectorAll('#cc_gallery [data-gallery]').forEach(function(card) {
+	card.setAttribute('role', 'button');
+	card.setAttribute('tabindex', '0');
+	var name = card.querySelector('.cc_gname');
+	if (name) { card.setAttribute('aria-label', 'Open ' + name.textContent + ' example'); }
 	card.addEventListener('click', function() {
 		launchGalleryExample(card.getAttribute('data-gallery'));
+	});
+	card.addEventListener('keydown', function(event) {
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			launchGalleryExample(card.getAttribute('data-gallery'));
+		}
 	});
 });
 
 // Hero CTAs: one loads the demo straight away, the other jumps to the paste box
 var heroDemoBtn = document.getElementById('hero_demo_btn');
-if (heroDemoBtn) {
-	heroDemoBtn.addEventListener('click', function() {
+var heroPreviewBtn = document.getElementById('hero_preview_btn');
+[heroDemoBtn, heroPreviewBtn].forEach(function(demoButton) {
+	if (demoButton) {
+		demoButton.addEventListener('click', function() {
 		document.getElementById('default_data').click();
 		document.getElementById('myccinput').style.display = 'block';
 		var btn = document.getElementById('graph_button');
 		btn.innerHTML = 'Graph Data';
 		btn.click();
-	});
-}
+		});
+	}
+});
 var heroPasteBtn = document.getElementById('hero_paste_btn');
 if (heroPasteBtn) {
 	heroPasteBtn.addEventListener('click', function() {
 		var input = document.getElementById('myccinput');
-		input.scrollIntoView({behavior: 'smooth', block: 'center'});
+		var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		input.scrollIntoView({behavior: reduceMotion ? 'auto' : 'smooth', block: 'center'});
 		input.focus();
 	});
 }
-
-

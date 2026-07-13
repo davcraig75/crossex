@@ -35,6 +35,7 @@ var SIGNAL_HEADER_FILTERS = {
 	"Filter_Additional": { maxDistinct: 150 },
 	"Sum_By":          { numericOnly: true },
 	"Size_By":         {},
+	"Opacity_By":      { numericOnly: true },
 	"X_Axis":          {},
 	"Search_By":       {},
 	"SortX_By":        {},
@@ -57,6 +58,47 @@ var INTERACTIVE_SIGNAL_HANDLERS = {
 };
 
 var INTERACTIVE_SIGNAL_NAMES = Object.keys(INTERACTIVE_SIGNAL_HANDLERS);
+
+// Repair legacy spec details that otherwise leave visible controls inert.
+// Keeping this normalization here also protects embedded/R builds that load
+// the same Vega spec without requiring consumers to migrate saved projects.
+function normalizeGraphSpec(spec) {
+	if (!spec || !spec.scales) { return; }
+	if (!spec.scales.some(function(scale) { return scale.name === 'opacity_scale'; })) {
+		spec.scales.push({
+			name: 'opacity_scale', type: 'linear', zero: false,
+			domain: {data: 'mydata', field: 'O_Value'}, range: [0.12, 1]
+		});
+	}
+	(function visit(node) {
+		if (!node || typeof node !== 'object') { return; }
+		if (node.name === 'scatter_point_mark' && node.encode && node.encode.update) {
+			node.encode.update.fillOpacity = [
+				{test: "Opacity_By!='None' && isFinite(toNumber(datum.O_Value))", scale: 'opacity_scale', field: 'O_Value'},
+				{signal: 'Opacity_'}
+			];
+		}
+		if (node.name === 'MyOutliers_' && Array.isArray(node.transform)) {
+			var oldFilter = node.transform.find(function(transform) { return transform.type === 'filter'; });
+			var measure = oldFilter && oldFilter.expr.indexOf("datum['X_Value'] >=") >= 0 ? 'X_Value' : 'Y_Value';
+			node.transform = [
+				{type: 'joinaggregate', fields: [measure, measure], ops: ['q1', 'q3'], as: ['outlier_q1', 'outlier_q3']},
+				{type: 'filter', expr: "datum['" + measure + "'] >= datum.outlier_q3 + (datum.outlier_q3-datum.outlier_q1)*2 || datum['" + measure + "'] <= datum.outlier_q1 - (datum.outlier_q3-datum.outlier_q1)*2"}
+			];
+		}
+		if (node.name === 'perrow_facets' && node.marks && node.marks[0] && node.marks[0].encode) {
+			node.marks[0].encode.update.opacity = [
+				{signal: "if(Jitter_ || (Color_By=='None' && Size_By=='None'), 0, Opacity_)"}
+			];
+		}
+		if (node.name === 'count_heat_facets' && node.marks && node.marks[0] && node.marks[0].encode) {
+			node.marks[0].encode.update.opacity = {
+				signal: "if(!Jitter_ && Color_By=='None' && Size_By=='None', Grid_Opacity, 0)"
+			};
+		}
+		Object.keys(node).forEach(function(key) { visit(node[key]); });
+	})(spec);
+}
 
 function setInteractiveSignals(spec, signalMap, enable) {
 	INTERACTIVE_SIGNAL_NAMES.forEach(function(name) {
@@ -147,7 +189,7 @@ function delay(time) {
 	return new Promise(resolve => setTimeout(resolve, time));
 }
 
-var crossexloader=function crossexloader(element,status) {	
+var crossexloader=function crossexloader(element,status) {
 	if(status) {
 		document.getElementById("cc_loader"+element).style['z-index'] = 999;
 		document.getElementById("cc_loader"+element).style['display'] = 'block';
@@ -255,24 +297,16 @@ var json2csv = function json2csv(filename,json) {
             }
         }
     }
-    var replacer = function(key, value) { return value === null ? '' : value } 
-    var csv = json.map(function(row){
-        return fields.map(function(fieldName){
-            return JSON.stringify(row[fieldName], replacer)
-        }).join(',')
-    })
-    csv.unshift(fields.join(',')) // add header column
-    csv = csv.join('\r\n');
-	var csvData = new Blob([csv], { type: 'text/csv' });
-	var a = document.createElement('a')
+	var csvData = new Blob([CrossexData.toCsv(json, fields)], { type: 'text/csv;charset=utf-8' });
+	var a = document.createElement('a');
 	var csvUrl = URL.createObjectURL(csvData);
 	a.href =  csvUrl;
     a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(csvUrl);
-}
+    setTimeout(function() { URL.revokeObjectURL(csvUrl); }, 1000);
+};
 
 function getContentWidth (elementNode) {
 	var styles = window.getComputedStyle(elementNode, null);
@@ -985,63 +1019,71 @@ function trFail(msgEl, text) {
 	msgEl.textContent = text;
 }
 
-// Register the column everywhere a column name can appear, then re-render:
-// dropdown option lists, the caller's .columns, and the per-dataset caches
-// (keyed by the mutated array, so they must be dropped explicitly).
-function finishTransform(element, name, formula, redefined) {
-	var data = _fullData[element];
-	var opts = _crossexOpts[element];
+function cloneRowsForAnalysis(data, onProgress, done) {
+	var columns = (data.columns || (data[0] ? Object.keys(data[0]) : [])).filter(function(column) {
+		return !_3D_HIDDEN_FIELDS[column];
+	}).slice();
+	var output = new Array(data.length);
+	var i = 0, CHUNK = 100000;
+	(function run() {
+		var end = Math.min(i + CHUNK, data.length);
+		for (; i < end; i++) {
+			var row = {};
+			columns.forEach(function(column) {
+				Object.defineProperty(row, column, { value: data[i][column], writable: true, enumerable: true, configurable: true });
+			});
+			output[i] = row;
+		}
+		if (i < data.length) {
+			if (onProgress) { onProgress(Math.round(100 * i / data.length)); }
+			requestAnimationFrame(run);
+		} else { output.columns = columns; done(output); }
+	})();
+}
+
+// Register a computed column on a new immutable dataset version.
+function finishTransform(element, data, name, formula, redefined) {
+	var opts = cloneAnalysisOptions(_crossexOpts[element].options);
 	if (data.columns && data.columns.indexOf(name) < 0) { data.columns.push(name); }
-	((opts && opts.options) || []).forEach(function(sig) {
+	opts.forEach(function(sig) {
 		if (sig && sig.name && sig.bind && sig.bind.options && sig.bind.options.indexOf(name) < 0) {
 			sig.bind.options.push(name);
 		}
 	});
-	_typeCache.delete(data);
-	_overviewCache.delete(data);
-	var list = _transforms[element] = _transforms[element] || [];
+	var list = cloneTransformDefs(_transforms[element]);
 	if (redefined) {
 		list.forEach(function(t) { if (t.name === name) { t.formula = formula; } });
 	} else {
 		list.push({ name: name, formula: formula });
 	}
-	_reopenTab[element] = 'Transforms_tablinks';
-	crossexloader(element, true);
-	delay(30).then(function() { crossex(element, data, opts.options, opts.widthid); });
+	replaceDataset(element, data, opts, (redefined ? 'updated formula column ' : 'created formula column ') + name,
+		'Transforms_tablinks', true, { type: redefined ? 'formula-update' : 'formula-add', name: name, formula: formula }, list);
 }
 
 function removeTransform(element, name) {
 	var data = _fullData[element];
-	var opts = _crossexOpts[element];
-	_transforms[element] = (_transforms[element] || []).filter(function(t) { return t.name !== name; });
+	var opts = cloneAnalysisOptions(_crossexOpts[element].options);
+	var nextTransforms = (_transforms[element] || []).filter(function(t) { return t.name !== name; });
 	if (!data) { return; }
-	var i = 0, CHUNK = 200000;
-	(function chunk() {
-		var end = Math.min(i + CHUNK, data.length);
-		for (; i < end; i++) { delete data[i][name]; }
-		if (i < data.length) { requestAnimationFrame(chunk); return; }
-		if (data.columns) {
-			var ci = data.columns.indexOf(name);
-			if (ci >= 0) { data.columns.splice(ci, 1); }
-		}
-		((opts && opts.options) || []).forEach(function(sig) {
+	cloneRowsForAnalysis(data, null, function(output) {
+		output.forEach(function(row) { delete row[name]; });
+		var ci = output.columns.indexOf(name);
+		if (ci >= 0) { output.columns.splice(ci, 1); }
+		opts.forEach(function(sig) {
 			if (sig && sig.name && sig.bind && sig.bind.options) {
 				var oi = sig.bind.options.indexOf(name);
 				if (oi >= 0) { sig.bind.options.splice(oi, 1); }
 			}
 		});
-		_typeCache.delete(data);
-		_overviewCache.delete(data);
 		// a saved selection pointing at the removed column would draw an empty chart
 		var store = loadSignalsFromCookie('vegaSignals_' + element);
 		if (store) {
 			Object.keys(store).forEach(function(k) { if (store[k] === name) { delete store[k]; } });
 			saveSignalState('vegaSignals_' + element, store);
 		}
-		_reopenTab[element] = 'Transforms_tablinks';
-		crossexloader(element, true);
-		delay(30).then(function() { crossex(element, data, opts.options, opts.widthid); });
-	})();
+		replaceDataset(element, output, opts, 'removed formula column ' + name, 'Transforms_tablinks', true,
+			{ type: 'formula-remove', name: name }, nextTransforms);
+	});
 }
 
 function renderTransformList(element) {
@@ -1128,21 +1170,247 @@ function wireTransformTab(element, mycolumns) {
 			return trFail(msg, e.message);
 		}
 		applyBtn.disabled = true;
-		applyBtn.textContent = 'Computing…';
-		trEvaluate(fn, data, name, function(pct) {
-			applyBtn.textContent = 'Computing… ' + pct + '%';
-		}, function(res) {
+		applyBtn.textContent = 'Copying…';
+		cloneRowsForAnalysis(data, function(pct) {
+			applyBtn.textContent = 'Copying… ' + pct + '%';
+		}, function(workingData) {
+			applyBtn.textContent = 'Computing…';
+			trEvaluate(fn, workingData, name, function(pct) {
+				applyBtn.textContent = 'Computing… ' + pct + '%';
+			}, function(res) {
 			if (!res.nonnull) {
-				for (var r = 0; r < data.length; r++) { delete data[r][name]; }
 				applyBtn.disabled = false;
 				applyBtn.textContent = 'Add Column';
 				return trFail(msg, 'every row came out missing — check the formula' +
 					(res.errors ? ' (' + res.errors + ' rows errored)' : ''));
 			}
-			finishTransform(element, name, formula, redefined);
+			finishTransform(element, workingData, name, formula, redefined);
+			});
 		});
 	};
 	renderTransformList(element);
+	wireDataLab(element, mycolumns);
+}
+
+// ---- Data Lab: reproducible table operations and portable projects ---------
+var _labSecondary = {};
+var LAB_MAX_OUTPUT_ROWS = 5000000;
+var LAB_MAX_PROJECT_CELLS = 5000000;
+
+function labMessage(element, text, ok) {
+	var node = document.getElementById('cc_lab_msg' + element);
+	if (!node) { return; }
+	node.className = 'cc_tr_msg' + (ok ? ' cc_ok' : '');
+	node.textContent = text;
+}
+
+function labColumns(element) {
+	var data = _fullData[element] || [];
+	var bound = dtColumns(element);
+	if (bound.length) { return bound; }
+	return (data.columns || (data[0] ? Object.keys(data[0]) : [])).filter(function(column) {
+		return !PIVOT_HIDDEN_ATTRS || PIVOT_HIDDEN_ATTRS.indexOf(column) < 0;
+	}).slice();
+}
+
+function fillLabSelect(select, columns, includeNone, noneLabel) {
+	if (!select) { return; }
+	select.innerHTML = '';
+	if (includeNone) {
+		var none = document.createElement('option');
+		none.value = ''; none.textContent = noneLabel || 'None'; select.appendChild(none);
+	}
+	columns.forEach(function(column) {
+		var option = document.createElement('option');
+		option.value = column; option.textContent = column; select.appendChild(option);
+	});
+}
+
+function selectedLabValues(select) {
+	return Array.prototype.slice.call(select.selectedOptions || []).map(function(option) { return option.value; });
+}
+
+function optionsForColumns(element, columns, presets) {
+	var opts = cloneAnalysisOptions((_crossexOpts[element] && _crossexOpts[element].options) || []);
+	presets = presets || {};
+	opts.forEach(function(option) {
+		if (!option || !option.name) { return; }
+		if (option.bind && option.bind.options) { option.bind.options = columns.slice(); }
+		if (presets[option.name] !== undefined) { option.value = presets[option.name]; }
+		else if (option.value && ['None', 'Count', 'Sum'].indexOf(option.value) < 0 && columns.indexOf(option.value) < 0) {
+			option.value = 'None';
+		}
+	});
+	return opts;
+}
+
+function analysisProjectName() {
+	return 'crossex-project-' + new Date().toISOString().slice(0, 10);
+}
+
+function exportAnalysisProject(element) {
+	var data = _fullData[element];
+	var columns = labColumns(element);
+	if (!data || !data.length) { return labMessage(element, 'No data to export.'); }
+	if (data.length * Math.max(1, columns.length) > LAB_MAX_PROJECT_CELLS) {
+		return labMessage(element, 'Project export is limited to 5 million cells to protect browser memory. Export CSV for this dataset or reduce it first.');
+	}
+	var project;
+	try {
+		project = CrossexData.createProject({
+			name: analysisProjectName(), data: data, columns: columns,
+			options: (_crossexOpts[element] && _crossexOpts[element].options) || [],
+			signals: loadSignalsFromCookie('vegaSignals_' + element) || {},
+			transforms: _transforms[element] || [], operations: _analysisOperations[element] || []
+		});
+	} catch (error) { return labMessage(element, 'Could not create project: ' + error.message); }
+	var blob = new Blob([JSON.stringify(project)], { type: 'application/json' });
+	var link = document.createElement('a');
+	link.href = URL.createObjectURL(blob); link.download = project.name + '.crossex.json';
+	document.body.appendChild(link); link.click(); link.remove();
+	setTimeout(function() { URL.revokeObjectURL(link.href); }, 1000);
+	labMessage(element, 'Project exported with data, settings, transforms, and provenance.', true);
+}
+
+function importAnalysisProject(element, file) {
+	if (!file) { return; }
+	if (file.size > 512 * 1024 * 1024) { return labMessage(element, 'Project file exceeds the 512 MB safety limit.'); }
+	var reader = new FileReader();
+	reader.onload = function(event) {
+		var project;
+		try { project = CrossexData.parseProject(event.target.result); }
+		catch (error) { return labMessage(element, 'Could not import project: ' + error.message); }
+		if (project.signals) { saveSignalState('vegaSignals_' + element, project.signals); }
+		var state = {
+			data: project.data,
+			options: project.options.length ? project.options : optionsForColumns(element, project.columns),
+			transforms: project.transforms,
+			label: 'Imported ' + (project.name || 'project'), operation: { type: 'project-import' },
+			createdAt: new Date().toISOString()
+		};
+		_dataHistory[element] = { entries: [state], index: 0 };
+		_analysisOperations[element] = project.operations.concat([{
+			type: 'project-import', label: state.label, rows: project.data.length, createdAt: state.createdAt
+		}]);
+		applyAnalysisState(element, state, 'Transforms_tablinks');
+		labMessage(element, 'Project imported.', true);
+	};
+	reader.onerror = function() { labMessage(element, 'Could not read the project file.'); };
+	reader.readAsText(file);
+}
+
+function wireDataLab(element, mycolumns) {
+	var columns = labColumns(element);
+	var sortCol = document.getElementById('cc_lab_sort_col' + element);
+	if (!sortCol) { return; }
+	fillLabSelect(sortCol, columns);
+	fillLabSelect(document.getElementById('cc_lab_dedupe_cols' + element), columns);
+	fillLabSelect(document.getElementById('cc_lab_group_col' + element), columns, true, 'all rows (no groups)');
+	fillLabSelect(document.getElementById('cc_lab_agg_col' + element), columns, true, 'choose value column');
+	fillLabSelect(document.getElementById('cc_lab_join_left' + element), columns);
+
+	var timeline = ensureAnalysisHistory(element, _fullData[element], _crossexOpts[element].options);
+	renderAnalysisHistory(element);
+	document.getElementById('cc_lab_undo' + element).onclick = function() { analysisUndo(element); };
+	document.getElementById('cc_lab_redo' + element).onclick = function() { analysisRedo(element); };
+	document.getElementById('cc_lab_export' + element).onclick = function() { exportAnalysisProject(element); };
+	var importButton = document.getElementById('cc_lab_import' + element);
+	var importFile = document.getElementById('cc_lab_import_file' + element);
+	importButton.onclick = function() { importFile.click(); };
+	importFile.onchange = function() { if (this.files.length) { importAnalysisProject(element, this.files[0]); this.value = ''; } };
+
+	document.getElementById('cc_lab_sort_apply' + element).onclick = function() {
+		try {
+			var direction = document.getElementById('cc_lab_sort_dir' + element).value;
+			var output = CrossexData.sortRows(_fullData[element], sortCol.value, direction);
+			output.columns = labColumns(element);
+			replaceDataset(element, output, null, 'sorted by ' + sortCol.value + ' (' + direction + ')',
+				'Transforms_tablinks', true, { type: 'sort', column: sortCol.value, direction: direction });
+		} catch (error) { labMessage(element, error.message); }
+	};
+
+	document.getElementById('cc_lab_dedupe_apply' + element).onclick = function() {
+		try {
+			var keys = selectedLabValues(document.getElementById('cc_lab_dedupe_cols' + element));
+			var before = _fullData[element].length;
+			var output = CrossexData.deduplicateRows(_fullData[element], keys);
+			output.columns = labColumns(element);
+			replaceDataset(element, output, null, 'removed ' + (before - output.length).toLocaleString() + ' duplicate rows',
+				'Transforms_tablinks', true, { type: 'deduplicate', keys: keys, removed: before - output.length });
+		} catch (error) { labMessage(element, error.message); }
+	};
+
+	var aggOp = document.getElementById('cc_lab_agg_op' + element);
+	var aggCol = document.getElementById('cc_lab_agg_col' + element);
+	function syncAggregationUi() { aggCol.disabled = aggOp.value === 'count'; }
+	aggOp.onchange = syncAggregationUi; syncAggregationUi();
+	document.getElementById('cc_lab_group_apply' + element).onclick = function() {
+		var group = document.getElementById('cc_lab_group_col' + element).value;
+		var operation = aggOp.value;
+		var valueColumn = operation === 'count' ? null : aggCol.value;
+		if (operation !== 'count' && !valueColumn) { return labMessage(element, 'Choose a value column to summarize.'); }
+		var outputName = (document.getElementById('cc_lab_agg_name' + element).value || '').trim() ||
+			(operation === 'count' ? 'count' : operation + '_' + valueColumn);
+		try {
+			var output = CrossexData.groupRows(_fullData[element], group ? [group] : [],
+				[{ operation: operation, column: valueColumn, as: outputName }]);
+			var presets = { X_Axis: group || outputName, Y_Axis: group ? outputName : 'None', Color_By: 'None', Facet_Rows_By: 'None', Facet_Cols_By: 'None' };
+			replaceDataset(element, output, optionsForColumns(element, output.columns, presets),
+				'grouped by ' + (group || 'all rows') + ' and calculated ' + operation,
+				'Transforms_tablinks', false, { type: 'group', groupBy: group ? [group] : [], aggregation: operation,
+					column: valueColumn, as: outputName });
+		} catch (error) { labMessage(element, error.message); }
+	};
+
+	var secondLoad = document.getElementById('cc_lab_second_load' + element);
+	var secondFile = document.getElementById('cc_lab_second_file' + element);
+	var appendButton = document.getElementById('cc_lab_append_apply' + element);
+	var joinButton = document.getElementById('cc_lab_join_apply' + element);
+	secondLoad.onclick = function() { secondFile.click(); };
+	secondFile.onchange = function() {
+		if (!this.files.length) { return; }
+		var file = this.files[0]; this.value = '';
+		if (file.size > 512 * 1024 * 1024) { return labMessage(element, 'Second table exceeds the 512 MB safety limit.'); }
+		var reader = new FileReader();
+		reader.onload = function(event) {
+			try {
+				var rows = typeof parseInputData === 'function' ? parseInputData(event.target.result) : CrossexData.parseInput(event.target.result, window.d3);
+				_labSecondary[element] = { name: file.name, rows: rows };
+				document.getElementById('cc_lab_second_note' + element).textContent =
+					file.name + ': ' + rows.length.toLocaleString() + ' rows × ' + rows.columns.length + ' columns';
+				fillLabSelect(document.getElementById('cc_lab_join_right' + element), rows.columns);
+				appendButton.disabled = false; joinButton.disabled = false;
+				var leftJoin = document.getElementById('cc_lab_join_left' + element);
+				var common = columns.find(function(column) { return rows.columns.indexOf(column) >= 0; });
+				if (common) { leftJoin.value = common; document.getElementById('cc_lab_join_right' + element).value = common; }
+				labMessage(element, 'Second table loaded.', true);
+			} catch (error) { labMessage(element, 'Could not load second table: ' + error.message); }
+		};
+		reader.readAsText(file);
+	};
+	appendButton.onclick = function() {
+		var second = _labSecondary[element]; if (!second) { return; }
+		if (_fullData[element].length + second.rows.length > LAB_MAX_OUTPUT_ROWS) { return labMessage(element, 'Append would exceed the 5 million-row safety limit.'); }
+		try {
+			var output = CrossexData.appendRows(_fullData[element], second.rows,
+				{ leftColumns: labColumns(element), rightColumns: second.rows.columns });
+			replaceDataset(element, output, optionsForColumns(element, output.columns), 'appended ' + second.name,
+				'Transforms_tablinks', false, { type: 'append', source: second.name, addedRows: second.rows.length });
+		} catch (error) { labMessage(element, error.message); }
+	};
+	joinButton.onclick = function() {
+		var second = _labSecondary[element]; if (!second) { return; }
+		var leftKey = document.getElementById('cc_lab_join_left' + element).value;
+		var rightKey = document.getElementById('cc_lab_join_right' + element).value;
+		var type = document.getElementById('cc_lab_join_type' + element).value;
+		try {
+			var output = CrossexData.joinRows(_fullData[element], second.rows,
+				{ leftKey: leftKey, rightKey: rightKey, type: type, maxRows: LAB_MAX_OUTPUT_ROWS,
+					leftColumns: labColumns(element), rightColumns: second.rows.columns });
+			replaceDataset(element, output, optionsForColumns(element, output.columns), type + ' joined ' + second.name,
+				'Transforms_tablinks', false, { type: 'join', source: second.name, leftKey: leftKey, rightKey: rightKey, joinType: type });
+		} catch (error) { labMessage(element, error.message); }
+	};
 }
 
 var _overviewSort = {};   // element -> chosen card ordering, kept across reopens
@@ -1234,55 +1502,141 @@ function wireOverviewActions(element) {
 	});
 }
 
-// ---- Dataset versions (brush keep/exclude, melt) ----------------------------
-// Replacing the dataset (subset or reshape) stacks the previous version so
-// "Restore Original Data" can always get back to the first one.
+// ---- Reproducible analysis history ------------------------------------------
+// Every dataset-changing operation creates a new state instead of mutating a
+// prior one. Row arrays use structural sharing where safe; formulas/type
+// changes clone their row objects before evaluation. A bounded timeline keeps
+// undo memory predictable, while the lightweight provenance log remains full.
 var _dataHistory = {};
+var _analysisOperations = {};
+var ANALYSIS_HISTORY_MAX = 20;
 
-function pushDataVersion(element, note) {
-	var h = _dataHistory[element] = _dataHistory[element] || [];
-	h.push({ data: _fullData[element], options: _crossexOpts[element].options,
-		transforms: (_transforms[element] || []).slice(), note: note });
+function cloneAnalysisOptions(options) {
+	try { return JSON.parse(JSON.stringify(options || [])); } catch (e) { return options || []; }
+}
+
+function cloneTransformDefs(transforms) {
+	return (transforms || []).map(function(t) { return { name: t.name, formula: t.formula }; });
+}
+
+function historyLimitFor(data) {
+	var cols = data && data.columns ? data.columns.length : 1;
+	var cells = (data ? data.length : 0) * Math.max(1, cols);
+	return cells > 5000000 ? 5 : (cells > 1000000 ? 10 : ANALYSIS_HISTORY_MAX);
+}
+
+function ensureAnalysisHistory(element, data, options) {
+	var timeline = _dataHistory[element];
+	if (timeline && timeline.entries[timeline.index] && timeline.entries[timeline.index].data === data) { return timeline; }
+	timeline = _dataHistory[element] = {
+		entries: [{ data: data, options: cloneAnalysisOptions(options), transforms: cloneTransformDefs(_transforms[element]),
+			label: 'Loaded dataset', operation: { type: 'load' }, createdAt: new Date().toISOString() }],
+		index: 0
+	};
+	_analysisOperations[element] = [{ type: 'load', label: 'Loaded dataset', rows: data ? data.length : 0,
+		createdAt: timeline.entries[0].createdAt }];
+	return timeline;
+}
+
+function renderAnalysisHistory(element) {
+	var timeline = _dataHistory[element];
+	var list = document.getElementById('cc_lab_history' + element);
+	var undo = document.getElementById('cc_lab_undo' + element);
+	var redo = document.getElementById('cc_lab_redo' + element);
+	if (!timeline) { return; }
+	if (undo) { undo.disabled = timeline.index <= 0; }
+	if (redo) { redo.disabled = timeline.index >= timeline.entries.length - 1; }
+	if (!list) { return; }
+	list.innerHTML = '';
+	timeline.entries.forEach(function(entry, index) {
+		var item = document.createElement('div');
+		item.className = 'cc_lab_history_item' + (index === timeline.index ? ' current' : '');
+		if (index > timeline.index) { item.className += ' future'; }
+		var num = document.createElement('span');
+		num.className = 'cc_lab_history_num'; num.textContent = String(index + 1);
+		var text = document.createElement('span');
+		text.textContent = entry.label;
+		var meta = document.createElement('span');
+		meta.className = 'cc_lab_history_meta';
+		meta.textContent = (entry.data ? entry.data.length.toLocaleString() : '0') + ' rows';
+		text.appendChild(meta); item.appendChild(num); item.appendChild(text); list.appendChild(item);
+	});
 }
 
 function updateRestoreUi(element) {
 	var wrap = document.getElementById('cc_data_restore' + element);
-	if (!wrap) { return; }
-	var h = _dataHistory[element];
-	if (h && h.length) {
+	var timeline = _dataHistory[element];
+	if (wrap && timeline && timeline.index > 0) {
 		wrap.style.display = 'block';
 		document.getElementById('cc_data_note' + element).textContent =
-			'Working on a modified dataset: ' + h[h.length - 1].note + ' → ' +
+			'Working on a modified dataset: ' + timeline.entries[timeline.index].label + ' → ' +
 			((_fullData[element] || []).length).toLocaleString() + ' rows.';
-	} else {
+	} else if (wrap) {
 		wrap.style.display = 'none';
 	}
+	renderAnalysisHistory(element);
 }
 
-function replaceDataset(element, newData, newOptions, note, reopenTab, keepTransforms) {
-	pushDataVersion(element, note);
+function applyAnalysisState(element, state, reopenTab) {
 	var opts = _crossexOpts[element];
-	var keepT = keepTransforms ? (_transforms[element] || []).slice() : [];
+	if (typeof window !== 'undefined' && typeof window.ccAnalysisDatasetChanged === 'function') {
+		window.ccAnalysisDatasetChanged(element, state.data, state.label);
+	}
 	_reopenTab[element] = reopenTab || 'Interact_tablinks';
 	crossexloader(element, true);
 	delay(30).then(function() {
-		crossex(element, newData, newOptions || opts.options, opts.widthid);
-		_transforms[element] = keepT;
+		crossex(element, state.data, cloneAnalysisOptions(state.options), opts.widthid);
+		_transforms[element] = cloneTransformDefs(state.transforms);
 	});
 }
 
-function restoreOriginalData(element) {
-	var h = _dataHistory[element];
-	if (!h || !h.length) { return; }
-	var first = h[0];
-	_dataHistory[element] = [];
+function replaceDataset(element, newData, newOptions, note, reopenTab, keepTransforms, operation, transformsOverride) {
 	var opts = _crossexOpts[element];
-	_reopenTab[element] = 'Interact_tablinks';
-	crossexloader(element, true);
-	delay(30).then(function() {
-		crossex(element, first.data, first.options, opts.widthid);
-		_transforms[element] = first.transforms;
-	});
+	var timeline = ensureAnalysisHistory(element, _fullData[element], opts.options);
+	if (timeline.index < timeline.entries.length - 1) { timeline.entries = timeline.entries.slice(0, timeline.index + 1); }
+	var state = {
+		data: newData,
+		options: cloneAnalysisOptions(newOptions || opts.options),
+		transforms: transformsOverride !== undefined ? cloneTransformDefs(transformsOverride) :
+			(keepTransforms ? cloneTransformDefs(_transforms[element]) : []),
+		label: note || 'Modified dataset',
+		operation: operation || { type: 'transform', label: note || 'Modified dataset' },
+		createdAt: new Date().toISOString()
+	};
+	timeline.entries.push(state);
+	timeline.index = timeline.entries.length - 1;
+	var limit = historyLimitFor(newData);
+	if (timeline.entries.length > limit) {
+		var removeCount = timeline.entries.length - limit;
+		// Preserve the original loaded dataset; discard the oldest intermediate
+		// states when the memory-aware cap is reached.
+		timeline.entries.splice(1, removeCount);
+		timeline.index = timeline.entries.length - 1;
+	}
+	var log = _analysisOperations[element] = _analysisOperations[element] || [];
+	log.push(Object.assign({ label: state.label, rows: newData.length, createdAt: state.createdAt }, state.operation));
+	applyAnalysisState(element, state, reopenTab);
+}
+
+function analysisUndo(element) {
+	var timeline = _dataHistory[element];
+	if (!timeline || timeline.index <= 0) { return; }
+	timeline.index--;
+	applyAnalysisState(element, timeline.entries[timeline.index], 'Transforms_tablinks');
+}
+
+function analysisRedo(element) {
+	var timeline = _dataHistory[element];
+	if (!timeline || timeline.index >= timeline.entries.length - 1) { return; }
+	timeline.index++;
+	applyAnalysisState(element, timeline.entries[timeline.index], 'Transforms_tablinks');
+}
+
+function restoreOriginalData(element) {
+	var timeline = _dataHistory[element];
+	if (!timeline || !timeline.entries.length || timeline.index === 0) { return; }
+	timeline.index = 0;
+	applyAnalysisState(element, timeline.entries[0], 'Interact_tablinks');
 }
 
 // ---- Data table view ---------------------------------------------------------
@@ -1604,7 +1958,8 @@ function showBrushSelection(element, view, x0, x1, y0, y1) {
 			next.columns = data.columns;
 			bar.style.display = 'none';
 			replaceDataset(element, next,
-				null, (act === 'keep' ? 'kept' : 'excluded') + ' brush selection', 'Interact_tablinks', true);
+				null, (act === 'keep' ? 'kept' : 'excluded') + ' brush selection', 'Interact_tablinks', true,
+				{ type: 'brush-' + act, selectedRows: sel.length, xColumn: xcol, yColumn: ycol });
 		};
 	});
 }
@@ -1736,7 +2091,8 @@ function wireReshape(element, mycolumns) {
 			saveSignalState('vegaSignals_' + element, store);
 			replaceDataset(element, out, newOptions,
 				'melted ' + chosen.length + ' columns into ' + varName + '/' + valName,
-				'Transforms_tablinks', false);
+				'Transforms_tablinks', false,
+				{ type: 'melt', columns: chosen, variableColumn: varName, valueColumn: valName });
 		})();
 	};
 }
@@ -2118,6 +2474,7 @@ var crossex = function crossex(element, data, options,widthid) {
 	ccPanelProxy[element]={};
 	var res = local_vgspec.replace(/\-ccnm/g, element);
 	var spec = JSON.parse(res);
+	normalizeGraphSpec(spec);
 	var hide_panel=false;
 	var editable=false;
 	var exportable=true;
@@ -2226,6 +2583,7 @@ var crossex = function crossex(element, data, options,widthid) {
 	spec.data[dataMap["mycolumns"]].values = sum_cols;
 	if (data != null) {
 		_fullData[element] = data;
+		ensureAnalysisHistory(element, data, options);
 		var renderData = data;
 		var sampleN = getSampleSetting(element, data.length);
 		var facetCapped = false;

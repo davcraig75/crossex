@@ -11,6 +11,8 @@ Crossex lets users paste or load tabular data and instantly explore it through d
 
 Built on [Vega](https://vega.github.io/vega/), a declarative visualization grammar.
 
+See the [product audit and release roadmap](PRODUCT_ROADMAP.md) for the current ship-readiness plan, prioritized capabilities, and release gates.
+
 ---
 
 ## Table of Contents
@@ -41,6 +43,7 @@ Most charting libraries require you to decide your chart type and axis mappings 
 - **Facet data into subplot grids** by any categorical variable
 - **Filter, search, and drill down** without writing code
 - **Export** the current view as PNG or download filtered data as CSV
+- **Review data quality** with duplicate, missing, constant, mixed-type, and identifier checks, then override column types when needed
 
 It is designed for scenarios where you want to hand someone a dataset and let them explore it themselves -- dashboards, reports, research tools, or internal apps.
 
@@ -75,7 +78,7 @@ Then call `crossex()` with your data (see [Embedding](#embedding-on-a-web-page) 
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v14+)
+- [Node.js](https://nodejs.org/) (v20+)
 
 ### Install
 
@@ -487,7 +490,17 @@ The *fx* button opens the Transforms tab: name a new column, type a formula, and
 
 An **insert column** picker drops any column reference into the formula at the cursor, and **example formulas** offers ready-made templates (log, z-score, percent of total, ratio, difference, high/low split, combined categories) built from your own columns. Created columns are listed in the tab — click one to edit and re-apply it, or ✕ to remove it everywhere. Rows that error, divide by zero, or produce non-finite values become missing (NA). Formulas are compiled once and evaluated in chunks, so transforms work on multi-million-row datasets without freezing the page.
 
-The tab's **Reshape** section melts wide data into long form: select two or more columns and they become `variable`/`value` pairs (names configurable) — the natural shape for multi-series plots (X = variable, Y = value, color by any kept column). Melting replaces the working dataset; *Restore Original Data* (Interact tab) undoes it.
+The tab's **Reshape** section melts wide data into long form: select two or more columns and they become `variable`/`value` pairs (names configurable) — the natural shape for multi-series plots (X = variable, Y = value, color by any kept column).
+
+The **Data Lab** in the same tab makes analysis reproducible:
+
+- Every formula, type override, melt, brush subset, sort, deduplication, summary, append, and join creates a visible immutable history step with **Undo** and **Redo**.
+- **Sort** rows by any column and **Deduplicate** using selected keys or complete rows.
+- **Group & summarize** with count, sum, mean, minimum, or maximum.
+- Load a second CSV/TSV/JSON table to **Append Rows** or perform left, inner, and full joins with collision-safe column names.
+- **Export Project** saves the exact current data, chart settings, signals, formulas, and provenance log in a versioned `.crossex.json` file; **Import Project** restores it without a server or account.
+
+History is memory-aware for very large datasets and always preserves the original loaded state. *Restore Original Data* in the Interact tab jumps directly back to it.
 
 ### Overview
 The bar-chart button at the bottom of the tab strip toggles a Column Overview: one card per column showing its distribution (a mini histogram for numeric columns, top-category bars for categorical ones) with range, mean, distinct and missing counts. Clicking a card graphs that column's distribution; a sort control orders the cards by data order, name, type, or missingness. The Overview opens automatically the first time a dataset is viewed with no saved settings.
@@ -506,6 +519,7 @@ crossex/
 │
 ├── views/
 │   ├── crossex_base.js       # Core: data loading, signal wiring, Vega handoff
+│   ├── data_utils.js          # Tested parsing, profiling, table operations, projects
 │   ├── crossex_ext.js        # Extensions: axis optimizer, data input, URL loading
 │   ├── crossex_dash.js       # Dashboard builder (site-only): grid of chart tiles
 │   ├── crossex_base.ejs      # EJS template that produces crossex.js
@@ -566,7 +580,14 @@ Build **`crossex_site.js`** (full standalone site with UI, styles, and data inpu
 npm run build:site
 ```
 
-Both commands write output to `./` and `./public/`.
+Build and verify every web, Electron, docs, and R distribution:
+
+```bash
+npx playwright install chromium   # once per development machine
+npm run verify
+```
+
+`npm run verify` rebuilds all artifacts, runs the shared data/server unit tests, exercises desktop and mobile intake workflows in a real Chromium browser, runs automated accessibility checks, and verifies that every duplicated distribution is synchronized.
 
 ---
 

@@ -1,116 +1,177 @@
 <section id="cc_hero" class="cc_hero">
-    <div class="cc_hero_top">
-        <div class="cc_hero_badge">100% client-side &middot; nothing uploaded &middot; no account</div>
-        <h1 class="cc_hero_title">Give it a table. Get an instant explorer.</h1>
-        <p class="cc_hero_sub">Paste a spreadsheet, a CSV, or a JSON array and crossex reads which columns are
-            numeric and which are categorical, then hands you scatter plots, box &amp; violin plots, histograms,
-            heatmaps, a correlation matrix, a drag-and-drop pivot table, and a WebGL 3D view &mdash; all driven
-            by dropdowns, not code.</p>
-        <div class="cc_hero_cta">
-            <button type="button" class="cc_hero_btn cc_hero_btn_primary" id="hero_demo_btn">Load a demo dataset</button>
-            <button type="button" class="cc_hero_btn cc_hero_btn_secondary" id="hero_paste_btn">Paste your own data</button>
+    <nav class="cc_marketing_nav" aria-label="Landing page navigation">
+        <a class="cc_wordmark" href="#cc_hero" aria-label="Crossex home"><strong><span>cross</span>ex</strong><small>browser data explorer</small></a>
+        <div class="cc_marketing_links">
+            <a href="#cc_capabilities">Capabilities</a>
+            <a href="#cc_gallery">Examples</a>
+            <a href="https://github.com/davcraig75/crossex" target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span></a>
         </div>
-        <div class="cc_hero_stats">
-            <div class="cc_hero_stat"><b>12+</b><span>chart types</span></div>
-            <div class="cc_hero_stat"><b>40+</b><span>color palettes</span></div>
-            <div class="cc_hero_stat"><b>5,000,000</b><span>rows tested</span></div>
-            <div class="cc_hero_stat"><b>3 lines</b><span>to embed</span></div>
-            <div class="cc_hero_stat"><b>0</b><span>server round-trips</span></div>
+    </nav>
+
+    <div class="cc_hero_grid">
+        <div class="cc_hero_copy">
+            <div class="cc_hero_badge"><span aria-hidden="true"></span> Your data stays in your browser</div>
+            <h1 class="cc_hero_title">Turn any table into an <em>analysis workspace.</em></h1>
+            <p class="cc_hero_sub">Open CSV, TSV, or JSON and move from raw rows to interactive charts,
+                data-quality checks, transformations, statistics, and a reproducible project—without code,
+                uploads, or an account.</p>
+            <div class="cc_hero_cta">
+                <button type="button" class="cc_hero_btn cc_hero_btn_primary" id="hero_demo_btn">Explore the penguins demo <span aria-hidden="true">→</span></button>
+                <button type="button" class="cc_hero_btn cc_hero_btn_secondary" id="hero_paste_btn">Use my own data</button>
+            </div>
+            <ul class="cc_hero_proof" aria-label="Product highlights">
+                <li><span aria-hidden="true">✓</span> Automatic chart selection</li>
+                <li><span aria-hidden="true">✓</span> 5M rows tested</li>
+                <li><span aria-hidden="true">✓</span> Undoable analysis history</li>
+            </ul>
+        </div>
+
+        <div class="cc_product_preview" aria-label="Preview of the Crossex data explorer">
+            <div class="cc_preview_topbar">
+                <div class="cc_preview_brand"><i aria-hidden="true"></i> crossex</div>
+                <div class="cc_preview_status"><span aria-hidden="true"></span> 344 rows · 8 columns</div>
+            </div>
+            <div class="cc_preview_body">
+                <div class="cc_preview_rail" aria-hidden="true"><b>⌕</b><b>↔</b><b>⌁</b><b>ƒx</b><b>▦</b></div>
+                <div class="cc_preview_main">
+                    <div class="cc_preview_fields">
+                        <span><small>X</small> bill length</span>
+                        <span><small>Y</small> bill depth</span>
+                        <span><small>COLOR</small> species</span>
+                        <span><small>FACET</small> none</span>
+                    </div>
+                    <div class="cc_preview_chart">
+                        <div class="cc_preview_chart_title"><b>Bill length vs. bill depth</b><span>Colored by species</span></div>
+                        <svg viewBox="0 0 560 260" role="img" aria-label="Example scatter plot of penguin measurements">
+                            <g stroke="#e9e7eb" stroke-width="1"><line x1="56" y1="34" x2="538" y2="34"/><line x1="56" y1="92" x2="538" y2="92"/><line x1="56" y1="150" x2="538" y2="150"/><line x1="56" y1="208" x2="538" y2="208"/><line x1="145" y1="20" x2="145" y2="220"/><line x1="258" y1="20" x2="258" y2="220"/><line x1="371" y1="20" x2="371" y2="220"/><line x1="484" y1="20" x2="484" y2="220"/></g>
+                            <g stroke="#a09aa4" stroke-width="1.4"><line x1="56" y1="20" x2="56" y2="220"/><line x1="56" y1="220" x2="538" y2="220"/></g>
+                            <g fill="#6954c2" fill-opacity=".72"><circle cx="158" cy="89" r="5"/><circle cx="176" cy="107" r="5"/><circle cx="191" cy="93" r="4"/><circle cx="205" cy="119" r="5"/><circle cx="222" cy="100" r="4"/><circle cx="238" cy="124" r="5"/><circle cx="254" cy="111" r="4"/><circle cx="268" cy="135" r="5"/><circle cx="285" cy="116" r="4"/></g>
+                            <g fill="#cf4f89" fill-opacity=".72"><circle cx="270" cy="75" r="5"/><circle cx="292" cy="88" r="4"/><circle cx="310" cy="68" r="5"/><circle cx="329" cy="95" r="5"/><circle cx="346" cy="81" r="4"/><circle cx="366" cy="103" r="5"/><circle cx="388" cy="86" r="4"/><circle cx="405" cy="111" r="5"/></g>
+                            <g fill="#ee875c" fill-opacity=".76"><circle cx="317" cy="168" r="5"/><circle cx="339" cy="151" r="4"/><circle cx="355" cy="179" r="5"/><circle cx="376" cy="158" r="5"/><circle cx="396" cy="185" r="4"/><circle cx="417" cy="166" r="5"/><circle cx="438" cy="194" r="5"/><circle cx="458" cy="175" r="4"/><circle cx="477" cy="202" r="5"/></g>
+                            <g fill="#777" font-size="10" font-family="system-ui, sans-serif"><text x="44" y="38" text-anchor="end">20</text><text x="44" y="96" text-anchor="end">18</text><text x="44" y="154" text-anchor="end">16</text><text x="44" y="212" text-anchor="end">14</text><text x="137" y="239">35</text><text x="250" y="239">40</text><text x="363" y="239">45</text><text x="476" y="239">50</text></g>
+                        </svg>
+                    </div>
+                    <div class="cc_preview_footer">
+                        <span><i class="cc_dot cc_dot_one"></i>Adelie</span><span><i class="cc_dot cc_dot_two"></i>Chinstrap</span><span><i class="cc_dot cc_dot_three"></i>Gentoo</span>
+                        <button type="button" id="hero_preview_btn">Open this view <span aria-hidden="true">→</span></button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="cc_hero_steps">
-        <div class="cc_hs_step">
-            <span class="cc_hs_num">1</span>
-            <div>
-                <b>Load your data</b>
-                <p>Paste CSV, TSV, or JSON below, drag &amp; drop a file, or press <i>Load Demo Data</i> to try it instantly.</p>
-            </div>
-        </div>
-        <div class="cc_hs_arrow">&#8594;</div>
-        <div class="cc_hs_step">
-            <span class="cc_hs_num">2</span>
-            <div>
-                <b>Pick columns, not chart types</b>
-                <p>Choose X and Y from the dropdowns and the right chart draws itself. Add Color or Facets to split it by category.</p>
-            </div>
-        </div>
-        <div class="cc_hs_arrow">&#8594;</div>
-        <div class="cc_hs_step">
-            <span class="cc_hs_num">3</span>
-            <div>
-                <b>Explore &amp; share</b>
-                <p>The icon strip on the left adds filters, palettes, summary stats, formula columns, a data table, a 3D view, and a pivot table. Share Link rebuilds your exact view for anyone.</p>
-            </div>
-        </div>
+
+    <div class="cc_value_strip" aria-label="Core capabilities">
+        <div><b>13</b><span>visual modes that adapt to your columns</span></div>
+        <div><b>Profile</b><span>types, missingness, cardinality, and anomalies</span></div>
+        <div><b>Transform</b><span>formula, sort, dedupe, group, append, and join</span></div>
+        <div><b>Reproduce</b><span>undo, redo, provenance, and portable projects</span></div>
     </div>
-    <div class="cc_hero_features">
-        <div class="cc_hf_card">
-            <svg viewBox="0 0 24 24" width="22" height="22"><circle cx="6" cy="16" r="2" fill="#830862"/><circle cx="12" cy="9" r="2" fill="#830862"/><circle cx="18" cy="13" r="2" fill="#830862"/><path d="M3 21 V3 M3 21 H21" fill="none" stroke="#999" stroke-width="1.3"/></svg>
-            <b>The chart type picks itself</b>
-            <p>Map columns to X, Y, color, and facets — crossex reads the data types and switches between
-                scatter, box, histogram, heatmap, and more automatically. No chart-type dropdown to fight.</p>
+
+    <section id="cc_capabilities" class="cc_capabilities" aria-labelledby="cc_capabilities_title">
+        <div class="cc_section_heading">
+            <span class="cc_section_kicker">More than a chart maker</span>
+            <h2 id="cc_capabilities_title">From raw rows to a defensible answer.</h2>
+            <p>Crossex keeps the entire exploratory workflow together, so the path from source data to final view stays visible and repeatable.</p>
         </div>
-        <div class="cc_hf_card">
-            <svg viewBox="0 0 24 24" width="22" height="22"><rect x="4" y="3" width="16" height="5" rx="1.5" fill="none" stroke="#830862" stroke-width="1.5"/><rect x="4" y="9.5" width="16" height="5" rx="1.5" fill="none" stroke="#830862" stroke-width="1.5"/><rect x="4" y="16" width="16" height="5" rx="1.5" fill="none" stroke="#830862" stroke-width="1.5"/></svg>
-            <b>Built for real data, not toy demos</b>
-            <p>Chunked parsing, incremental column typing, and smart sampling keep a 5-million-row dataset
-                responsive in the browser — with a banner that always shows exactly what's being rendered.</p>
+        <div class="cc_capability_grid">
+            <article class="cc_capability_card cc_capability_featured">
+                <div class="cc_capability_icon" aria-hidden="true">⌁</div>
+                <div>
+                    <span class="cc_capability_label">Explore visually</span>
+                    <h3>Map columns. The right view appears.</h3>
+                    <p>Choose X, Y, color, size, opacity, or facets. Crossex reads the data types and moves naturally between scatter, line, histogram, ECDF, QQ, box, violin, heatmap, correlation, overview, and 3D views.</p>
+                    <div class="cc_feature_tags"><span>Faceting</span><span>Regression</span><span>Contours</span><span>40+ palettes</span><span>PNG · SVG · CSV</span></div>
+                </div>
+            </article>
+            <article class="cc_capability_card">
+                <div class="cc_capability_icon" aria-hidden="true">✓</div>
+                <span class="cc_capability_label">Understand the data</span>
+                <h3>See quality issues before they become chart issues.</h3>
+                <p>Inspect inferred types, missing values, distinct counts, examples, and warnings. Override types safely, then use summaries, statistical annotations, normality checks, and correlations.</p>
+            </article>
+            <article class="cc_capability_card">
+                <div class="cc_capability_icon" aria-hidden="true">ƒx</div>
+                <span class="cc_capability_label">Prepare and reshape</span>
+                <h3>Do the useful table work without leaving the browser.</h3>
+                <p>Create formula columns, filter, sort, deduplicate, group, append, and join. Every operation creates a new immutable state that you can undo or redo.</p>
+            </article>
+            <article class="cc_capability_card cc_capability_wide">
+                <div class="cc_capability_icon" aria-hidden="true">↗</div>
+                <div>
+                    <span class="cc_capability_label">Reproduce and communicate</span>
+                    <h3>Keep the analysis, not just the screenshot.</h3>
+                    <p>Export a portable project with data, settings, formulas, and provenance; restore it later; share a compressed view; arrange dashboards; or embed the same explorer in a web page, RStudio, Shiny, or R Markdown.</p>
+                </div>
+                <div class="cc_repro_stack" aria-hidden="true"><span>03 · grouped by species</span><span>02 · added BMI formula</span><span>01 · loaded penguins.csv</span></div>
+            </article>
         </div>
-        <div class="cc_hf_card">
-            <svg viewBox="0 0 24 24" width="22" height="22"><rect x="5" y="11" width="14" height="10" rx="1.5" fill="none" stroke="#830862" stroke-width="1.5"/><path d="M8 11 V7 a4 4 0 0 1 8 0 V11" fill="none" stroke="#830862" stroke-width="1.5"/></svg>
-            <b>Private by construction</b>
-            <p>There's no server: parsing, charting, and stats all run in your tab. Share Link compresses the
-                whole view — settings and, for small inputs, the data itself — into the URL. Nothing is uploaded.</p>
-        </div>
-        <div class="cc_hf_card">
-            <svg viewBox="0 0 24 24" width="22" height="22"><path d="M8 6 L2 12 L8 18 M16 6 L22 12 L16 18" fill="none" stroke="#830862" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <b>Drop it into any page</b>
-            <p>The whole widget — Vega engine included — is one script tag and a <code>crossex()</code> call.
-                Lock axes and hide the panel for a fixed dashboard, or leave it fully interactive. An R
-                package wraps the same widget for RStudio, Shiny, and R Markdown.</p>
-        </div>
-        <div class="cc_hf_card">
-            <svg viewBox="0 0 24 24" width="22" height="22"><rect x="3" y="3" width="18" height="18" fill="none" stroke="#830862" stroke-width="1.5"/><rect x="3" y="3" width="18" height="5" fill="#830862" opacity="0.55"/><rect x="3" y="3" width="5" height="18" fill="#830862" opacity="0.55"/><line x1="3" y1="14" x2="21" y2="14" stroke="#830862"/><line x1="14" y1="3" x2="14" y2="21" stroke="#830862"/></svg>
-            <b>A pivot table and formula engine, built in</b>
-            <p>Drag-and-drop pivoting over the full dataset, plus a formula language for computed columns
-                (<code>(x - mean(x)) / sd(x)</code>) that compiles once and runs in chunks on multi-million-row data.</p>
-        </div>
-        <div class="cc_hf_card">
-            <svg viewBox="0 0 24 24" width="22" height="22"><circle cx="7" cy="17" r="3" fill="none" stroke="#830862" stroke-width="1.5"/><circle cx="17" cy="7" r="3" fill="none" stroke="#830862" stroke-width="1.5"/><path d="M9.2 14.8 L14.8 9.2" fill="none" stroke="#830862" stroke-width="1.5"/></svg>
-            <b>Every setting is shareable and remembered</b>
-            <p>Axes, filters, palettes, and transforms persist to your browser between visits. Name a full
-                configuration as a Saved View, or copy a Share Link that rebuilds the exact same chart for
-                someone else — with nothing sent to any server.</p>
-        </div>
+    </section>
+
+    <div class="cc_workflow" aria-label="Three-step workflow">
+        <div><span>01</span><b>Bring a table</b><p>Paste it, open a file, or load a URL.</p></div>
+        <div><span>02</span><b>Follow the question</b><p>Map columns, inspect patterns, and refine.</p></div>
+        <div><span>03</span><b>Keep the trail</b><p>Export the view, project, data, or dashboard.</p></div>
     </div>
 </section>
-<h1 class="cc">crossex <span class="cc_tagline">paste a table · click · explore</span></h1>
-<form>
+
+<section id="cc_start_section" class="cc_start" aria-labelledby="cc_start_title">
+<div id="cc_start_intro" class="cc_start_intro">
+    <span class="cc_section_kicker">Try it now</span>
+    <h2 id="cc_start_title">Start with your data—or ours.</h2>
+    <p>Paste a table below, drop in a file, fetch a public URL, or open the demo. Your data is processed locally in this tab.</p>
+</div>
+<form id="cc_data_form">
+    <label class="cc_sr_only" for="myccinput">Paste CSV, TSV, or JSON data</label>
     <textarea id="myccinput" placeholder="Paste CSV, TSV, or JSON data here — or drag and drop a file" style="width:100%;height:90px;font-size:xx-small;"></textarea>
     <input type="file" id="ccfileinput" accept=".csv,.tsv,.txt,.tab,.json" style="display:none">
-    <div style="display:inline-flex;flex-wrap:wrap;gap:2px">
-        <div id="graph_button" class="cc_button active">Graph Data</div>
-        <div id="load_file" class="cc_button">Load File</div>
-        <div id="load_url" class="cc_button">Load URL</div>
-        <div id="build_dashboard" class="cc_button">Dashboard</div>
-        <div id="default_data" class="cc_button">Load Demo Data</div>
-        <div id="large_demo" class="cc_button">Load 5M Demo</div>
-        <div id="share_link" class="cc_button">Share Link</div>
-        <div id="dark_toggle" class="cc_button">Dark Mode</div>
-        <div id="clear_cookies" class="cc_button">Clear Settings</div>
+    <div class="cc_input_actions">
+        <button type="button" id="graph_button" class="cc_button active">Graph Data</button>
+        <button type="button" id="load_file" class="cc_button">Load File</button>
+        <button type="button" id="load_url" class="cc_button" aria-expanded="false" aria-controls="cc_url_bar">Load URL</button>
+        <button type="button" id="build_dashboard" class="cc_button">Dashboard</button>
+        <button type="button" id="default_data" class="cc_button">Load Demo Data</button>
+        <button type="button" id="large_demo" class="cc_button">Load 5M Demo</button>
+        <button type="button" id="data_quality" class="cc_button" disabled>Data Quality</button>
+        <button type="button" id="share_link" class="cc_button">Share Link</button>
+        <button type="button" id="dark_toggle" class="cc_button" aria-pressed="false">Dark Mode</button>
+        <button type="button" id="clear_cookies" class="cc_button">Clear Settings</button>
     </div>
-    <div id="cc_url_bar" class="cc_url_bar" style="display:none">
-        <input type="text" id="cc_url_field" class="cc_url_field"
+    <div id="cc_url_bar" class="cc_url_bar" role="region" aria-label="Load data from URL" style="display:none">
+        <label class="cc_sr_only" for="cc_url_field">CSV, TSV, or JSON URL</label>
+        <input type="url" id="cc_url_field" class="cc_url_field" inputmode="url" autocomplete="url"
             placeholder="https://example.com/data.csv — a CSV, TSV, or JSON table">
-        <div id="cc_url_go" class="cc_button active">Fetch &amp; Graph</div>
-        <div id="cc_url_cancel" class="cc_button">Cancel</div>
+        <button type="button" id="cc_url_go" class="cc_button active">Fetch &amp; Graph</button>
+        <button type="button" id="cc_url_cancel" class="cc_button">Cancel</button>
     </div>
 </form>
-<div id="cc_toast"></div>
+</section>
+<div id="cc_data_notice" class="cc_data_notice" role="status" aria-live="polite" hidden>
+    <span id="cc_data_notice_text"></span>
+    <button type="button" id="cc_data_notice_close" aria-label="Dismiss message">&times;</button>
+</div>
+<section id="cc_quality" class="cc_quality" aria-labelledby="cc_quality_title" hidden>
+    <div class="cc_quality_head">
+        <div>
+            <h3 id="cc_quality_title" tabindex="-1">Data quality and column types</h3>
+            <p id="cc_quality_summary"></p>
+        </div>
+        <button type="button" id="cc_quality_close" class="cc_quality_close" aria-label="Close data quality panel">&times;</button>
+    </div>
+    <div id="cc_quality_issues" class="cc_quality_issues"></div>
+    <div class="cc_quality_table_wrap">
+        <table class="cc_quality_table">
+            <thead><tr><th>Column</th><th>Detected</th><th>Missing</th><th>Distinct</th><th>Example values</th><th>Use as</th></tr></thead>
+            <tbody id="cc_quality_columns"></tbody>
+        </table>
+    </div>
+    <div class="cc_quality_actions">
+        <button type="button" id="cc_quality_apply" class="cc_button active">Apply type changes and regraph</button>
+        <span>Invalid numeric or date values become missing.</span>
+    </div>
+</section>
+<div id="cc_toast" role="status" aria-live="polite" aria-atomic="true"></div>
 <div id="cc_gallery">
-    <div class="cc_gallery_head"><b>Chart gallery</b> — click an example to open it with the demo dataset,
-        or paste your own data above and press <b>Graph Data</b>. Chart types are chosen automatically
-        from the columns you map to X, Y, color, and facets.</div>
+    <div class="cc_gallery_head"><b>Start from a question.</b><br>Open any example with the penguins dataset, then change the mapped columns to watch Crossex choose the right visual form automatically.</div>
     <div class="cc_gallery_grid">
         <div class="cc_gcard" data-gallery="scatter">
             <svg viewBox="0 0 120 76"><path d="M14 6 V64 H114" fill="none" stroke="#ccc"/><circle cx="30" cy="52" r="3" fill="#4c78a8"/><circle cx="42" cy="44" r="3" fill="#4c78a8"/><circle cx="49" cy="53" r="3" fill="#4c78a8"/><circle cx="55" cy="38" r="3" fill="#4c78a8"/><circle cx="60" cy="28" r="3" fill="#f58518"/><circle cx="72" cy="24" r="3" fill="#f58518"/><circle cx="84" cy="31" r="3" fill="#f58518"/><circle cx="68" cy="36" r="3" fill="#f58518"/><circle cx="78" cy="14" r="3" fill="#54a24b"/><circle cx="92" cy="17" r="3" fill="#54a24b"/><circle cx="98" cy="24" r="3" fill="#54a24b"/><circle cx="104" cy="12" r="3" fill="#54a24b"/></svg>
@@ -177,6 +238,10 @@
             <div class="cc_gname">Column Overview</div>
             <div class="cc_gdesc">a distribution card per column</div>
         </div>
+    </div>
+    <div class="cc_gallery_footer">
+        <div><b>Open source and ready to embed.</b><span>Use the full explorer here, add the JavaScript widget to any page, or call it from R.</span></div>
+        <a href="https://github.com/davcraig75/crossex" target="_blank" rel="noopener">View documentation on GitHub <span aria-hidden="true">→</span></a>
     </div>
 </div>
 <br>

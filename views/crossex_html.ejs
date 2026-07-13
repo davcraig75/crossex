@@ -292,6 +292,52 @@
                     <input type="text" id="cc_melt_val-ccnm" class="cc_tr_name" value="value" spellcheck="false">
                     <button type="button" id="cc_melt_apply-ccnm" class="cc_3d_btn cc_tr_apply">Melt Columns</button>
                     <div id="cc_melt_msg-ccnm" class="cc_tr_msg"></div>
+                    <p class="cc-emph">History &amp; Project</p>
+                    <div class="cc_lab_history_toolbar">
+                        <button type="button" id="cc_lab_undo-ccnm" class="cc_3d_btn" disabled>Undo</button>
+                        <button type="button" id="cc_lab_redo-ccnm" class="cc_3d_btn" disabled>Redo</button>
+                        <button type="button" id="cc_lab_export-ccnm" class="cc_3d_btn">Export Project</button>
+                        <button type="button" id="cc_lab_import-ccnm" class="cc_3d_btn">Import Project</button>
+                        <input type="file" id="cc_lab_import_file-ccnm" accept=".json,.crossex.json" hidden>
+                    </div>
+                    <div id="cc_lab_history-ccnm" class="cc_lab_history" aria-live="polite"></div>
+                    <p class="cc-emph">Data Operations</p>
+                    <div class="cc_lab_ops">
+                        <div class="cc_lab_op">
+                            <b>Sort rows</b>
+                            <select id="cc_lab_sort_col-ccnm" class="cc_tr_select" aria-label="Sort column"></select>
+                            <select id="cc_lab_sort_dir-ccnm" class="cc_tr_select" aria-label="Sort direction"><option value="asc">ascending</option><option value="desc">descending</option></select>
+                            <button type="button" id="cc_lab_sort_apply-ccnm" class="cc_3d_btn cc_tr_apply">Sort</button>
+                        </div>
+                        <div class="cc_lab_op">
+                            <b>Remove duplicates</b>
+                            <span class="cc_tr_help_text">Select key columns, or none to compare complete rows.</span>
+                            <select id="cc_lab_dedupe_cols-ccnm" class="cc_tr_select" multiple size="4" aria-label="Duplicate key columns"></select>
+                            <button type="button" id="cc_lab_dedupe_apply-ccnm" class="cc_3d_btn cc_tr_apply">Deduplicate</button>
+                        </div>
+                        <div class="cc_lab_op">
+                            <b>Group &amp; summarize</b>
+                            <select id="cc_lab_group_col-ccnm" class="cc_tr_select" aria-label="Group by column"></select>
+                            <select id="cc_lab_agg_op-ccnm" class="cc_tr_select" aria-label="Summary operation"><option value="count">count rows</option><option value="sum">sum</option><option value="mean">mean</option><option value="min">minimum</option><option value="max">maximum</option></select>
+                            <select id="cc_lab_agg_col-ccnm" class="cc_tr_select" aria-label="Summary value column"></select>
+                            <input type="text" id="cc_lab_agg_name-ccnm" class="cc_tr_name" aria-label="Summary output column name" placeholder="output column name">
+                            <button type="button" id="cc_lab_group_apply-ccnm" class="cc_3d_btn cc_tr_apply">Create Summary</button>
+                        </div>
+                        <div class="cc_lab_op">
+                            <b>Append or join another table</b>
+                            <button type="button" id="cc_lab_second_load-ccnm" class="cc_3d_btn">Load Second Table</button>
+                            <input type="file" id="cc_lab_second_file-ccnm" accept=".csv,.tsv,.txt,.tab,.json" hidden>
+                            <span id="cc_lab_second_note-ccnm" class="cc_tr_help_text">No second table loaded.</span>
+                            <button type="button" id="cc_lab_append_apply-ccnm" class="cc_3d_btn cc_tr_apply" disabled>Append Rows</button>
+                            <div class="cc_lab_join_fields">
+                                <select id="cc_lab_join_left-ccnm" class="cc_tr_select" aria-label="Current table join key"></select>
+                                <select id="cc_lab_join_right-ccnm" class="cc_tr_select" aria-label="Second table join key"></select>
+                                <select id="cc_lab_join_type-ccnm" class="cc_tr_select" aria-label="Join type"><option value="left">left join</option><option value="inner">inner join</option><option value="full">full join</option></select>
+                                <button type="button" id="cc_lab_join_apply-ccnm" class="cc_3d_btn cc_tr_apply" disabled>Join Tables</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="cc_lab_msg-ccnm" class="cc_tr_msg" role="status" aria-live="polite"></div>
                     <details class="cc_tr_help">
                         <summary>formula syntax</summary>
                         <div>
@@ -354,4 +400,3 @@
         </div>
     </div>
 </div>
-

@@ -515,13 +515,15 @@
 	function dsCols(dsKey) { return DASH.datasets[dsKey].columns || []; }
 
 	function addDataset(name, rows, source, cols) {
+		var quality = null;
+		try { quality = CrossexData.profile(rows); } catch (e) { /* loader already validates rows */ }
 		convertDates(rows); // decimal-year dates, same as the single-chart path
 		var columns = (cols && cols.length ? cols : (rows.columns || (rows[0] ? Object.keys(rows[0]) : []))).slice();
 		if (!rows.columns) { rows.columns = columns; }
 		var key = 'ds' + (++DASH.dsSeq);
 		DASH.datasets[key] = {
 			name: name || ('Dataset ' + (DASH.dsOrder.length + 1)),
-			rows: rows, columns: columns, source: source || { type: 'paste' }
+			rows: rows, columns: columns, source: source || { type: 'paste' }, quality: quality
 		};
 		DASH.dsOrder.push(key);
 		renderDsBar();
@@ -544,8 +546,10 @@
 			var chip = el('span', 'dash_ds_chip');
 			var n = (d.rows && d.rows.length) ? d.rows.length.toLocaleString() : '—';
 			var ncol = (d.columns || []).length;
-			chip.innerHTML = '<b>' + escapeHtml(d.name) + '</b> <span>' + n + ' × ' + ncol + '</span>';
-			chip.title = 'Add a chart from ' + d.name;
+			var issueCount = d.quality ? d.quality.issues.length : 0;
+			chip.innerHTML = '<b>' + escapeHtml(d.name) + '</b> <span>' + n + ' × ' + ncol + '</span>' +
+				(issueCount ? '<span class="dash_ds_quality" title="Data-quality flags">' + issueCount + ' flags</span>' : '');
+			chip.title = 'Add a chart from ' + d.name + (issueCount ? ' · ' + issueCount + ' data-quality flags' : '');
 			chip.onclick = function () { addTile(k); };
 			bar.appendChild(chip);
 		});
@@ -558,26 +562,37 @@
 	}
 
 	// ---- Modal shell ---------------------------------------------------------
+	var _modalReturnFocus = null;
 	function openModal(title, bodyNode, wide) {
 		closeModal();
+		_modalReturnFocus = document.activeElement;
 		var bg = el('div', 'dash_modal_bg');
 		bg.id = 'dash_modal_bg';
 		var box = el('div', 'dash_modal' + (wide ? ' dash_modal_wide' : ''));
+		box.setAttribute('role', 'dialog');
+		box.setAttribute('aria-modal', 'true');
+		box.setAttribute('aria-label', title);
 		var head = el('div', 'dash_modal_head');
 		head.appendChild(el('b', null, escapeHtml(title)));
 		var x = el('button', 'dash_modal_x', '✕');
+		x.type = 'button';
+		x.setAttribute('aria-label', 'Close dialog');
 		x.onclick = closeModal;
 		head.appendChild(x);
 		box.appendChild(head);
 		box.appendChild(bodyNode);
 		bg.appendChild(box);
 		bg.addEventListener('pointerdown', function (e) { if (e.target === bg) { closeModal(); } });
+		bg.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeModal(); } });
 		document.body.appendChild(bg);
+		x.focus();
 		return bg;
 	}
 	function closeModal() {
 		var bg = byId('dash_modal_bg');
 		if (bg) { bg.remove(); }
+		if (_modalReturnFocus && document.contains(_modalReturnFocus)) { _modalReturnFocus.focus(); }
+		_modalReturnFocus = null;
 	}
 
 	// ---- Reusable data-loader controls (paste / URL / file / current) --------
@@ -589,19 +604,19 @@
 				'<textarea class="dash_paste" placeholder="col1,col2\\n1,2\\n3,4"></textarea></label>' +
 			'<div class="dash_row">' +
 				'<input class="dash_name" type="text" placeholder="Name this dataset (optional)">' +
-				'<button class="cc_button active dash_use_paste">Use pasted data</button>' +
+				'<button type="button" class="cc_button active dash_use_paste">Use pasted data</button>' +
 			'</div>' +
 			'<div class="dash_row dash_url_row">' +
-				'<input class="dash_url" type="text" placeholder="https://example.com/data.csv — CSV, TSV, or JSON">' +
-				'<button class="cc_button dash_use_url">Fetch URL</button>' +
+				'<input class="dash_url" type="url" inputmode="url" autocomplete="url" aria-label="CSV, TSV, or JSON URL" placeholder="https://example.com/data.csv — CSV, TSV, or JSON">' +
+				'<button type="button" class="cc_button dash_use_url">Fetch URL</button>' +
 			'</div>' +
 			'<div class="dash_row">' +
-				'<button class="cc_button dash_use_file">Upload file…</button>' +
-				'<button class="cc_button dash_use_demo">Load penguins demo</button>' +
-				'<button class="cc_button dash_use_current" style="display:none">Use data loaded in app</button>' +
+				'<button type="button" class="cc_button dash_use_file">Upload file…</button>' +
+				'<button type="button" class="cc_button dash_use_demo">Load penguins demo</button>' +
+				'<button type="button" class="cc_button dash_use_current" style="display:none">Use data loaded in app</button>' +
 				'<input type="file" class="dash_file" accept=".csv,.tsv,.txt,.tab,.json" style="display:none">' +
 			'</div>' +
-			'<div class="dash_loader_msg"></div>';
+			'<div class="dash_loader_msg" role="status" aria-live="polite"></div>';
 
 		var paste = wrap.querySelector('.dash_paste');
 		var nameIn = wrap.querySelector('.dash_name');
@@ -620,18 +635,26 @@
 			try { done(parseInputData(text), null, { type: 'paste' }); }
 			catch (e) { say('Could not parse: ' + e.message, true); }
 		};
-		wrap.querySelector('.dash_use_url').onclick = function () {
+		var urlButton = wrap.querySelector('.dash_use_url');
+		urlButton.onclick = function () {
 			var url = urlIn.value.trim();
 			if (!url) { say('Enter a URL first.', true); return; }
+			urlButton.disabled = true;
 			say('Fetching…');
 			ccFetchData(url).then(function (rows) {
+				urlButton.disabled = false;
 				done(rows, null, { type: 'url', url: url });
-			}).catch(function (e) { say('Could not load URL: ' + e.message, true); });
+			}).catch(function (e) { urlButton.disabled = false; say('Could not load URL: ' + e.message, true); });
 		};
 		wrap.querySelector('.dash_use_file').onclick = function () { fileIn.click(); };
 		fileIn.addEventListener('change', function (e) {
 			if (!e.target.files.length) { return; }
 			var f = e.target.files[0];
+			if (typeof MAX_FILE_BYTES !== 'undefined' && f.size > MAX_FILE_BYTES) {
+				say('That file is larger than the 512 MB safety limit.', true);
+				e.target.value = '';
+				return;
+			}
 			var reader = new FileReader();
 			reader.onload = function (ev) {
 				try { done(parseInputData(ev.target.result), f.name.replace(/\.[^.]+$/, ''), { type: 'file' }); }
@@ -888,9 +911,11 @@
 			var cols = (d.columns || []).slice();
 			var rows = d.rows || emptyRows(cols);
 			if (!rows.columns) { rows.columns = cols; }
+			var quality = null;
+			if (rows.length) { try { quality = CrossexData.profile(rows); } catch (e) {} }
 			DASH.datasets[d.key] = {
 				name: d.name, rows: rows, columns: cols, source: d.source || { type: 'paste' },
-				_pending: !d.rows && d.source && d.source.type === 'url'
+				_pending: !d.rows && d.source && d.source.type === 'url', quality: quality
 			};
 			DASH.dsOrder.push(d.key);
 		});
@@ -912,6 +937,7 @@
 			var d = DASH.datasets[k];
 			if (d._pending && d.source && d.source.url) {
 				ccFetchData(d.source.url).then(function (rows) {
+					try { d.quality = CrossexData.profile(rows); } catch (e) { d.quality = null; }
 					convertDates(rows);
 					var cols = (rows.columns || (rows[0] ? Object.keys(rows[0]) : [])).slice();
 					if (!rows.columns) { rows.columns = cols; }
@@ -1028,12 +1054,12 @@
 
 	// Show/hide the single-chart UI vs. the dashboard.
 	function showSingleUi(show) {
-		['cc_hero', 'cc_gallery', 'About'].forEach(function (id) {
+		['cc_hero', 'cc_gallery', 'cc_start_section', 'About'].forEach(function (id) {
 			var n = byId(id); if (n) { n.style.display = show ? '' : 'none'; }
 		});
 		var form = document.querySelector('#crossex form');
 		if (form) { form.style.display = show ? '' : 'none'; }
-		var h1 = document.querySelector('#crossex h1.cc');
+		var h1 = document.querySelector('#crossex .cc_app_title');
 		if (h1) { h1.style.display = show ? '' : 'none'; }
 	}
 

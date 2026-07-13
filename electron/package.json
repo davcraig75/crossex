@@ -1,21 +1,20 @@
 {
   "name": "crossex",
   "version": "1.0.0",
-  "description": "A minimal Electron application",
+  "description": "Private, no-code exploration of tabular data",
   "main": "main.js",
   "scripts": {
     "start": "electron ."
   },
   "repository": "https://github.com/davcraig75/crossex",
-  "keywords": [
-    "Electron",
-    "quick",
-    "start",
-    "tutorial",
-    "demo"
-  ],
-  "author": "GitHub",
-  "license": "CC0-1.0",
+  "keywords": ["data", "visualization", "exploration", "vega"],
+  "author": "David W. Craig",
+  "license": "MIT",
+  "build": {
+    "appId": "io.github.davcraig75.crossex",
+    "productName": "Crossex",
+    "files": ["index.html", "main.js", "crossex.120.png", "src/**/*", "jquery-ui.min.js", "jquery.ui.touch-punch.min.js", "jquery.min.js", "pivot.js", "pivot.css"]
+  },
   "devDependencies": {
     "electron": "^40.2.0",
     "electron-builder": "^26.6.3"

@@ -650,7 +650,7 @@ table.cc_summary td:first-child, table.cc_summary th:first-child {
 	border-radius: 4px;
 	font-size: 10px;
 	font-weight: bold;
-	background: #C7C7C7;
+	background: #626873;
 	color: #FFF;
 	padding: 3px 9px;
 	text-transform: uppercase;
@@ -776,6 +776,61 @@ table.cc_summary td:first-child, table.cc_summary th:first-child {
 	padding: 0 2px;
 	border-radius: 2px;
 }
+.cc_lab_history_toolbar {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 3px;
+	margin-bottom: 5px;
+}
+.cc_lab_history_toolbar button { min-width: 0; }
+.cc_lab_history {
+	max-height: 128px;
+	overflow: auto;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	background: #fafafa;
+	margin-bottom: 6px;
+}
+.cc_lab_history_empty {
+	padding: 5px;
+	color: #666;
+}
+.cc_lab_history_item {
+	display: grid;
+	grid-template-columns: 17px 1fr;
+	gap: 4px;
+	padding: 4px;
+	border-bottom: 1px solid #eee;
+	color: #555;
+}
+.cc_lab_history_item:last-child { border-bottom: 0; }
+.cc_lab_history_item.current {
+	background: #f6eaf3;
+	color: #5e164b;
+	font-weight: 600;
+}
+.cc_lab_history_num {
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: #ddd;
+	text-align: center;
+	line-height: 16px;
+	font-size: 8px;
+}
+.cc_lab_history_item.current .cc_lab_history_num { background: #830862; color: #fff; }
+.cc_lab_history_meta { display: block; color: #555; font-size: 8px; font-weight: normal; }
+.cc_lab_op {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 4px;
+	margin: 4px 0;
+	background: #fafafa;
+}
+.cc_lab_op b { display: block; margin-bottom: 2px; }
+.cc_lab_join_fields { margin-top: 3px; }
+.cc_lab_op button:disabled,
+.cc_lab_history_toolbar button:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* Summary toolbar  –––––––––––––––––––––––––––––––––––––––––––––––––– */
 .cc_summary_bar {
@@ -1219,6 +1274,15 @@ html.cc-dark .cc_tr_item {
 	background: #22242c;
 	border-color: #3a3d47;
 }
+html.cc-dark .cc_lab_history,
+html.cc-dark .cc_lab_op {
+	background: #1d1f26;
+	border-color: #3a3d47;
+}
+html.cc-dark .cc_lab_history_item { border-color: #343640; color: #b7bcc7; }
+html.cc-dark .cc_lab_history_item.current { background: #3d2038; color: #f0c4e4; }
+html.cc-dark .cc_lab_history_num { background: #444751; }
+html.cc-dark .cc_lab_history_meta { color: #9aa0ab; }
 html.cc-dark .cc_ovname,
 html.cc-dark .cc_dt_bar {
 	color: #d5d9e0;
