@@ -189,15 +189,107 @@ function delay(time) {
 	return new Promise(resolve => setTimeout(resolve, time));
 }
 
-var crossexloader=function crossexloader(element,status) {
-	if(status) {
-		document.getElementById("cc_loader"+element).style['z-index'] = 999;
-		document.getElementById("cc_loader"+element).style['display'] = 'block';
-	} else {
-		document.getElementById("cc_loader"+element).style['z-index'] = 0;
-		document.getElementById("cc_loader"+element).style['display'] = 'none'
+var _loaderTokens = {};
+var _loaderTokenSeq = 0;
 
+// The rendering overlay covers both the chart and its controls. `inert` keeps
+// keyboard users from changing a second option while Vega is still processing
+// the first one; pointer-events is the fallback for browsers without inert.
+// A token prevents an older async render from dismissing a newer overlay.
+var crossexloader=function crossexloader(element,status,token) {
+	var loader = document.getElementById('cc_loader' + element);
+	if (!loader) { return null; }
+	var graph = document.getElementById('cc_graph' + element);
+	var blocked = [
+		document.getElementById('cc_panel' + element),
+		document.getElementById('cc_tabscontent' + element),
+		document.getElementById('cc_graph_container' + element)
+	].filter(Boolean);
+	if(status) {
+		token = ++_loaderTokenSeq;
+		_loaderTokens[element] = token;
+		loader.style.zIndex = 999;
+		loader.style.display = 'flex';
+		loader.setAttribute('aria-hidden', 'false');
+		if (graph) {
+			graph.classList.add('cc-rendering');
+			graph.setAttribute('aria-busy', 'true');
+		}
+		blocked.forEach(function(node) { node.inert = true; node.setAttribute('aria-disabled', 'true'); });
+		return token;
 	}
+	if (token != null && _loaderTokens[element] !== token) { return false; }
+	loader.style.zIndex = 0;
+	loader.style.display = 'none';
+	loader.setAttribute('aria-hidden', 'true');
+	if (graph) {
+		graph.classList.remove('cc-rendering');
+		graph.setAttribute('aria-busy', 'false');
+	}
+	blocked.forEach(function(node) { node.inert = false; node.removeAttribute('aria-disabled'); });
+	return true;
+}
+
+function nextPaint() {
+	return new Promise(function(resolve) {
+		requestAnimationFrame(function() { requestAnimationFrame(resolve); });
+	});
+}
+
+// Vega may queue a second run from a signal listener (QQ data is one example).
+// Stay busy until the view has remained idle through a paint boundary.
+function waitForViewIdle(view) {
+	var running = view && view._running;
+	return Promise.resolve(running).catch(function() {}).then(nextPaint).then(function() {
+		if (view && view._running && view._running !== running) { return waitForViewIdle(view); }
+	});
+}
+
+function wireRenderBusyOverlay(element, view) {
+	var controls = document.getElementById('cc_tabscontent' + element);
+	if (!controls || controls.getAttribute('data-render-busy-wired')) { return; }
+	controls.setAttribute('data-render-busy-wired', '1');
+	function isPlotControlEvent(event) {
+		var target = event.target;
+		if (!event.isTrusted || !target || !target.closest || !target.closest('.vega-bind')) { return false; }
+		if (event.type === 'input') { return target.type === 'range' || target.type === 'number'; }
+		return event.type === 'change';
+	}
+	function deferRenderEvent(event) {
+		if (!isPlotControlEvent(event)) { return; }
+		var target = event.target;
+		var eventType = event.type;
+		var graph = document.getElementById('cc_graph' + element);
+		// A range input can emit a trailing change event after its input event.
+		// Once rendering starts, discard that and any other user change.
+		if (graph && graph.classList.contains('cc-rendering')) {
+			event.stopImmediatePropagation();
+			event.preventDefault();
+			return;
+		}
+		var restoreFocus = document.activeElement === target;
+		event.stopImmediatePropagation();
+		event.preventDefault();
+		var loaderNode = document.getElementById('cc_loader' + element);
+		var token = crossexloader(element, true);
+		// Two frames guarantee that the compositor paints the spinner before a
+		// long synchronous Vega dataflow begins.
+		nextPaint().then(function() {
+			if (!target.isConnected || document.getElementById('cc_loader' + element) !== loaderNode) {
+				crossexloader(element, false, token);
+				return;
+			}
+			target.dispatchEvent(new Event(eventType, { bubbles: true }));
+			return waitForViewIdle(view).then(function() {
+				if (crossexloader(element, false, token) && restoreFocus && target.isConnected) { target.focus(); }
+			});
+		}).catch(function(err) {
+			crossexloader(element, false, token);
+			console.error(err);
+		});
+	}
+	controls.addEventListener('input', deferRenderEvent, true);
+	controls.addEventListener('change', deferRenderEvent, true);
 }
 
 // Settings persist in localStorage: cookies cap at ~4KB (the full signal state
@@ -2739,6 +2831,7 @@ function openPivotView(element, data) {
 }
 
 function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable) {
+	var renderToken = crossexloader(element, true);
 	if (myview) {
 		myview.finalize();
 	}
@@ -2894,6 +2987,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 	vegaEmbed('#view_crossex' + element, spec, embedOpts).then(function(result) {
 		myview = result.view.run();
 		_views[element] = result.view;
+		wireRenderBusyOverlay(element, result.view);
 		// Save initial signal state to cookie if it doesn't exist
 		if (!loadSignalsFromCookie(cookieName)) {
 			saveSignalsToCookie(spec.signals, cookieName);
@@ -3052,6 +3146,9 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 				return;
 			});
 		}
-		crossexloader(element,false);
-	}).catch(console.error);
+		crossexloader(element,false,renderToken);
+	}).catch(function(err) {
+		crossexloader(element,false,renderToken);
+		console.error(err);
+	});
 }

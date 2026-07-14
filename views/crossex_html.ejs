@@ -1,8 +1,9 @@
 <div class="cc">
     <div class='cc_graph' id="cc_graph-ccnm">
-        <div id="cc_loader-ccnm" class='loader_box' style="width:100%;background-color: white;display:block;height:100%;z-index: 999;opacity:0.8;position:absolute;">
-            <div  id="cc_loader_child-ccnm"  style='top:25%;position:absolute;width: 100%;display:block;    margin: 1px;'>            
-                <div class='crossexloader' id='loadercircle-ccnm'></div>
+        <div id="cc_loader-ccnm" class="loader_box" role="status" aria-live="polite" aria-label="Rendering plot" aria-hidden="false">
+            <div id="cc_loader_child-ccnm" class="cc_loader_content">
+                <div class="crossexloader" id="loadercircle-ccnm" aria-hidden="true"></div>
+                <div class="cc_loader_label">Rendering plot…</div>
             </div>
         </div>
         <div id="cc_sample_notice-ccnm" class="cc_sample_notice" style="display:none"></div>

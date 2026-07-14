@@ -194,6 +194,46 @@ test('scatter options and visual encodings all alter a valid plot', async functi
   expect(errors).toEqual([]);
 });
 
+test('plot changes show a blocking rendering state until Vega settles', async function({ page }) {
+  const errors = installErrorCapture(page);
+  await openExample(page, 'scatter');
+  await page.locator('#Charts_tablinkssmartplot_id').click();
+  const points = page.locator('#Points_smartplot_id input');
+  const before = await page.evaluate(function() { return window._views.smartplot_id.signal('Points_'); });
+
+  await points.click();
+  const busy = await page.evaluate(function() {
+    const loader = document.getElementById('cc_loadersmartplot_id');
+    const graph = document.getElementById('cc_graphsmartplot_id');
+    const panel = document.getElementById('cc_tabscontentsmartplot_id');
+    const chart = document.getElementById('cc_graph_containersmartplot_id');
+    return {
+      loaderVisible: getComputedStyle(loader).display !== 'none',
+      status: loader.getAttribute('role'),
+      label: loader.getAttribute('aria-label'),
+      ariaBusy: graph.getAttribute('aria-busy'),
+      panelInert: panel.inert,
+      chartInert: chart.inert
+    };
+  });
+  expect(busy).toEqual({
+    loaderVisible: true,
+    status: 'status',
+    label: 'Rendering plot',
+    ariaBusy: 'true',
+    panelInert: true,
+    chartInert: true
+  });
+
+  await page.waitForFunction(function() {
+    return document.getElementById('cc_loadersmartplot_id').style.display === 'none';
+  });
+  expect(await page.evaluate(function() { return window._views.smartplot_id.signal('Points_'); })).toBe(!before);
+  expect(await page.locator('#cc_graphsmartplot_id').getAttribute('aria-busy')).toBe('false');
+  expect(await page.locator('#cc_tabscontentsmartplot_id').evaluate(function(node) { return node.inert; })).toBe(false);
+  expect(errors).toEqual([]);
+});
+
 test('axis controls redraw and restore a scatter plot', async function({ page }, testInfo) {
   const errors = installErrorCapture(page);
   await openExample(page, 'scatter');

@@ -11,6 +11,7 @@
 	color: #1c1f2a;
 }
 .cc_graph {
+	position: relative;
 	background: transparent;
 	margin: 0 auto !important;
 	border-top-right-radius: 4px;
@@ -413,20 +414,60 @@ div.vega-bind > label > input[type="checkbox"] {
 }
 /* Tables  –––––––––––––––––––––––––––––––––––––––––––––––––– */
 
+.loader_box {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	z-index: 999;
+	background: rgba(255, 255, 255, 0.84);
+	cursor: progress;
+	pointer-events: auto;
+	box-sizing: border-box;
+}
+.cc_loader_content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 10px;
+	padding: 18px 22px;
+	border: 1px solid rgba(131, 8, 98, 0.18);
+	border-radius: 12px;
+	background: rgba(255, 255, 255, 0.94);
+	box-shadow: 0 10px 30px rgba(35, 15, 30, 0.14);
+}
 .crossexloader {
-	border: 1em solid #f3f3f3;
-	border-top: 1em solid #3498db;
+	border: 7px solid #eadfe7;
+	border-top-color: #830862;
 	border-radius: 50%;
-	width: 50px;
+	width: 42px;
 	margin: 0 auto !important;
-	height: 50px;
+	height: 42px;
 	vertical-align: middle;
 	display: block;
-	animation: spin 1s linear infinite;
+	animation: spin 0.8s linear infinite;
+	will-change: transform;
+}
+.cc_loader_label {
+	color: #532044;
+	font: 600 12px/1.2 Verdana, Arial, sans-serif;
+	letter-spacing: 0.02em;
+}
+.cc_graph.cc-rendering > .cc_panel,
+.cc_graph.cc-rendering > .cc_tabscontent,
+.cc_graph.cc-rendering > .cc_graph_container {
+	pointer-events: none;
+	user-select: none;
 }
 @keyframes spin {
 	0% { transform: rotate(0deg); }
 	100% { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.crossexloader { animation-duration: 1.8s; }
 }
 /* Summary tab  –––––––––––––––––––––––––––––––––––––––––––––––––– */
 .cc_summary_wrap {
@@ -1165,6 +1206,21 @@ html.cc-dark .cc_dt_overlay,
 html.cc-dark .cc_pivot_overlay {
 	background: #191a21;
 	border-color: #3a3d47;
+}
+html.cc-dark .loader_box {
+	background: rgba(16, 17, 22, 0.86);
+}
+html.cc-dark .cc_loader_content {
+	background: rgba(34, 36, 44, 0.96);
+	border-color: #4a4050;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+html.cc-dark .crossexloader {
+	border-color: #40343e;
+	border-top-color: #e067bd;
+}
+html.cc-dark .cc_loader_label {
+	color: #efcfe5;
 }
 html.cc-dark .pvtUi,
 html.cc-dark .pvtUi td,
