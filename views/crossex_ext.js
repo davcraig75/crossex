@@ -513,35 +513,28 @@ if (qualityApply) {
 	};
 }
 
-// ---- Dark theme toggle -------------------------------------------------------
-function setDarkMode(on) {
-	try { window.localStorage.setItem('ccDarkMode', on ? '1' : '0'); } catch (e) {}
-	document.documentElement.classList.toggle('cc-dark', on);
-	var darkToggle = document.getElementById('dark_toggle');
-	darkToggle.innerHTML = on ? 'Light Mode' : 'Dark Mode';
-	darkToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
-	// the core stylesheet (all dark-mode rules) is normally injected on first
-	// chart draw — on the empty landing state (hero, no chart yet) it may not
-	// exist yet, so make sure it's there before relying on .cc-dark selectors
-	ensureCoreCss();
-	// re-render the current chart so the dark Vega config applies
-	if (_fullData.smartplot_id && _crossexOpts.smartplot_id) {
-		crossexloader('smartplot_id', true);
-		delay(30).then(function() {
-			crossex('smartplot_id', _fullData.smartplot_id,
-				_crossexOpts.smartplot_id.options, _crossexOpts.smartplot_id.widthid);
-		});
-	}
-}
-document.getElementById('dark_toggle').onclick = function() { setDarkMode(!ccDarkMode()); };
-if (ccDarkMode()) {
-	document.documentElement.classList.add('cc-dark');
-	document.getElementById('dark_toggle').innerHTML = 'Light Mode';
-	document.getElementById('dark_toggle').setAttribute('aria-pressed', 'true');
-	// returning in dark mode with no chart drawn yet (still on the hero/gallery
-	// landing state) — same lazy-css gap as setDarkMode() above
-	ensureCoreCss();
-}
+// ---- Data-source dropdown menu ----------------------------------------------
+// Groups the less-frequent sources (demo, 5M demo, URL, share, clear) under one
+// pulldown so the input toolbar stays uncluttered. Each item keeps its own id
+// and handler; this only manages open/close.
+(function wireSourceMenu() {
+	var menu = document.getElementById('cc_source_menu');
+	var toggle = document.getElementById('cc_source_toggle');
+	if (!menu || !toggle) { return; }
+	function close() { menu.classList.remove('open'); toggle.setAttribute('aria-expanded', 'false'); }
+	toggle.onclick = function(e) {
+		e.stopPropagation();
+		var open = !menu.classList.contains('open');
+		menu.classList.toggle('open', open);
+		toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+	};
+	// each menuitem runs its own click handler first; collapse the menu after
+	menu.querySelectorAll('[role="menuitem"]').forEach(function(item) {
+		item.addEventListener('click', close);
+	});
+	document.addEventListener('click', function(e) { if (!menu.contains(e.target)) { close(); } });
+	document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { close(); } });
+})();
 
 // ---- Shareable state via URL hash --------------------------------------------
 // The link carries the full signal state, transform definitions, and (when it

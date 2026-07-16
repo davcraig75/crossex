@@ -19,6 +19,19 @@ var crossex_spec = JSON.parse(itgz.decompressFromEncodedURIComponent("<%-crossex
 // substitution); stringifying the ~350KB object once here instead of per
 // call saves ~15ms on each re-graph
 var crossex_spec_str = JSON.stringify(crossex_spec);
+// The "Datatype -> Numerical" pulldown coerces a column with this expression
+// function instead of Vega's toNumber(), which turns spreadsheet values like
+// "1,200", "$1,200", or " 1 200 " into NaN. ccnum() cleans separators/currency
+// and maps anything non-finite to null, matching CrossexData.cleanNumber so the
+// axis and the Data Lab agree. Registered once, before any view is parsed.
+(function registerCcNum() {
+	if (typeof vega === 'undefined' || typeof vega.expressionFunction !== 'function') { return; }
+	vega.expressionFunction('ccnum', function(value) {
+		return (typeof CrossexData !== 'undefined' && CrossexData.cleanNumber)
+			? CrossexData.cleanNumber(value)
+			: (isFinite(+value) ? +value : null);
+	});
+})();
 var crossex_html=itgz.decompressFromEncodedURIComponent("<%=crossex_html%>");
 crossex_html = crossex_html.replace("itgversion","<%-itgversion%>");
 var ccPanel,ccPanelProxy;

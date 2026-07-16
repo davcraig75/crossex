@@ -15,7 +15,7 @@
 // never in the embeddable crossex.js. It relies on globals already defined by
 // crossex_base.js / crossex_ext.js: crossex, saveSignalState, ccDarkMode,
 // ccToast, parseInputData, ccFetchData, optimize_axis, convertDates,
-// setDarkMode, _lastStruct, itgz.
+// _lastStruct, itgz.
 // ============================================================================
 (function () {
 	'use strict';
@@ -1002,7 +1002,6 @@
 					'<button class="cc_button" id="dash_export">Export</button>' +
 					'<button class="cc_button" id="dash_import">Import</button>' +
 					'<input type="file" id="dash_import_file" accept=".json" style="display:none">' +
-					'<button class="cc_button" id="dash_dark">Dark</button>' +
 					'<button class="cc_button" id="dash_exit">Exit ✕</button>' +
 				'</div>' +
 			'</div>' +
@@ -1031,12 +1030,6 @@
 			if (e.target.files.length) { importJson(e.target.files[0]); e.target.value = ''; }
 		});
 		byId('dash_exit').onclick = exitDashboard;
-		byId('dash_dark').onclick = function () {
-			if (typeof setDarkMode === 'function') { setDarkMode(!ccDarkMode()); }
-			byId('dash_dark').textContent = ccDarkMode() ? 'Light' : 'Dark';
-			renderAllCharts();
-		};
-		byId('dash_dark').textContent = ccDarkMode() ? 'Light' : 'Dark';
 		byId('dash_cols').onchange = function () {
 			DASH.cols = parseInt(this.value, 10) || 12;
 			DASH.tiles.forEach(function (t) {

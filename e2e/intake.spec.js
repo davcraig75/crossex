@@ -81,10 +81,12 @@ test('landing and quality workflows have no serious automated accessibility viol
   let results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter(function(v) { return v.impact === 'critical' || v.impact === 'serious'; })).toEqual([]);
 
-  await page.locator('#dark_toggle').click();
+  // the data-source pulldown open state should also be accessible
+  await page.locator('#cc_source_toggle').click();
+  await expect(page.locator('#cc_source_menu')).toHaveClass(/open/);
   results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter(function(v) { return v.impact === 'critical' || v.impact === 'serious'; })).toEqual([]);
-  await page.locator('#dark_toggle').click();
+  await page.keyboard.press('Escape');
 
   await page.getByLabel('Paste CSV, TSV, or JSON data').fill('name,value\na,1\nb,2');
   await page.getByRole('button', { name: 'Graph Data' }).click();

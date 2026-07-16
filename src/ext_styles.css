@@ -762,6 +762,36 @@ html.cc-dark .cc_quality_table select {
 	border-radius: 4px;
 }
 
+/* ---- Data-source dropdown menu -------------------------------------------- */
+.cc_menu { position: relative; display: inline-flex; }
+.cc_menu_list {
+	position: absolute;
+	top: calc(100% + 4px);
+	left: 0;
+	z-index: 60;
+	min-width: 172px;
+	margin: 0;
+	padding: 4px;
+	list-style: none;
+	background: #fff;
+	border: 1px solid #d7d7de;
+	border-radius: 6px;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, .16);
+	display: none;
+}
+.cc_menu.open .cc_menu_list { display: block; }
+.cc_menu_list li { margin: 0; }
+.cc_menu_list button.cc_button {
+	display: block;
+	width: 100%;
+	margin: 1px 0;
+	text-align: left;
+	background: transparent;
+	color: #333;
+	border-radius: 4px;
+}
+.cc_menu_list button.cc_button:hover { background: #830862; color: #fff; }
+
 /* ---- Dashboard shell ------------------------------------------------------ */
 .cc_dashboard {
 	width: 100%;

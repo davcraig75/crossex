@@ -17,6 +17,44 @@ describe('data intake utilities', function() {
     assert.deepEqual(json.columns, ['a', 'b']);
   });
 
+  it('keeps pasted-spreadsheet quirks clean without inventing NaN', function() {
+    // trailing blank lines, an unlabeled column, a short header row, empty cells,
+    // and Excel error/NA tokens — none of which should become the number NaN.
+    const csv = data.parseInput('x,,z\n1,2,3\n4,,\n\n\n', d3);
+    assert.deepEqual(csv.columns, ['x', 'Column 2', 'z']);
+    assert.equal(csv.length, 2);              // blank trailing lines dropped
+    assert.equal(csv[1]['Column 2'], null);   // empty cell stays a true null
+    assert.equal(csv[1].z, null);
+
+    const dirty = data.parseInput('a\tb\tc\nNaN\t#N/A\t3\nnan\t#DIV/0!\t6', d3);
+    assert.equal(dirty[0].a, null);           // "NaN" -> null, not the number NaN
+    assert.equal(dirty[0].b, null);           // Excel "#N/A" -> null
+    assert.equal(dirty[1].b, null);           // "#DIV/0!" -> null
+    assert.equal(dirty[0].c, 3);
+    // a header shorter than the body keeps the extra column instead of dropping it
+    const wide = data.parseInput('p,q\n1,2,3', d3);
+    assert.deepEqual(wide.columns, ['p', 'q', 'Column 3']);
+    assert.equal(wide[0]['Column 3'], 3);
+  });
+
+  it('does not let a stray tab collapse a comma table', function() {
+    const rows = data.parseInput('x,y\n1,10\n2\t,20\n3,30', d3);
+    assert.deepEqual(rows.columns, ['x', 'y']);
+    assert.equal(rows.length, 3);
+    assert.equal(rows[1].y, 20);
+  });
+
+  it('cleanNumber strips separators and never returns NaN', function() {
+    assert.equal(data.cleanNumber('1,200'), 1200);
+    assert.equal(data.cleanNumber(' 1 200 '), 1200);
+    assert.equal(data.cleanNumber('$1,200'), 1200);
+    assert.equal(data.cleanNumber('(1,200)'), -1200);
+    assert.equal(data.cleanNumber('#N/A'), null);
+    assert.equal(data.cleanNumber('abc'), null);
+    assert.equal(data.cleanNumber(''), null);
+    assert.equal(data.cleanNumber(Infinity), null);
+  });
+
   it('rejects malformed and structurally invalid input', function() {
     assert.throws(function() { data.parseInput('', d3); }, /No data/);
     assert.throws(function() { data.parseInput('[{"a":1}', d3); }, /Invalid JSON/);

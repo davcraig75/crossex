@@ -7,6 +7,124 @@
 
 	var DEFAULT_MISSING = new Set(['NA', 'N/A', 'NULL', 'null', 'NaN', 'nan', '']);
 
+	// Tokens that mean "no value" once a cell is trimmed and upper-cased. Covers
+	// the usual NA family plus the error strings Excel/Sheets paste into cells
+	// (#N/A, #DIV/0!, …). Matching is case-insensitive so "nan"/"NaN"/"#n/a" all
+	// collapse to a true null — we never turn these into the number NaN.
+	var MISSING_TOKENS = new Set([
+		'', 'NA', 'N/A', 'NAN', 'NULL', 'NIL',
+		'#N/A', '#NA', '#N/A N/A', '#VALUE!', '#REF!', '#DIV/0!', '#NUM!', '#NAME?', '#NULL!', '#ERROR!'
+	]);
+	function isMissingToken(trimmed) {
+		return trimmed === '' || MISSING_TOKENS.has(trimmed.toUpperCase());
+	}
+
+	// Same ISO-ish shape d3.autoType recognizes as a Date.
+	var DATE_LIKE = /^([-+]\d{2})?\d{4}(-\d{2}(-\d{2})?)?(T\d{2}:\d{2}(:\d{2}(\.\d{3})?)?(Z|[-+]\d{2}:\d{2})?)?$/;
+
+	// Coerce one raw delimited cell. Mirrors d3.autoType (number / boolean / date
+	// / text) with two deliberate differences: missing tokens and non-finite
+	// values become a true null instead of NaN, and text is trimmed. A blank or
+	// "#N/A" cell therefore stays empty and never contaminates a numeric column.
+	function coerceCell(raw) {
+		if (raw == null) { return null; }
+		var s = String(raw).trim();
+		if (isMissingToken(s)) { return null; }
+		if (s === 'true') { return true; }
+		if (s === 'false') { return false; }
+		var n = +s;
+		if (n === n) { return isFinite(n) ? n : null; }   // NaN check; ±Infinity -> null
+		if (DATE_LIKE.test(s)) {
+			var d = new Date(s);
+			if (!isNaN(+d)) { return d; }
+		}
+		return s;
+	}
+
+	// Aggressive numeric cleaner for explicit "use as Number" conversions (the
+	// Datatype pulldown and the Data Lab). Strips thousands separators, spaces
+	// (incl. non-breaking), currency symbols, and accounting parentheses so
+	// "1,200", " 1 200 ", "$1,200", and "(1,200)" all become finite numbers.
+	// Anything that still isn't a finite number returns null — never NaN.
+	function cleanNumber(value) {
+		if (value == null) { return null; }
+		if (typeof value === 'number') { return isFinite(value) ? value : null; }
+		var s = String(value).trim();
+		if (isMissingToken(s)) { return null; }
+		var negative = /^\(.*\)$/.test(s);
+		if (negative) { s = s.slice(1, -1); }
+		s = s.replace(/[,\s $€£¥]/g, '');
+		if (s === '') { return null; }
+		var n = Number(s);
+		if (!isFinite(n)) { return null; }
+		return negative ? -n : n;
+	}
+
+	// Turn a raw header row into clean, unique, non-empty column names. A blank
+	// header cell (a column Excel left unlabeled) becomes "Column N"; duplicate
+	// names get a numeric suffix so no column silently overwrites another.
+	function cleanHeaders(rawHeader, width) {
+		var used = Object.create(null);
+		var names = [];
+		for (var i = 0; i < width; i++) {
+			var base = rawHeader[i] == null ? '' : String(rawHeader[i]).trim();
+			if (base === '') { base = 'Column ' + (i + 1); }
+			var unique = base, k = 2;
+			while (used[unique]) { unique = base + '_' + k; k++; }
+			used[unique] = true;
+			names.push(unique);
+		}
+		return names;
+	}
+
+	// Choose the delimiter from the first non-empty line by counting candidates:
+	// tabs win ties (a pasted spreadsheet is tab-separated), otherwise comma.
+	// This replaces "contains any tab -> TSV", where one stray tab in a CSV
+	// collapsed the whole table into a single column.
+	function sniffDelimiter(text) {
+		var start = 0;
+		while (start < text.length) {
+			var nl = text.indexOf('\n', start);
+			var line = (nl < 0 ? text.slice(start) : text.slice(start, nl)).replace(/\r$/, '');
+			if (line.trim() !== '') {
+				var tabs = 0, commas = 0, semis = 0;
+				for (var i = 0; i < line.length; i++) {
+					var c = line.charCodeAt(i);
+					if (c === 9) { tabs++; } else if (c === 44) { commas++; } else if (c === 59) { semis++; }
+				}
+				if (tabs > 0 && tabs >= commas && tabs >= semis) { return '\t'; }
+				if (semis > commas) { return ';'; }
+				return ',';
+			}
+			if (nl < 0) { break; }
+			start = nl + 1;
+		}
+		return ',';
+	}
+
+	// Parse delimited text with full control over headers and blank lines. Fully
+	// empty rows (trailing newlines, blank lines Excel leaves at the end) are
+	// dropped; the header is padded to the widest row so an extra unlabeled
+	// column is kept rather than discarded.
+	function parseDelimited(text, delimiter, dsv) {
+		var arrays = dsv.dsvFormat(delimiter).parseRows(text).filter(function(row) {
+			return row.some(function(cell) { return cell != null && String(cell).trim() !== ''; });
+		});
+		if (!arrays.length) { throw new Error('No data rows were found'); }
+		var width = 0;
+		for (var a = 0; a < arrays.length; a++) { if (arrays[a].length > width) { width = arrays[a].length; } }
+		var header = cleanHeaders(arrays[0], width);
+		var rows = [];
+		for (var r = 1; r < arrays.length; r++) {
+			var arr = arrays[r];
+			var obj = {};
+			for (var c = 0; c < width; c++) { obj[header[c]] = coerceCell(arr[c]); }
+			rows.push(obj);
+		}
+		rows.columns = header;
+		return validateRows(rows);
+	}
+
 	function columnsOf(rows) {
 		if (rows && Array.isArray(rows.columns)) { return rows.columns.slice(); }
 		var columns = [];
@@ -36,19 +154,18 @@
 
 	function parseInput(text, dsv) {
 		if (typeof text !== 'string' || !text.trim()) { throw new Error('No data was provided'); }
-		if (!dsv || typeof dsv.csvParse !== 'function' || typeof dsv.tsvParse !== 'function') {
+		if (!dsv || typeof dsv.dsvFormat !== 'function') {
 			throw new Error('A CSV/TSV parser is required');
 		}
 		var trimmed = text.trim();
-		var rows;
 		if (trimmed[0] === '[' || trimmed[0] === '{') {
+			var rows;
 			try { rows = JSON.parse(trimmed); }
 			catch (error) { throw new Error('Invalid JSON: ' + error.message); }
 			if (!Array.isArray(rows)) { rows = [rows]; }
 			return validateRows(rows);
 		}
-		rows = text.indexOf('\t') >= 0 ? dsv.tsvParse(text, dsv.autoType) : dsv.csvParse(text, dsv.autoType);
-		return validateRows(rows);
+		return parseDelimited(text, sniffDelimiter(text), dsv);
 	}
 
 	function isMissing(value, missingValues) {
@@ -166,8 +283,7 @@
 			if (value === null || value === undefined || value === '') { rows[i][column] = null; continue; }
 			if (targetType === 'text') { rows[i][column] = String(value); }
 			else if (targetType === 'numeric') {
-				var number = typeof value === 'number' ? value : Number(String(value).replace(/,/g, ''));
-				rows[i][column] = isFinite(number) ? number : null;
+				rows[i][column] = cleanNumber(value);
 			} else if (targetType === 'date') {
 				var date = value instanceof Date ? value : new Date(value);
 				rows[i][column] = isNaN(+date) ? null : date;
@@ -386,6 +502,7 @@
 		columnsOf: columnsOf,
 		validateRows: validateRows,
 		parseInput: parseInput,
+		cleanNumber: cleanNumber,
 		profile: profile,
 		convertColumn: convertColumn,
 		sortRows: sortRows,
