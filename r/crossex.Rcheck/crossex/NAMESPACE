@@ -1,7 +1,0 @@
-export(crossex)
-export(crossexOutput)
-export(renderCrossex)
-importFrom(htmlwidgets,createWidget)
-importFrom(htmlwidgets,shinyRenderWidget)
-importFrom(htmlwidgets,shinyWidgetOutput)
-importFrom(htmlwidgets,sizingPolicy)

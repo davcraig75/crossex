@@ -525,7 +525,6 @@ crossex/
 │   ├── crossex_base.ejs      # EJS template that produces crossex.js
 │   ├── wrapper.ejs           # EJS template that produces crossex_site.js
 │   ├── stand_alone.ejs       # Full HTML page served at /
-│   ├── template.ejs          # Bootstrap dashboard template (embedding sample)
 │   ├── crossex_html.ejs      # UI component: tabs, panels, controls
 │   ├── body.ejs              # Data input: textarea, buttons
 │   ├── stats.js              # Statistics: correlation, z-tests, formatting

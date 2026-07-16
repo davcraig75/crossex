@@ -1,5 +1,0 @@
-dependencies:
-  - name: crossex
-    version: 1.20260225
-    src: htmlwidgets/lib/crossex
-    script: crossex.js
