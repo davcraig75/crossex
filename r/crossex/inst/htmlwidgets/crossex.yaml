@@ -1,5 +1,5 @@
 dependencies:
   - name: crossex
-    version: 1.20260225
+    version: 1.20260716
     src: htmlwidgets/lib/crossex
     script: crossex.js
