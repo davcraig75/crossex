@@ -283,7 +283,8 @@ div.vega-bind {
 	border: 1px solid #dcdcdc;
 	color: black;
 }
-div[id^="Background_Color"] > div > label > input[type=text] {
+div[id^="Background_Color"] > div > label > input[type=text],
+div[id^="graph_title"] > div > label > input[type=text] {
 	width:60px;
 }
 div.vega-bind  > label {

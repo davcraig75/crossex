@@ -470,19 +470,202 @@ function hideOverlays(element, except) {
 	}
 }
 
-function initAndListen(listener, id, result) {
-	if (result.view.signal(listener) == true) {
-		document.getElementById(id).style.display = "block";
-	} else {
-		document.getElementById(id).style.display = "none";
+// ---- Contextual option visibility -------------------------------------------
+// Each panel control only affects some chart modes (the signal→mark usage in
+// the Vega spec is the ground truth for these rules). Show a control only
+// while the visible graph actually reads its signal, so every tab presents
+// just the options that do something. Hidden controls stay in the DOM and
+// keep their signal values — nothing is lost by toggling display.
+function optionContext(view) {
+	function sig(name, dflt) {
+		try {
+			var v = view.signal(name);
+			return v === undefined ? dflt : v;
+		} catch (e) { return dflt; }
 	}
-	result.view.addSignalListener(listener, function(name, value) {
-		if (value) {
-			document.getElementById(id).style.display = "block";
-		} else {
-			document.getElementById(id).style.display = "none";
-		}
+	var corr = !!sig('Show_Covariance', false);
+	var qq = !!sig('QQNorm_', false) && !corr;   // QQ replaces every chart but the matrix
+	var plain = !corr && !qq;
+	var ctx = {
+		corr: corr,
+		qq: qq,
+		scatter: plain && !!sig('show_scatter_graph', false),
+		// show_hist_graph is true for any numeric X; the histogram area is only
+		// real when Y is not a plotted column (pure histogram) or the marginal
+		// histogram is enabled on a scatter
+		box: plain && !!sig('show_box_graphs', false),
+		hzbox: plain && !!sig('show_hzbox_graphs', false),
+		stacked: plain && !!sig('show_stacked_graphs', false),
+		grid: plain && !!sig('show_grid_graphs', false),
+		xCat: !!sig('Xord', false),
+		yCat: !!sig('Yord', false),
+		facetRows: sig('Facet_Rows_By', 'None') !== 'None',
+		facetCols: sig('Facet_Cols_By', 'None') !== 'None',
+		colored: sig('Color_By', 'None') !== 'None',
+		sized: sig('Size_By', 'None') !== 'None',
+		stroked: sig('Stroke_By', 'None') !== 'None',
+		filtered: sig('Filter_Out_From', 'None') !== 'None' || sig('Filter_Additional', 'None') !== 'None',
+		valueFilter: sig('Filter_By_Value', 'None') !== 'None',
+		contours: !!sig('Contours_', false),
+		violin: !!sig('Violin_', false),
+		boxOn: !!sig('Boxplot_', false),
+		dashes: !!sig('Dashes_', false),
+		jitter: !!sig('Jitter_', false),
+		linked: !!sig('Link', false),
+		gridsOn: !!sig('Grids_', false)
+	};
+	var yPlotted = ['None', 'Count', 'Sum'].indexOf(sig('Y_Axis', 'None')) < 0;
+	var xPlotted = ['None', 'Count', 'Sum'].indexOf(sig('X_Axis', 'None')) < 0;
+	ctx.xIsCol = xPlotted;
+	ctx.yIsCol = yPlotted;
+	ctx.pureHist = plain && !ctx.xCat && xPlotted && !yPlotted;
+	ctx.margHist = ctx.scatter && !!sig('Histogram_', false);
+	ctx.hist = ctx.pureHist || ctx.margHist;
+	ctx.faceted = ctx.facetRows || ctx.facetCols;
+	// Color_By numeric → continuous color scale (Cord is true for categorical)
+	ctx.colorNumeric = ctx.colored && !sig('Cord', false);
+	ctx.legend = (ctx.colored || ctx.stroked || ctx.filtered) && !corr;
+	// grid-eligible even while the heat map toggle is off, so Map_XY_Cat_
+	// stays reachable to turn the grid back on
+	ctx.gridEligible = plain && ctx.xCat && ctx.yCat && yPlotted;
+	ctx.anyChart = ctx.scatter || ctx.pureHist || ctx.box || ctx.hzbox || ctx.stacked || ctx.grid;
+	return ctx;
+}
+
+// Control/section slot id → is it relevant for the current context?
+// Ids not listed are always shown.
+var CONTROL_RELEVANCE = {
+	// Charts: variables
+	'Facet_Rows_By':     function(c) { return !c.corr && !c.grid; },   // GRIDS only facets by columns
+	'Facet_Cols_By':     function(c) { return !c.corr && !c.hzbox; },  // HZBOXES only facets by rows
+	'Color_By':          function(c) { return !c.corr; },
+	'Size_By':           function(c) { return c.scatter || c.grid; },
+	'Stats_':            function(c) { return c.scatter || c.box || c.hzbox; },
+	// Charts: per-graph-type sections
+	'Stacked_Options':   function(c) { return c.stacked; },
+	'Grid_Options':      function(c) { return c.gridEligible; },
+	'Grid_Spacing':      function(c) { return c.grid; },
+	'Grid_Radius':       function(c) { return c.grid; },
+	'Violin_Options':    function(c) { return c.box || c.hzbox; },
+	'Scatter_Options':   function(c) { return c.scatter; },
+	'Hist_Options':      function(c) { return c.hist || c.qq; },
+	'Histogram_Ratio':   function(c) { return c.margHist; },
+	'ECDF_':             function(c) { return c.pureHist; },
+	// Search: the highlight marks only exist on scatter plots
+	'Search_Options':    function(c) { return c.scatter; },
+	// Interact
+	'PanZoom_Options':   function(c) { return !c.grid; },
+	'Interactive_':      function(c) { return c.scatter || c.hist; },
+	'cc_reset_zoom':     function(c) { return c.scatter || c.hist; },
+	'Brush_Options':     function(c) { return c.scatter; },
+	// Axis
+	'SortX_By':          function(c) { return c.stacked; },
+	'LogY_':             function(c) { return c.scatter || c.box; },
+	'LogX_':             function(c) { return c.scatter || c.hist || c.hzbox; },
+	'Reverse_X':         function(c) { return c.scatter || c.hist || c.hzbox || c.grid || c.corr; },
+	'Reverse_Y':         function(c) { return c.scatter || c.box || c.grid || c.corr; },
+	'Limit_Options':     function(c) { return c.scatter || c.hist || (c.box && c.facetRows) || c.stacked; },
+	'Uniform_YLim':      function(c) { return c.box && c.facetRows; },
+	'Uniform_XLim':      function(c) { return c.stacked; },
+	'Y_Upper_Lim':       function(c) { return c.scatter; },
+	'Y_Lower_Lim':       function(c) { return c.scatter; },
+	'X_Upper_Lim':       function(c) { return c.scatter || c.hist; },
+	'X_Lower_Lim':       function(c) { return c.scatter || c.hist; },
+	// Marks
+	'Point_Options':     function(c) { return c.scatter || c.box || c.hzbox || c.grid || c.stacked; },
+	'Jitter_':           function(c) { return c.box || c.hzbox || c.grid; },
+	'Stroke_By':         function(c) { return c.scatter || c.box || c.stacked; },
+	'Stroke_Width':      function(c) { return (c.scatter || c.box || c.stacked) && c.stroked; },
+	'Jitter_Radius':     function(c) { return (c.box || c.grid) && c.jitter; },
+	'Dash_Height':       function(c) { return (c.box || c.hzbox) && c.dashes; },
+	'Dash_Width':        function(c) { return (c.box || c.hzbox) && c.dashes; },
+	'Dash_Radius':       function(c) { return (c.box || c.hzbox) && c.dashes; },
+	'Violin_Width':      function(c) { return (c.box || c.hzbox) && c.violin; },
+	'Max_Point':         function(c) { return c.scatter || c.box || c.hzbox || c.grid; },
+	'Min_Point':         function(c) { return (c.scatter || c.grid) && c.sized; },
+	'Shape':             function(c) { return c.scatter || c.box || c.hzbox; },
+	'Reverse_Size':      function(c) { return (c.scatter || c.grid) && c.sized; },
+	'Contour_Options':   function(c) { return c.scatter && c.contours; },
+	'Link_Options':      function(c) { return c.scatter; },
+	'LinkField':         function(c) { return c.linked; },
+	'LinkURL':           function(c) { return c.linked; },
+	'LinkTail':          function(c) { return c.linked; },
+	// Fonts
+	'Show_Titles':       function(c) { return c.legend; },
+	'Y_Axis_Angle':      function(c) { return c.hzbox; },
+	'Legend_Font':       function(c) { return c.legend; },
+	'TickCount':         function(c) { return !c.grid && !c.corr; },
+	// Filtering
+	'Datatype_Options':  function(c) { return c.xIsCol || c.yIsCol || c.colored; },
+	'Datatype_X':        function(c) { return c.xIsCol; },
+	'Datatype_Y':        function(c) { return c.yIsCol; },
+	'Datatype_Color':    function(c) { return c.colored; },
+	'filter_min':        function(c) { return c.valueFilter; },
+	'filter_max':        function(c) { return c.valueFilter; },
+	// Coloring
+	'Background_Color':  function(c) { return c.anyChart && !c.grid; },
+	'Reverse_Color':     function(c) { return c.colored || c.grid || c.corr; },
+	'Opacity_Options':   function(c) { return c.anyChart || c.corr; },
+	'Opacity_By':        function(c) { return c.scatter; },
+	'Grid_Opacity':      function(c) { return c.gridsOn || c.grid || c.corr; },
+	'Boxplot_Opacity':   function(c) { return (c.box || c.hzbox) && c.boxOn; },
+	'Violin_Opacity':    function(c) { return (c.box || c.hzbox) && c.violin; },
+	'Contour_Opacity':   function(c) { return c.scatter && c.contours; },
+	'Cnt_St_Opacity':    function(c) { return c.scatter && c.contours; },
+	'Dash_Opacity':      function(c) { return c.box && c.dashes; },
+	'ColorScale_Options': function(c) { return c.colorNumeric; },
+	// Margins
+	'Facet_Options':     function(c) { return c.faceted; },
+	'Row_Height':        function(c) { return c.facetRows; },
+	'Legend_Options':    function(c) { return c.legend; }
+};
+
+// A tab hides only when nothing on it can affect the visible graph.
+var TAB_RELEVANCE = {
+	'Search_tablinks': function(c) { return c.scatter; },
+	'Marks_tablinks':  function(c) { return c.scatter || c.box || c.hzbox || c.grid || c.stacked; }
+};
+
+// Signals whose changes can flip any of the predicates above
+var RELEVANCE_TRIGGERS = ['show_scatter_graph', 'show_hist_graph', 'show_box_graphs',
+	'show_hzbox_graphs', 'show_stacked_graphs', 'show_grid_graphs', 'Show_Covariance',
+	'QQNorm_', 'Xord', 'Yord', 'X_Axis', 'Y_Axis', 'Color_By', 'Cord', 'Size_By',
+	'Stroke_By', 'Facet_Rows_By', 'Facet_Cols_By', 'Filter_Out_From', 'Filter_Additional',
+	'Filter_By_Value', 'Contours_', 'Violin_', 'Boxplot_', 'Dashes_', 'Jitter_',
+	'Link', 'Grids_', 'Histogram_'];
+
+function updateOptionRelevance(element, view) {
+	var ctx = optionContext(view);
+	Object.keys(CONTROL_RELEVANCE).forEach(function(id) {
+		var node = document.getElementById(id + element);
+		if (node) { node.style.display = CONTROL_RELEVANCE[id](ctx) ? 'block' : 'none'; }
 	});
+	var activeHidden = false;
+	Object.keys(TAB_RELEVANCE).forEach(function(id) {
+		var btn = document.getElementById(id + element);
+		if (!btn) { return; }
+		var show = TAB_RELEVANCE[id](ctx);
+		btn.style.display = show ? 'block' : 'none';
+		if (!show && btn.className.indexOf(' active') >= 0) { activeHidden = true; }
+	});
+	// The open tab lost every option: fall back to the chart-variables tab.
+	// Deferred, because opening a tab resizes the chart with a synchronous
+	// view.run(), which is illegal inside the signal listener that got us here.
+	if (activeHidden) {
+		setTimeout(function() {
+			var charts = document.getElementById('Charts_tablinks' + element);
+			if (charts) { charts.click(); }
+		}, 0);
+	}
+}
+
+function wireOptionRelevance(element, view) {
+	RELEVANCE_TRIGGERS.forEach(function(sig) {
+		try {
+			view.addSignalListener(sig, function() { updateOptionRelevance(element, view); });
+		} catch (e) { /* signal absent in this spec */ }
+	});
+	updateOptionRelevance(element, view);
 }
 
 function corrColTypes(df, cols) {
@@ -3114,12 +3297,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 					return true;
 				}
 			});
-			initAndListen('show_scatter_graph', 'Scatter_Options' + element, result,element);
-			initAndListen('show_hist_graph', 'Hist_Options' + element, result,element);
-			initAndListen('show_hzbox_graphs', 'Violin_Options' + element, result,element);
-			initAndListen('show_grid_graphs', 'Grid_Options' + element, result,element);
-			initAndListen('show_stacked_graphs', 'Stacked_Options' + element, result,element);
-			initAndListen('show_box_graphs', 'Violin_Options' + element, result,element);
+			wireOptionRelevance(element, result.view);
 			var checkbox = document.querySelector('#Interactive_'+element + '> div > label > input[type=checkbox]');
 			var DownloadCSVNode=document.querySelector("#view_crossex"+element+" > details > div > a:nth-child(1)");
 			DownloadCSVNode.addEventListener('click', function(e) {
@@ -3130,18 +3308,15 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 			var cross_checkbox=document.querySelector("#Show_Covariance"+element + "> div > label > input[type=checkbox]");
 			cross_checkbox.addEventListener('change', (event) => {
 				if (event.currentTarget.checked ) {
-					document.getElementById("Violin_Options"+element).style['display']='none';
 					crossexloader(element,true);
 					corrmatrixAsync(spec.data[dataMap["mydata"]].values, spec.data[dataMap["col_names"]].values, function(corr) {
 						result.view.change('covariance', vega.changeset().insert(corr).remove(function () {return true})).runAsync().then(function() { crossexloader(element,false); });
 					});
-				} else {
-					document.getElementById("Violin_Options"+element).style['display']='block';
 				}
 				myview = result.view;
 			});
 			checkbox.addEventListener('change', (event) => {
-				var new_signals_ar=["X_Axis","Search_By","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","SortX_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","LogY_","Jitter_" ,"Weight_Contour","Tips_","Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point","Min_Point","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Include_Only","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Manual_Color","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Plot_Padding","Title_Height","X_Axis_Height","Row_Header_Width","Row_Height","Max_Facets","Legend_Height","Legend_Cols","ContourCounts","resolve","ContourLevels","CellSize_","Line_","ECDF_","QQNorm_"];
+				var new_signals_ar=["X_Axis","Search_By","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","SortX_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","LogY_","Jitter_" ,"Weight_Contour","Tips_","Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point","Min_Point","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Plot_Padding","Title_Height","X_Axis_Height","Row_Header_Width","Row_Height","Max_Facets","Legend_Height","Legend_Cols","PlotTitle_Height","graph_title","Show_Titles","ContourCounts","resolve","ContourLevels","CellSize_","Line_","ECDF_","QQNorm_"];
 				for (var i = 0; i < new_signals_ar.length; i++) {
 					if (signalMap[new_signals_ar[i]] === undefined) { continue; }
 					try {

@@ -412,45 +412,31 @@ All of the above yields via `requestAnimationFrame` rather than a Web Worker, so
 
 ## Control Panel Reference
 
-### Search Tab
-Search and highlight data points by text matching against any column.
-
-### Interact Tab
-- **Pan/zoom** (drag + scroll) and **tooltips** toggles
-- **Reset Zoom** clears any manual axis limits
-- **Brush mode** — on an unfaceted, linear-axis scatter plot, drag a box around points, then **Keep** or **Exclude** them (replacing the working dataset, with one-click *Restore Original Data*), download just the selection as **CSV**, or **Zoom** the axes to the box
-- **Saved Views** — name the current full settings state (axes, colors, filters, everything) and flip back to it with one click; views persist in the browser
+Tabs on the left rail are grouped: chart building, then appearance (axis, marks, colors, titles, layout), then data work (highlight, filter, interact), then analysis (summary, transforms), then alternate views (table, overview, 3D, pivot). **Tabs and individual controls appear only when they apply to the visible chart** — a scatter plot shows contour and opacity-encoding options but no violin controls; a histogram hides the Marks tab entirely; the correlation matrix pares the panel down to the essentials. Hidden controls keep their values and reappear the moment they become relevant.
 
 ### Charts Tab
-Set X and Y axis columns. The **Stats** toggle overlays fitted r²/slope on scatter plots and n/μ/σ per category — and, on box/violin charts, a badge with the group-difference test: **Welch t-test** for two groups, **one-way ANOVA** for three or more, computed over the full dataset. Shows chart-type-specific sub-panels:
-- **Scatter options** -- Contour density overlay, histogram margins, regression
-- **Violin/Box options** -- Box plot, violin, dashes, bar plot toggles
-- **Grid options** -- Grid spacing, radius, categorical mapping
-- **Stacked options** -- Sum aggregation column
+Set X and Y axis columns, facets, color, and size. The **Stat Annotations** toggle overlays fitted r²/slope on scatter plots and n/μ/σ per category — and, on box/violin charts, a badge with the group-difference test: **Welch t-test** for two groups, **one-way ANOVA** for three or more, computed over the full dataset. Chart-type-specific sections appear underneath:
+- **Scatter** -- Density contours, regression line, points, mean line, marginal histogram
+- **Box/Violin** -- Box plot, violin, outliers, value dashes, bar overlay toggles
+- **Grid** -- Heat map grid toggle (two categorical axes), fixed cell size, cell corner radius
+- **Stacked** -- Sum aggregation column
+- **Distribution** -- Histogram bins, ECDF overlay, normal QQ plot (histogram ratio when a marginal histogram is on)
 
 ### Axis Tab
-- **Log scale** for X and/or Y
+- **Log scale** for X and/or Y (numeric axes)
 - **Reverse** axis direction
-- **Sort** X categories by another column
-- **Manual limits** -- Set min/max for X and Y axes
-- **Uniform limits** -- Share axis ranges across facets
+- **Sort X By** another column (stacked bars)
+- **Manual limits** -- Set min/max for X and Y axes (pan/zoomable charts)
+- **Shared limits** -- Share axis ranges across facets
 
 ### Marks Tab
-- **Points** -- Show/hide data points
-- **Regression** -- Overlay fitted line
-- **Outliers** -- Highlight statistical outliers
 - **Jitter** -- Add random offset to overlapping points (configurable radius)
-- **Point size** -- Min/max point size range
-- **Shape** -- Point symbol (circle, square, diamond, triangles, …)
-- **Stroke** -- Map a column to point outline color
-- **Tooltips** -- Enable hover info
-- **Contour levels** -- Number and weighting of density contours
-- **Dash/violin dimensions** -- Height, width, radius of marks
-
-### Fonts Tab
-- Font sizes for axis titles, tick labels, chart title, and legend
-- Label rotation angles for X and Y axes
-- Tick count control
+- **Outline** -- Map a column to point outline color, with width control
+- **Point size** -- Max size always; min size and reverse when a Size By column is set
+- **Point shape** -- circle, square, diamond, triangles, …
+- **Contours** -- Resolve, bandwidth, levels, weighting, and cell size (when density contours are on)
+- **Link Points** -- Make scatter points clickable links built from a column value
+- **Dash/violin dimensions** -- Thickness, width, radius of marks (when those marks are on)
 
 ### Coloring Tab
 - **40+ color palettes** including:
@@ -458,24 +444,38 @@ Set X and Y axis columns. The **Stats** toggle overlays fitted r²/slope on scat
   - Sequential: `viridis`, `magma`, `plasma`, `inferno`, `turbo`, `cividis`, `blues`, `reds`, `oranges`
   - Diverging: `spectral`, `blueorange`, `redblue`, `purplegreen`, `redyellowblue`
 - **Reverse** color direction
-- **Manual colors** -- Pick min/max colors with a color picker
 - **Background color** control
-- **Per-element opacity** -- Independent opacity for points, boxes, violins, contours, grid cells, and dashes
+- **Per-element opacity** -- Independent opacity for whichever marks are on screen: points, boxes, violins, contours, grid cells, dashes
+- **Color scale** -- Pin the numeric min/max values of a continuous color scale
 
-### Filtering Tab
-- **Exclude values** from a specific column
-- **Additional filter** on a second column
-- **Numeric range filter** -- Set min/max on any numeric column
-- **Include only** -- Text-match to keep specific values
-- **Data type overrides** -- Force a column to be treated as numeric or categorical
-- **Render sample** -- Cap how many rows are drawn (uniform sample) for large datasets; a banner shows when active
+### Titles & Fonts Tab
+- **Title prefix** text and a **legend titles** toggle
+- Font sizes for axis titles, tick labels, chart title, and legend
+- Label rotation angles for X and Y axes
+- Tick count control
 
 ### Margins Tab
 - Plot width, height, and padding
-- Title, axis label, and legend area sizing
-- Row/column facet header dimensions
-- Maximum number of facets to display
-- Legend column count
+- Title, axis label, and header area sizing
+- **Facets** (when faceting) -- row height, facet title height, and the maximum number of facets to draw
+- **Legends** (when a legend is shown) -- legend height and column count
+
+### Search Tab
+Highlight the scatter points whose column matches a value. Appears for scatter plots.
+
+### Filtering Tab
+- **Exclude values** from a specific column (click legend entries to toggle)
+- **Also filter by** a second column
+- **Exclude value** -- Drop rows where any mapped column equals a value
+- **Value range filter** -- Set min/max on any numeric column
+- **Data type overrides** -- Force a mapped column to be treated as numeric or categorical
+- **Render sample** -- Cap how many rows are drawn (uniform sample) for large datasets; a banner shows when active
+
+### Interact Tab
+- **Pan & zoom** (drag + scroll) and **tooltips** toggles
+- **Reset Zoom** clears any manual axis limits
+- **Brush mode** — on an unfaceted, linear-axis scatter plot, drag a box around points, then **Keep** or **Exclude** them (replacing the working dataset, with one-click *Restore Original Data*), download just the selection as **CSV**, or **Zoom** the axes to the box
+- **Saved Views** — name the current full settings state (axes, colors, filters, everything) and flip back to it with one click; views persist in the browser
 
 ### Summary Tab
 Per-column statistics for the full dataset: type, valid/missing/distinct counts, min, median, mean, standard deviation, max, and the most frequent value for categorical columns. Computed on first open. Click any column header to sort the table by that statistic (click again to reverse), and use **Download CSV** to save the summary itself.
