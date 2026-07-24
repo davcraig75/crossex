@@ -434,6 +434,7 @@ Set X and Y axis columns, facets, color, and size. The **Stat Annotations** togg
 - **Outline** -- Map a column to point outline color, with width control
 - **Point size** -- Max size always; min size and reverse when a Size By column is set
 - **Point shape** -- circle, square, diamond, triangles, …
+- **Opacity** -- Mark opacity for points/marks, plus an Opacity By column encoding, right beside size and shape
 - **Contours** -- Resolve, bandwidth, levels, weighting, and cell size (when density contours are on)
 - **Link Points** -- Make scatter points clickable links built from a column value
 - **Dash/violin dimensions** -- Thickness, width, radius of marks (when those marks are on)
@@ -445,7 +446,7 @@ Set X and Y axis columns, facets, color, and size. The **Stat Annotations** togg
   - Diverging: `spectral`, `blueorange`, `redblue`, `purplegreen`, `redyellowblue`
 - **Reverse** color direction
 - **Background color** control
-- **Per-element opacity** -- Independent opacity for whichever marks are on screen: points, boxes, violins, contours, grid cells, dashes
+- **Per-element opacity** -- Independent opacity for the non-point marks on screen: boxes, violins, contours, grid cells, dashes (point/mark opacity lives on the Marks tab)
 - **Color scale** -- Pin the numeric min/max values of a continuous color scale
 
 ### Titles & Fonts Tab

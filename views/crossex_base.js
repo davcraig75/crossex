@@ -585,6 +585,11 @@ var CONTROL_RELEVANCE = {
 	'Min_Point':         function(c) { return (c.scatter || c.grid) && c.sized; },
 	'Shape':             function(c) { return c.scatter || c.box || c.hzbox; },
 	'Reverse_Size':      function(c) { return (c.scatter || c.grid) && c.sized; },
+	// Opacity is a marker property: base Mark Opacity (scatter + box marks read
+	// Opacity_) and Opacity By (scatter only) sit on the Marks tab beside size/shape
+	'Mark_Opacity':      function(c) { return c.scatter || c.box || c.hzbox; },
+	'Opacity_':          function(c) { return c.scatter || c.box || c.hzbox; },
+	'Opacity_By':        function(c) { return c.scatter; },
 	'Contour_Options':   function(c) { return c.scatter && c.contours; },
 	'Link_Options':      function(c) { return c.scatter; },
 	'LinkField':         function(c) { return c.linked; },
@@ -605,8 +610,10 @@ var CONTROL_RELEVANCE = {
 	// Coloring
 	'Background_Color':  function(c) { return c.anyChart && !c.grid; },
 	'Reverse_Color':     function(c) { return c.colored || c.grid || c.corr; },
-	'Opacity_Options':   function(c) { return c.anyChart || c.corr; },
-	'Opacity_By':        function(c) { return c.scatter; },
+	// base Mark Opacity + Opacity By now live with the marker controls; this
+	// Coloring section only carries the per-chart-type opacities, so hide it
+	// (and its header) unless one of those actually applies
+	'Opacity_Options':   function(c) { return c.box || c.hzbox || c.grid || c.corr || c.gridsOn || (c.scatter && c.contours); },
 	'Grid_Opacity':      function(c) { return c.gridsOn || c.grid || c.corr; },
 	'Boxplot_Opacity':   function(c) { return (c.box || c.hzbox) && c.boxOn; },
 	'Violin_Opacity':    function(c) { return (c.box || c.hzbox) && c.violin; },
