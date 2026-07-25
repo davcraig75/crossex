@@ -1804,6 +1804,7 @@ function wireOverviewActions(element) {
 // undo memory predictable, while the lightweight provenance log remains full.
 var _dataHistory = {};
 var _analysisOperations = {};
+var _applySeq = {};   // element -> render token; supersedes stale deferred renders
 var ANALYSIS_HISTORY_MAX = 20;
 
 function cloneAnalysisOptions(options) {
@@ -1878,8 +1879,14 @@ function applyAnalysisState(element, state, reopenTab) {
 		window.ccAnalysisDatasetChanged(element, state.data, state.label);
 	}
 	_reopenTab[element] = reopenTab || 'Interact_tablinks';
+	// Each application supersedes any still-pending one. Without this, an earlier
+	// operation's deferred render (e.g. a group apply) can fire after a newer one
+	// (e.g. a project import) reset _dataHistory, rebuilding the timeline against
+	// stale data and wiping the newer provenance (the imported entry).
+	var token = (_applySeq[element] = (_applySeq[element] || 0) + 1);
 	crossexloader(element, true);
 	delay(30).then(function() {
+		if (_applySeq[element] !== token) { return; }
 		crossex(element, state.data, cloneAnalysisOptions(state.options), opts.widthid);
 		_transforms[element] = cloneTransformDefs(state.transforms);
 	});
