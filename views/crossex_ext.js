@@ -358,7 +358,17 @@ document.getElementById("large_demo").onclick = function fun() {
 
 document.getElementById("clear_cookies").onclick = function fun() {
 	clearAllCookies();
-	ccToast('Saved settings cleared');
+	// Redraw every live widget with pristine defaults. Seeding an empty
+	// signal state keeps the reset from re-triggering the first-visit
+	// overview overlay — the user asked for the default chart, so show it.
+	Object.keys(_crossexOpts).forEach(function(el) {
+		if (!_fullData[el]) { return; }
+		saveSignalState('vegaSignals_' + el, {});
+		var opts = _crossexOpts[el];
+		crossexloader(el, true);
+		delay(30).then(function() { crossex(el, _fullData[el], opts.options, opts.widthid); });
+	});
+	ccToast('Saved settings cleared — chart reset to defaults');
 };
 
 // ---- Small toast for button feedback ----------------------------------------

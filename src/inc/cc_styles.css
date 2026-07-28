@@ -1481,3 +1481,15 @@ html.cc-dark .cc_editpop .cc_ep_btns button {
 html.cc-dark .cc_editpop .cc_ep_btns button:hover {
 	background: #383c48;
 }
+
+/* ---- export menu sits above the chart, out of snapshot range ---- */
+.cc .vega-embed {
+	padding-top: 34px !important;
+}
+.cc .vega-embed > details {
+	top: 4px;
+	right: 4px;
+}
+.cc .vega-embed summary {
+	top: 0 !important;
+}

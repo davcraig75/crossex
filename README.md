@@ -331,7 +331,8 @@ Toggle **Interactive mode** (checkbox in the control panel) to enable:
 
 Point at the chart itself to restyle it — no panel digging required:
 
-- **Drag an axis title** to reposition it; **drag the legend** to move the whole legend block
+- **Drag the chart title, an axis title, or the legend** to reposition them
+- **Double-click the chart title** to edit the title and subtitle text and the title area height
 - **Double-click an axis** (its title or labels) to open an editor for the title text, min/max limits, tick count, label angle, font size, and axis area size
 - **Double-click the legend** to edit colors: with a categorical mapping every category gets a color picker (or paste a hex code); with a numeric mapping choose a start and end color for a custom gradient
 - **Double-click empty chart space** to add a free-text label; drag a label to move it, double-click it to edit or delete it
@@ -350,7 +351,7 @@ Click the export icon (top-right of the chart) to:
 
 All settings (axis selections, filters, palettes, etc.) are saved to browser localStorage and restored automatically on your next visit. Saved column selections that don't exist in the currently loaded dataset are ignored, so switching datasets always produces a valid chart.
 
-Click **Clear Settings** to reset everything to defaults.
+Click **Clear Settings** to reset everything to defaults — the chart redraws immediately with the widget's default configuration.
 
 ---
 
@@ -424,49 +425,39 @@ All of the above yields via `requestAnimationFrame` rather than a Web Worker, so
 
 ## Control Panel Reference
 
-Tabs on the left rail are grouped: chart building, then appearance (axis, marks, colors, titles, layout), then data work (highlight, filter, interact), then analysis (summary, transforms), then alternate views (table, overview, 3D, pivot). **Tabs and individual controls appear only when they apply to the visible chart** — a scatter plot shows contour and opacity-encoding options but no violin controls; a histogram hides the Marks tab entirely; the correlation matrix pares the panel down to the essentials. Hidden controls keep their values and reappear the moment they become relevant.
+Tabs on the left rail are grouped: chart building, then appearance (axis & text, marks & colors, layout), then data work (filter & search, interact), then analysis (summary, transforms), then alternate views (table, overview, 3D, pivot). **Individual controls appear only when they apply to the visible chart** — a scatter plot shows contour and opacity-encoding options but no violin controls; the correlation matrix pares the panel down to the essentials. Hidden controls keep their values and reappear the moment they become relevant.
 
 ### Charts Tab
 Set X and Y axis columns, facets, color, size, and outline encodings. The **Stat Annotations** toggle overlays fitted r²/slope on scatter plots and n/μ/σ per category — and, on box/violin charts, a badge with the group-difference test: **Welch t-test** for two groups, **one-way ANOVA** for three or more, computed over the full dataset. Chart-type-specific sections appear underneath:
-- **Scatter** -- Density contours, regression line, points, mean line, marginal histogram
-- **Box/Violin** -- Box plot, violin, outliers, value dashes, value points (a centered, shape-aware strip of the raw observations — no jitter needed), bar overlay toggles
+- **Scatter** -- Density contours, regression line, points, mean line, marginal histograms on X and Y
+- **Box/Violin** -- Box plot, violin, outliers, value dashes, value points (a centered, shape-aware strip of the raw observations — no jitter needed), bar overlay toggles, violin bandwidth (0 = auto) and resolution for tuning how much detail the density shows
 - **Grid** -- Heat map grid toggle (two categorical axes), fixed cell size, cell corner radius
 - **Stacked** -- Sum aggregation column
 - **Distribution** -- Histogram bins, ECDF overlay, normal QQ plot (histogram ratio when a marginal histogram is on)
 
-### Axis Tab
+### Axis & Text Tab
 - **Log scale** for X and/or Y (numeric axes)
 - **Reverse** axis direction
 - **Sort X By** another column (stacked bars)
 - **Manual limits** -- Set min/max for the value axes (scatter, histogram, and box charts)
-- **Shared limits** -- Share axis ranges across facets
+- **Shared limits** -- Uniform axis ranges across facet rows (box and scatter), or let each row scale to its own data
+- **Title prefix** text and a **legend titles** toggle
+- Font sizes for axis titles, tick labels, chart title, and legend; label rotation angles; tick count
 
-### Marks Tab
+### Marks & Colors Tab
 - **Jitter** -- Add random offset to overlapping points (configurable radius, both box orientations and heat maps)
-- **Outline width** -- Width for the Outline By encoding (the column mapping itself sits on the Charts tab beside Color By)
-- **Point size** -- Max Point Size sets the size of every point (scatter and jittered box points); min size and reverse appear when a Size By column is set
-- **Point shape** -- circle, square, diamond, triangles, … (scatter and jittered points)
+- **Outline width** -- Width for the Outline By encoding, applied to scatter points and box value points (the column mapping sits on the Charts tab beside Color By)
+- **Point size** -- Max Point Size sets the size of every point (scatter and box value points); min size and reverse appear when a Size By column is set
+- **Point shape** -- circle, square, diamond, triangles, … (scatter and box value points)
 - **Opacity** -- Mark opacity for points, stacked bars, and encoded heat cells, plus an Opacity By column encoding, right beside size and shape
 - **Distribution width** -- Width of each category's violin/box/bar/dash track on box charts
+- **Median bar thickness** -- The white median bar on box plots
 - **Contours** -- Resolve, bandwidth, levels, weighting, and cell size (when density contours are on)
 - **Link Points** -- Make scatter points clickable links built from a column value
 - **Dash dimensions** -- Thickness, width, radius of value dashes (when dashes are on)
-
-### Coloring Tab
-- **40+ color palettes** including:
-  - Categorical: `category10`, `category20`, `tableau10`, `tableau20`, `accent`, `paired`, `pastel1`, `dark2`
-  - Sequential: `viridis`, `magma`, `plasma`, `inferno`, `turbo`, `cividis`, `blues`, `reds`, `oranges`
-  - Diverging: `spectral`, `blueorange`, `redblue`, `purplegreen`, `redyellowblue`
-- **Reverse** color direction
-- **Background color** control
-- **Per-element opacity** -- Independent opacity for the non-point marks on screen: boxes, violins, contours, grid cells, dashes (point/mark opacity lives on the Marks tab)
+- **40+ color palettes** (categorical, sequential, diverging), **reverse** color direction, **background color**
+- **Per-element opacity** -- Independent opacity for boxes, violins, contours, grid cells, dashes
 - **Color scale** -- Pin the numeric min/max values of a continuous color scale
-
-### Titles & Fonts Tab
-- **Title prefix** text and a **legend titles** toggle
-- Font sizes for axis titles, tick labels, chart title, and legend
-- Label rotation angles for X and Y axes
-- Tick count control
 
 ### Margins Tab
 - Plot width, height, and padding
@@ -474,10 +465,8 @@ Set X and Y axis columns, facets, color, size, and outline encodings. The **Stat
 - **Facets** (when faceting) -- row height, facet title height, and the maximum number of facets to draw
 - **Legends** (when a legend is shown) -- legend height and column count
 
-### Search Tab
-Highlight the scatter points whose column matches a value. Appears for scatter plots.
-
-### Filtering Tab
+### Filter & Search Tab
+- **Highlight** -- Emphasize the scatter points whose column matches a value
 - **Exclude values** from a specific column (click legend entries to toggle)
 - **Also filter by** a second column
 - **Exclude value** -- Drop rows where any mapped column equals a value

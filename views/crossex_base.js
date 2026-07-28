@@ -72,6 +72,25 @@ var INTERACTIVE_SIGNAL_HANDLERS = {
 
 var INTERACTIVE_SIGNAL_NAMES = Object.keys(INTERACTIVE_SIGNAL_HANDLERS);
 
+// Vega's heatmap transform crashes ("reading 'forEach'") when a signal reflow
+// reaches it before its mark items exist — which happens when density contours
+// are switched on inside already-created facet cells. That one error kills the
+// whole dataflow run, so contours never appear. Skip source-less pulses; the
+// data pulse that follows renders normally.
+(function hardenHeatmapTransform() {
+	try {
+		var proto = vega && vega.transforms && vega.transforms.heatmap && vega.transforms.heatmap.prototype;
+		if (!proto || proto._ccHardened) { return; }
+		proto._ccHardened = true;
+		var baseTransform = proto.transform;
+		proto.transform = function(_, pulse) {
+			try { pulse.materialize(pulse.SOURCE); } catch (e) { /* fall through */ }
+			if (!pulse.source) { return pulse.StopPropagation; }
+			return baseTransform.call(this, _, pulse);
+		};
+	} catch (e) { /* vega absent or internals moved — keep stock behavior */ }
+})();
+
 // Repair legacy spec details that otherwise leave visible controls inert.
 // Keeping this normalization here also protects embedded/R builds that load
 // the same Vega spec without requiring consumers to migrate saved projects.
@@ -126,13 +145,10 @@ function setInteractiveSignals(spec, signalMap, enable) {
 
 var TAB_CONFIG = [
 	{id: 'defaultOpen', panel: 'None'},
-	{id: 'Search_tablinks', panel: 'Search'},
 	{id: 'Interact_tablinks', panel: 'Interact'},
 	{id: 'Charts_tablinks', panel: 'Charts'},
 	{id: 'Axis_tablinks', panel: 'Axis'},
 	{id: 'Marks_tablinks', panel: 'Marks'},
-	{id: 'Fonts_tablinks', panel: 'Fonts'},
-	{id: 'Coloring_tablinks', panel: 'Coloring'},
 	{id: 'Filtering_tablinks', panel: 'Filtering'},
 	{id: 'Margins_tablinks', panel: 'Margins'},
 	{id: 'Summary_tablinks', panel: 'Summary'},
@@ -512,6 +528,7 @@ function optionContext(view) {
 		dashes: !!sig('Dashes_', false),
 		jitter: !!sig('Jitter_', false),
 		boxPoints: !!sig('Box_Points_', false),
+		yHist: !!sig('Histogram_Y_', false),
 		linked: !!sig('Link', false),
 		gridsOn: !!sig('Grids_', false)
 	};
@@ -549,10 +566,13 @@ var CONTROL_RELEVANCE = {
 	'Grid_Spacing':      function(c) { return c.grid; },
 	'Grid_Radius':       function(c) { return c.grid || c.corr; },
 	'Violin_Options':    function(c) { return c.box || c.hzbox; },
+	'Violin_Bandwidth':  function(c) { return (c.box || c.hzbox) && c.violin; },
+	'Violin_Steps':      function(c) { return (c.box || c.hzbox) && c.violin; },
 	'Scatter_Options':   function(c) { return c.scatter; },
 	'Hist_Options':      function(c) { return c.hist || c.qq; },
 	'Histogram_Ratio':   function(c) { return c.margHist; },
-	'Histogram_Bins_Size': function(c) { return c.hist; },   // QQ ignores binning
+	'Histogram_Bins_Size': function(c) { return c.hist || (c.scatter && c.yHist); },   // QQ ignores binning
+	'Histogram_Y_':      function(c) { return c.scatter; },
 	'ECDF_':             function(c) { return c.pureHist; },
 	// Search: the highlight marks only exist on scatter plots
 	'Search_Options':    function(c) { return c.scatter; },
@@ -568,7 +588,9 @@ var CONTROL_RELEVANCE = {
 	'Reverse_X':         function(c) { return c.scatter || c.hist || c.hzbox || c.grid || c.corr; },
 	'Reverse_Y':         function(c) { return c.scatter || c.box || c.grid || c.corr; },
 	'Limit_Options':     function(c) { return c.scatter || c.hist || c.box || c.hzbox || c.stacked; },
-	'Uniform_YLim':      function(c) { return c.box && c.facetRows; },
+	// per-row scatter domains only exist without column facets (a row axis
+	// can't describe cells whose extents differ per column)
+	'Uniform_YLim':      function(c) { return (c.box && c.facetRows) || (c.scatter && c.facetRows && !c.facetCols); },
 	'Uniform_XLim':      function(c) { return c.stacked; },
 	// the box value scales take their domain from ydom/xdom, so the manual
 	// limits apply to box plots (vertical: Y, horizontal: X) as well
@@ -579,8 +601,8 @@ var CONTROL_RELEVANCE = {
 	// Marks
 	'Point_Options':     function(c) { return c.scatter || c.box || c.hzbox || c.grid || c.stacked; },
 	'Jitter_':           function(c) { return c.box || c.hzbox || c.grid; },
-	'Stroke_By':         function(c) { return c.scatter || c.box || c.stacked; },
-	'Stroke_Width':      function(c) { return (c.scatter || c.box || c.stacked) && c.stroked; },
+	'Stroke_By':         function(c) { return c.scatter || c.box || c.hzbox || c.stacked; },
+	'Stroke_Width':      function(c) { return (c.scatter || c.box || c.hzbox || c.stacked) && c.stroked; },
 	'Jitter_Radius':     function(c) { return (c.box || c.hzbox || c.grid) && c.jitter; },
 	'Dash_Height':       function(c) { return (c.box || c.hzbox) && c.dashes; },
 	'Dash_Width':        function(c) { return (c.box || c.hzbox) && c.dashes; },
@@ -588,6 +610,7 @@ var CONTROL_RELEVANCE = {
 	// viol_width/viol_ht scale every distribution mark (violin, box, bars,
 	// dashes, jitter track), so the width control applies to all box charts
 	'Violin_Width':      function(c) { return c.box || c.hzbox; },
+	'Median_Thickness':  function(c) { return (c.box || c.hzbox) && c.boxOn; },
 	// the grid heat map sizes cells from its own bandwidth-based scale, so the
 	// point-size controls only apply where marks read Max_Point/size_scale
 	'Max_Point':         function(c) { return c.scatter || c.box || c.hzbox; },
@@ -638,10 +661,9 @@ var CONTROL_RELEVANCE = {
 };
 
 // A tab hides only when nothing on it can affect the visible graph.
-var TAB_RELEVANCE = {
-	'Search_tablinks': function(c) { return c.scatter; },
-	'Marks_tablinks':  function(c) { return c.scatter || c.box || c.hzbox || c.grid || c.stacked; }
-};
+// (The merged Marks & Colors and Filter & Search tabs always carry something
+// relevant, so no tabs currently hide — kept for future rules.)
+var TAB_RELEVANCE = {};
 
 // Signals whose changes can flip any of the predicates above
 var RELEVANCE_TRIGGERS = ['show_scatter_graph', 'show_hist_graph', 'show_box_graphs',
@@ -649,7 +671,7 @@ var RELEVANCE_TRIGGERS = ['show_scatter_graph', 'show_hist_graph', 'show_box_gra
 	'QQNorm_', 'Xord', 'Yord', 'X_Axis', 'Y_Axis', 'Color_By', 'Cord', 'Size_By',
 	'Stroke_By', 'Facet_Rows_By', 'Facet_Cols_By', 'Filter_Out_From', 'Filter_Additional',
 	'Filter_By_Value', 'Contours_', 'Violin_', 'Boxplot_', 'Dashes_', 'Jitter_',
-	'Box_Points_', 'Link', 'Grids_', 'Histogram_'];
+	'Box_Points_', 'Link', 'Grids_', 'Histogram_', 'Histogram_Y_'];
 
 function updateOptionRelevance(element, view) {
 	var ctx = optionContext(view);
@@ -842,7 +864,7 @@ function wireDirectEdit(element, view) {
 		var origin = view._origin || [0, 0];
 		var px = clientX - rect.left - origin[0];
 		var py = clientY - rect.top - origin[1];
-		var hitTitle = null, hitNote = null, hitLegend = null;
+		var hitTitle = null, hitNote = null, hitLegend = null, hitGTitle = null;
 		function contains(b, ox, oy, pad) {
 			return b && px >= ox + b.x1 - pad && px <= ox + b.x2 + pad &&
 				py >= oy + b.y1 - pad && py <= oy + b.y2 + pad;
@@ -852,6 +874,9 @@ function wireDirectEdit(element, view) {
 			mark.items.forEach(function(item) {
 				if (mark.role === 'axis-title' && orient && contains(item.bounds, ox, oy, 5)) {
 					hitTitle = {type: 'title', orient: orient};
+				}
+				if ((mark.role === 'title-text' || mark.role === 'title-subtitle') && contains(item.bounds, ox, oy, 5)) {
+					hitGTitle = {type: 'gtitle'};
 				}
 				if (mark.name === 'cc_note_mark' && contains(item.bounds, ox, oy, 4)) {
 					hitNote = {type: 'note', datum: item.datum};
@@ -867,7 +892,7 @@ function wireDirectEdit(element, view) {
 				}
 			});
 		})(view.scenegraph().root, 0, 0, null);
-		var hit = hitNote || hitTitle || hitLegend;
+		var hit = hitNote || hitTitle || hitGTitle || hitLegend;
 		if (hit && hit.type === 'title' && hit.orient !== 'left' && hit.orient !== 'bottom') { return null; }
 		return hit;
 	}
@@ -945,6 +970,28 @@ function wireDirectEdit(element, view) {
 			upd[p + '_Lower_Lim'] = '';
 			upd[p + '_Upper_Lim'] = '';
 			setSignals(upd);
+			closePop();
+		};
+	}
+
+	// ---- chart title dialog ------------------------------------------------
+	function openTitleDialog(event) {
+		var body =
+			field('Title', 'cc_ep_gt' + element, 'text', sig('CC_Title', ''), 'placeholder="computed from axes"') +
+			field('Subtitle', 'cc_ep_gs' + element, 'text', sig('CC_Subtitle', ''), 'placeholder="computed from settings"') +
+			field('Height', 'cc_ep_gh' + element, 'number', sig('Title_Height', 40), 'min="0" max="200"');
+		var pop = openPop(event, popShell('Chart Title', body,
+			'<button data-cc-apply>Apply</button><button data-cc-reset>Reset</button>'));
+		pop.querySelector('[data-cc-apply]').onclick = function() {
+			setSignals({
+				CC_Title: document.getElementById('cc_ep_gt' + element).value,
+				CC_Subtitle: document.getElementById('cc_ep_gs' + element).value,
+				Title_Height: +document.getElementById('cc_ep_gh' + element).value || sig('Title_Height', 40)
+			});
+			closePop();
+		};
+		pop.querySelector('[data-cc-reset]').onclick = function() {
+			setSignals({CC_Title: '', CC_Subtitle: '', CC_TI_DX: 0, CC_TI_DY: 0});
 			closePop();
 		};
 	}
@@ -1068,6 +1115,8 @@ function wireDirectEdit(element, view) {
 			setSignals({CC_YT_DX: drag.s0[0] - dy, CC_YT_DY: drag.s0[1] + dx});
 		} else if (drag.type === 'legend') {
 			setSignals({CC_LEG_DX: drag.s0[0] + dx, CC_LEG_DY: drag.s0[1] + dy});
+		} else if (drag.type === 'gtitle') {
+			setSignals({CC_TI_DX: drag.s0[0] + dx, CC_TI_DY: drag.s0[1] + dy});
 		} else if (drag.type === 'note') {
 			var notes = (sig('CC_Notes', []) || []).map(function(n) {
 				return n.id === drag.datum.id ? Object.assign({}, n, {x: drag.s0[0] + dx, y: drag.s0[1] + dy}) : n;
@@ -1095,6 +1144,7 @@ function wireDirectEdit(element, view) {
 			if (target.type === 'title' && target.orient === 'bottom') { s0 = [sig('CC_XT_DX', 0), sig('CC_XT_DY', 0)]; }
 			else if (target.type === 'title') { s0 = [sig('CC_YT_DX', 0), sig('CC_YT_DY', 0)]; }
 			else if (target.type === 'legend') { s0 = [sig('CC_LEG_DX', 0), sig('CC_LEG_DY', 0)]; }
+			else if (target.type === 'gtitle') { s0 = [sig('CC_TI_DX', 0), sig('CC_TI_DY', 0)]; }
 			else { s0 = [target.datum.x, target.datum.y]; }
 			drag = {type: target.type, orient: target.orient, datum: target.datum,
 				sx: event.clientX, sy: event.clientY, s0: s0, moved: false};
@@ -1107,6 +1157,7 @@ function wireDirectEdit(element, view) {
 			if (!target) { return; }
 			if (target.type === 'note') { openNoteDialog(event, target.datum); }
 			else if (target.type === 'title') { openAxisDialog(event, target.orient === 'left' ? 'y' : 'x'); }
+			else if (target.type === 'gtitle') { openTitleDialog(event); }
 			else { openLegendDialog(event); }
 		});
 	}
@@ -1123,6 +1174,7 @@ function wireDirectEdit(element, view) {
 		openAxisDialog: openAxisDialog,
 		openLegendDialog: openLegendDialog,
 		openNoteDialog: openNoteDialog,
+		openTitleDialog: openTitleDialog,
 		syncNotes: syncNotes,
 		applyCatColors: function(map) { ccReinit(element, {CC_Cat_Colors: map || {}}); },
 		applyContRange: function(pair) {
@@ -3510,18 +3562,26 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 	if (spec.signals[signalMap['Interactive_']]['value']==true) {
 		setInteractiveSignals(spec, signalMap, true);
 	}
+	// The Interactive_ toggle re-runs drawGraph on the same DOM, so every
+	// listener here must attach exactly once — duplicates make the overlay
+	// buttons (3D, Table, Overview, Pivot) toggle open+closed in one click.
+	function wireOnce(id, type, fn) {
+		var node = document.getElementById(id + element);
+		if (!node || node.getAttribute('data-cc-once-' + type)) { return; }
+		node.setAttribute('data-cc-once-' + type, '1');
+		node.addEventListener(type, fn);
+	}
 	// Set up tab listeners
 	TAB_CONFIG.forEach(function(tab) {
-		var el = document.getElementById(tab.id + element);
-		el.addEventListener('click', function(event) { ccOpenCity(event, tab.panel + element, element); });
+		wireOnce(tab.id, 'click', function(event) { ccOpenCity(event, tab.panel + element, element); });
 	});
 	// Summary table is computed on first open, not up front; it always
 	// summarizes the full dataset even when the chart renders a sample
-	document.getElementById('Summary_tablinks' + element).addEventListener('click', function() {
+	wireOnce('Summary_tablinks', 'click', function() {
 		renderSummary(element, _fullData[element] || spec.data[dataMap['mydata']].values, spec.data[dataMap['mycolumns']].values);
 	});
 	// Overview toggles a column-distribution overlay over the chart area
-	document.getElementById('Overview_btn' + element).addEventListener('click', function() {
+	wireOnce('Overview_btn', 'click', function() {
 		var ov = document.getElementById('cc_overview' + element);
 		if (ov.style.display === 'none') {
 			hideOverlays(element, 'cc_overview');
@@ -3532,7 +3592,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 		}
 	});
 	// 3D view toggles a WebGL unit-visualization overlay over the chart area
-	document.getElementById('ThreeD_btn' + element).addEventListener('click', function() {
+	wireOnce('ThreeD_btn', 'click', function() {
 		var td = document.getElementById('cc_3d' + element);
 		if (td.style.display === 'none' || !td.style.display) {
 			hideOverlays(element, 'cc_3d');
@@ -3542,7 +3602,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 		}
 	});
 	// Data table overlay: full rows, virtual scrolled
-	document.getElementById('Table_btn' + element).addEventListener('click', function() {
+	wireOnce('Table_btn', 'click', function() {
 		var t = document.getElementById('cc_table' + element);
 		if (t.style.display === 'none' || !t.style.display) {
 			openDataTable(element);
@@ -3550,16 +3610,16 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 			t.style.display = 'none';
 		}
 	});
-	document.getElementById('cc_dt_close' + element).addEventListener('click', function() {
+	wireOnce('cc_dt_close', 'click', function() {
 		document.getElementById('cc_table' + element).style.display = 'none';
 	});
-	document.getElementById('cc_3d_close' + element).addEventListener('click', function() {
+	wireOnce('cc_3d_close', 'click', function() {
 		document.getElementById('cc_3d' + element).style.display = 'none';
 		var tip = document.getElementById('cc_3d_tip');
 		if (tip) { tip.style.display = 'none'; }
 	});
 	// Pivot table overlay: drag-and-drop PivotTable.js over the full dataset
-	document.getElementById('Pivot_btn' + element).addEventListener('click', function() {
+	wireOnce('Pivot_btn', 'click', function() {
 		var p = document.getElementById('cc_pivot' + element);
 		if (p.style.display === 'none' || !p.style.display) {
 			openPivotView(element, _fullData[element] || spec.data[dataMap['mydata']].values);
@@ -3567,7 +3627,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 			p.style.display = 'none';
 		}
 	});
-	document.getElementById('cc_pivot_close' + element).addEventListener('click', function() {
+	wireOnce('cc_pivot_close', 'click', function() {
 		document.getElementById('cc_pivot' + element).style.display = 'none';
 	});
 	// Facet changes rebuild every cell's scaffolding inside Vega — on large
@@ -3793,7 +3853,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 				myview = result.view;
 			});
 			checkbox.addEventListener('change', (event) => {
-				var new_signals_ar=["X_Axis","Search_By","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","SortX_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","Box_Points_","LogY_","Jitter_" ,"Weight_Contour","Tips_","Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point","Min_Point","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Title_Height","X_Axis_Height","Row_Header_Width","Row_Height","Max_Facets","Legend_Height","Legend_Cols","PlotTitle_Height","graph_title","Show_Titles","ContourCounts","resolve","ContourLevels","CellSize_","Line_","ECDF_","QQNorm_","CC_X_Title","CC_Y_Title","CC_XT_DX","CC_XT_DY","CC_YT_DX","CC_YT_DY","CC_LEG_DX","CC_LEG_DY","CC_Cat_Colors","CC_Cont_Range","CC_Notes"];
+				var new_signals_ar=["X_Axis","Search_By","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","SortX_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","Box_Points_","Histogram_Y_","Violin_Bandwidth","steps","Median_Thickness","LogY_","Jitter_" ,"Weight_Contour","Tips_","Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point","Min_Point","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Title_Height","X_Axis_Height","Row_Header_Width","Row_Height","Max_Facets","Legend_Height","Legend_Cols","PlotTitle_Height","graph_title","Show_Titles","ContourCounts","resolve","ContourLevels","CellSize_","Line_","ECDF_","QQNorm_","CC_X_Title","CC_Y_Title","CC_XT_DX","CC_XT_DY","CC_YT_DX","CC_YT_DY","CC_LEG_DX","CC_LEG_DY","CC_Cat_Colors","CC_Cont_Range","CC_Notes","CC_Title","CC_Subtitle","CC_TI_DX","CC_TI_DY"];
 				for (var i = 0; i < new_signals_ar.length; i++) {
 					if (signalMap[new_signals_ar[i]] === undefined) { continue; }
 					try {
