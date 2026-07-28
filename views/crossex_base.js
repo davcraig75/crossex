@@ -511,6 +511,7 @@ function optionContext(view) {
 		boxOn: !!sig('Boxplot_', false),
 		dashes: !!sig('Dashes_', false),
 		jitter: !!sig('Jitter_', false),
+		boxPoints: !!sig('Box_Points_', false),
 		linked: !!sig('Link', false),
 		gridsOn: !!sig('Grids_', false)
 	};
@@ -591,13 +592,13 @@ var CONTROL_RELEVANCE = {
 	// point-size controls only apply where marks read Max_Point/size_scale
 	'Max_Point':         function(c) { return c.scatter || c.box || c.hzbox; },
 	'Min_Point':         function(c) { return c.scatter && c.sized; },
-	'Shape':             function(c) { return c.scatter || ((c.box || c.hzbox) && c.jitter); },
+	'Shape':             function(c) { return c.scatter || ((c.box || c.hzbox) && (c.jitter || c.boxPoints)); },
 	'Reverse_Size':      function(c) { return c.scatter && c.sized; },
-	// Opacity is a marker property: base Mark Opacity (points, jittered box
+	// Opacity is a marker property: base Mark Opacity (points, box value
 	// points, stacked bars, encoded grid cells) and Opacity By (scatter only)
 	// sit on the Marks tab beside size/shape
-	'Mark_Opacity':      function(c) { return c.scatter || c.stacked || ((c.box || c.hzbox) && c.jitter) || (c.grid && (c.colored || c.sized || c.jitter)); },
-	'Opacity_':          function(c) { return c.scatter || c.stacked || ((c.box || c.hzbox) && c.jitter) || (c.grid && (c.colored || c.sized || c.jitter)); },
+	'Mark_Opacity':      function(c) { return c.scatter || c.stacked || ((c.box || c.hzbox) && (c.jitter || c.boxPoints)) || (c.grid && (c.colored || c.sized || c.jitter)); },
+	'Opacity_':          function(c) { return c.scatter || c.stacked || ((c.box || c.hzbox) && (c.jitter || c.boxPoints)) || (c.grid && (c.colored || c.sized || c.jitter)); },
 	'Opacity_By':        function(c) { return c.scatter; },
 	'Contour_Options':   function(c) { return c.scatter && c.contours; },
 	'Link_Options':      function(c) { return c.scatter; },
@@ -648,7 +649,7 @@ var RELEVANCE_TRIGGERS = ['show_scatter_graph', 'show_hist_graph', 'show_box_gra
 	'QQNorm_', 'Xord', 'Yord', 'X_Axis', 'Y_Axis', 'Color_By', 'Cord', 'Size_By',
 	'Stroke_By', 'Facet_Rows_By', 'Facet_Cols_By', 'Filter_Out_From', 'Filter_Additional',
 	'Filter_By_Value', 'Contours_', 'Violin_', 'Boxplot_', 'Dashes_', 'Jitter_',
-	'Link', 'Grids_', 'Histogram_'];
+	'Box_Points_', 'Link', 'Grids_', 'Histogram_'];
 
 function updateOptionRelevance(element, view) {
 	var ctx = optionContext(view);
@@ -682,6 +683,455 @@ function wireOptionRelevance(element, view) {
 		} catch (e) { /* signal absent in this spec */ }
 	});
 	updateOptionRelevance(element, view);
+}
+
+// ---- Direct manipulation: edit the chart by clicking it ---------------------
+// Drag axis titles and the legend block; double-click axes, the legend, or
+// empty space to edit titles, limits, colors, and free-text labels. Every edit
+// lands in a CC_* signal, so it rides the same persistence as panel controls
+// (localStorage, saved views, the Interactive_ rebuild) and acts as an
+// override on top of whatever the panel computes.
+var _ccDirectEdit = {};
+var _ccSuppressClick = {};
+var _ccNoteSeq = 0;
+
+function ccSchemeColors(name, n) {
+	var s = null;
+	try { s = vega.scheme(String(name || '').toLowerCase()); } catch (e) {}
+	if (typeof s === 'function') {
+		var out = [];
+		for (var i = 0; i < n; i++) { out.push(s(n === 1 ? 0.5 : i / (n - 1))); }
+		return out;
+	}
+	if (Array.isArray(s) && s.length) { return s.slice(); }
+	return ['#4c78a8', '#f58518', '#e45756', '#72b7b2', '#54a24b', '#eeca3b', '#b279a2', '#ff9da6', '#9d755d', '#bab0ac'];
+}
+
+// normalize any CSS color to #rrggbb so <input type=color> accepts it
+function ccToHex(color) {
+	try {
+		var canvas = document.createElement('canvas');
+		var ctx = canvas.getContext('2d');
+		ctx.fillStyle = String(color);
+		var v = ctx.fillStyle;
+		if (/^#[0-9a-f]{6}$/i.test(v)) { return v; }
+	} catch (e) {}
+	return '#4c78a8';
+}
+
+function ccHexLerp(a, b, t) {
+	function ch(hex, i) { return parseInt(hex.substr(1 + i * 2, 2), 16); }
+	a = ccToHex(a); b = ccToHex(b);
+	var r = Math.round(ch(a, 0) + (ch(b, 0) - ch(a, 0)) * t);
+	var g = Math.round(ch(a, 1) + (ch(b, 1) - ch(a, 1)) * t);
+	var bl = Math.round(ch(a, 2) + (ch(b, 2) - ch(a, 2)) * t);
+	return '#' + ((1 << 24) + (r << 16) + (g << 8) + bl).toString(16).slice(1);
+}
+
+// unique category values in the order Vega's sorted ordinal domain uses
+function ccCatDomain(rows, col) {
+	var seen = new Set(), out = [];
+	for (var i = 0; i < rows.length; i++) {
+		var v = rows[i][col];
+		if (v == null || v === '') { continue; }
+		var k = String(v);
+		if (!seen.has(k)) { seen.add(k); out.push(v); }
+	}
+	out.sort(function(a, b) { return a < b ? -1 : a > b ? 1 : 0; });
+	return out;
+}
+
+// Apply the stored color/note overrides to a spec about to be parsed.
+// Idempotent: always writes the canonical value for the current override
+// state, so the Interactive_ rebuild (same spec object) stays correct.
+function applyOverridePatches(spec, signalMap, dataMap) {
+	function sval(n) {
+		var i = signalMap[n];
+		return i === undefined ? undefined : spec.signals[i].value;
+	}
+	var noteIdx = dataMap['cc_notes_data'];
+	if (noteIdx !== undefined) {
+		spec.data[noteIdx].values = Array.isArray(sval('CC_Notes')) ? sval('CC_Notes') : [];
+	}
+	var scales = spec.scales || [];
+	var catScale = null, contScale = null;
+	scales.forEach(function(s) {
+		if (s.name === 'color_scale_cat') { catScale = s; }
+		if (s.name === 'color_scale_cont') { contScale = s; }
+	});
+	if (catScale) {
+		var overrides = sval('CC_Cat_Colors') || {};
+		var colorBy = sval('Color_By');
+		var range = null;
+		if (Object.keys(overrides).length && colorBy && colorBy !== 'None' && dataMap['mydata'] !== undefined) {
+			var domain = ccCatDomain(spec.data[dataMap['mydata']].values || [], colorBy);
+			if (domain.length) {
+				var defaults = ccSchemeColors(sval('Palette'), Math.max(domain.length, 10));
+				range = domain.map(function(v, i) { return overrides[String(v)] || defaults[i % defaults.length]; });
+			}
+		}
+		catScale.range = range || {scheme: {signal: 'Palette'}};
+	}
+	if (contScale) {
+		var g = sval('CC_Cont_Range');
+		if (Array.isArray(g) && g.length === 2) {
+			var stops = [];
+			for (var i = 0; i < 20; i++) { stops.push(ccHexLerp(g[0], g[1], i / 19)); }
+			contScale.range = stops;
+		} else {
+			contScale.range = {scheme: {signal: 'Palette'}, count: 20};
+		}
+	}
+}
+
+// Persist override state, then re-init the widget so spec-level patches
+// (color scale ranges) apply — same path a saved-view restore takes.
+function ccReinit(element, extraState) {
+	var store = loadSignalsFromCookie('vegaSignals_' + element) || {};
+	Object.keys(extraState || {}).forEach(function(k) { store[k] = extraState[k]; });
+	saveSignalState('vegaSignals_' + element, store);
+	var opts = _crossexOpts[element];
+	crossexloader(element, true);
+	delay(30).then(function() { crossex(element, _fullData[element], opts.options, opts.widthid); });
+}
+
+function wireDirectEdit(element, view) {
+	var container = document.getElementById('view_crossex' + element);
+	if (!container) { return; }
+
+	function sig(name, dflt) {
+		try {
+			var v = view.signal(name);
+			return v === undefined ? dflt : v;
+		} catch (e) { return dflt; }
+	}
+	function setSignals(map) {
+		Object.keys(map).forEach(function(k) {
+			try { view.signal(k, map[k]); } catch (e) {}
+		});
+		view.runAsync();
+	}
+	function syncNotes(notes) {
+		// strip Vega tuple metadata (_id) — re-inserting an already-stamped
+		// tuple is silently dropped, which would freeze notes after their
+		// first render
+		var clean = (notes || []).map(function(n) {
+			return {id: n.id, x: n.x, y: n.y, text: n.text, fontSize: n.fontSize, color: n.color, angle: n.angle || 0};
+		});
+		try {
+			view.signal('CC_Notes', clean);
+			view.change('cc_notes_data', vega.changeset().remove(function() { return true; })
+				.insert(clean.map(function(n) { return Object.assign({}, n); })));
+			view.runAsync();
+		} catch (e) {}
+	}
+	function chartCoords(event) {
+		var canvas = container.querySelector('canvas');
+		if (!canvas) { return {x: 0, y: 0}; }
+		var rect = canvas.getBoundingClientRect();
+		var origin = view._origin || [0, 0];
+		return {x: event.clientX - rect.left - origin[0], y: event.clientY - rect.top - origin[1]};
+	}
+	// Vega marks axes non-interactive, so its own picking never returns their
+	// items. Walk the scenegraph instead: absolute bounds of axis titles, note
+	// texts, and the legend block, tested against the pointer position.
+	function ccHitTest(clientX, clientY) {
+		var canvas = container.querySelector('canvas');
+		if (!canvas) { return null; }
+		var rect = canvas.getBoundingClientRect();
+		var origin = view._origin || [0, 0];
+		var px = clientX - rect.left - origin[0];
+		var py = clientY - rect.top - origin[1];
+		var hitTitle = null, hitNote = null, hitLegend = null;
+		function contains(b, ox, oy, pad) {
+			return b && px >= ox + b.x1 - pad && px <= ox + b.x2 + pad &&
+				py >= oy + b.y1 - pad && py <= oy + b.y2 + pad;
+		}
+		(function collect(mark, ox, oy, orient) {
+			if (!mark || !mark.items) { return; }
+			mark.items.forEach(function(item) {
+				if (mark.role === 'axis-title' && orient && contains(item.bounds, ox, oy, 5)) {
+					hitTitle = {type: 'title', orient: orient};
+				}
+				if (mark.name === 'cc_note_mark' && contains(item.bounds, ox, oy, 4)) {
+					hitNote = {type: 'note', datum: item.datum};
+				}
+				if (mark.name === 'chart_footer' && contains(item.bounds, ox, oy, 0)) {
+					hitLegend = {type: 'legend'};
+				}
+				if (mark.marktype === 'group' && item.items) {
+					var nextOrient = mark.role === 'axis' ? item.orient : orient;
+					item.items.forEach(function(child) {
+						collect(child, ox + (item.x || 0), oy + (item.y || 0), nextOrient);
+					});
+				}
+			});
+		})(view.scenegraph().root, 0, 0, null);
+		var hit = hitNote || hitTitle || hitLegend;
+		if (hit && hit.type === 'title' && hit.orient !== 'left' && hit.orient !== 'bottom') { return null; }
+		return hit;
+	}
+
+	// ---- popover -----------------------------------------------------------
+	var host = document.getElementById('cc_graph' + element) || container;
+	function popover() {
+		var pop = document.getElementById('cc_editpop' + element);
+		if (!pop) {
+			pop = document.createElement('div');
+			pop.id = 'cc_editpop' + element;
+			pop.className = 'cc_editpop';
+			host.appendChild(pop);
+		}
+		return pop;
+	}
+	function openPop(event, html) {
+		var pop = popover();
+		pop.innerHTML = html;
+		pop.style.display = 'block';
+		var hostRect = host.getBoundingClientRect();
+		var left = event.clientX - hostRect.left + 8;
+		var top = event.clientY - hostRect.top + 8;
+		pop.style.left = Math.max(4, Math.min(left, hostRect.width - 250)) + 'px';
+		pop.style.top = Math.max(4, top - Math.max(0, top + pop.offsetHeight - hostRect.height)) + 'px';
+		pop.querySelector('[data-cc-close]').onclick = closePop;
+		return pop;
+	}
+	function closePop() {
+		var pop = document.getElementById('cc_editpop' + element);
+		if (pop) { pop.style.display = 'none'; pop.innerHTML = ''; }
+	}
+	function field(label, id, type, value, attrs) {
+		return '<label class="cc_ep_row"><span>' + label + '</span>' +
+			'<input id="' + id + '" type="' + type + '" value="' + escapeHtml(String(value)) + '" ' + (attrs || '') + '></label>';
+	}
+	function popShell(title, body, buttons) {
+		return '<div class="cc_ep_head"><b>' + escapeHtml(title) + '</b>' +
+			'<span class="cc_tr_x" data-cc-close title="close">✕</span></div>' +
+			body + '<div class="cc_ep_btns">' + buttons + '</div>';
+	}
+
+	// ---- axis dialog -------------------------------------------------------
+	function openAxisDialog(event, axis) {
+		var isX = axis === 'x';
+		var p = isX ? 'X' : 'Y';
+		var sizeSig = isX ? 'X_Axis_Height' : 'Row_Header_Width';
+		var body =
+			field('Title', 'cc_ep_title' + element, 'text', sig('CC_' + p + '_Title', ''), 'placeholder="column name"') +
+			field('Min', 'cc_ep_min' + element, 'text', sig(p + '_Lower_Lim', ''), 'placeholder="auto"') +
+			field('Max', 'cc_ep_max' + element, 'text', sig(p + '_Upper_Lim', ''), 'placeholder="auto"') +
+			field('Ticks', 'cc_ep_ticks' + element, 'number', sig('TickCount', 5), 'min="1" max="50"') +
+			field('Label angle', 'cc_ep_angle' + element, 'number', sig(p + '_Axis_Angle', 0), 'step="5"') +
+			field('Font size', 'cc_ep_font' + element, 'number', sig('AxisFontSize', 12), 'min="4" max="40"') +
+			field(isX ? 'Axis height' : 'Axis width', 'cc_ep_size' + element, 'number', sig(sizeSig, isX ? 40 : 50), 'min="0" max="400"');
+		var pop = openPop(event, popShell((isX ? 'X' : 'Y') + ' Axis', body,
+			'<button data-cc-apply>Apply</button><button data-cc-reset>Reset</button>'));
+		pop.querySelector('[data-cc-apply]').onclick = function() {
+			var upd = {};
+			upd['CC_' + p + '_Title'] = document.getElementById('cc_ep_title' + element).value;
+			upd[p + '_Lower_Lim'] = document.getElementById('cc_ep_min' + element).value;
+			upd[p + '_Upper_Lim'] = document.getElementById('cc_ep_max' + element).value;
+			upd['TickCount'] = +document.getElementById('cc_ep_ticks' + element).value || 5;
+			upd[p + '_Axis_Angle'] = +document.getElementById('cc_ep_angle' + element).value || 0;
+			upd['AxisFontSize'] = +document.getElementById('cc_ep_font' + element).value || 12;
+			upd[sizeSig] = +document.getElementById('cc_ep_size' + element).value || sig(sizeSig, 0);
+			setSignals(upd);
+			closePop();
+		};
+		pop.querySelector('[data-cc-reset]').onclick = function() {
+			var upd = {};
+			upd['CC_' + p + '_Title'] = '';
+			upd['CC_' + p + 'T_DX'] = 0;
+			upd['CC_' + p + 'T_DY'] = 0;
+			upd[p + '_Lower_Lim'] = '';
+			upd[p + '_Upper_Lim'] = '';
+			setSignals(upd);
+			closePop();
+		};
+	}
+
+	// ---- note dialog -------------------------------------------------------
+	function openNoteDialog(event, datum) {
+		var isNew = !datum;
+		var at = isNew ? chartCoords(event) : null;
+		var body =
+			field('Text', 'cc_ep_ntext' + element, 'text', isNew ? '' : datum.text, 'placeholder="label text"') +
+			field('Size', 'cc_ep_nsize' + element, 'number', isNew ? 14 : datum.fontSize, 'min="6" max="72"') +
+			field('Color', 'cc_ep_ncolor' + element, 'color', isNew ? (ccDarkMode() ? '#e8e8e8' : '#333333') : ccToHex(datum.color), '') +
+			field('Angle', 'cc_ep_nangle' + element, 'number', isNew ? 0 : (datum.angle || 0), 'step="15"');
+		var pop = openPop(event, popShell(isNew ? 'New Label' : 'Edit Label', body,
+			'<button data-cc-apply>' + (isNew ? 'Add' : 'Apply') + '</button>' +
+			(isNew ? '' : '<button data-cc-del>Delete</button>')));
+		pop.querySelector('[data-cc-apply]').onclick = function() {
+			var text = document.getElementById('cc_ep_ntext' + element).value;
+			if (!text) { closePop(); return; }
+			var notes = (sig('CC_Notes', []) || []).slice();
+			var props = {
+				text: text,
+				fontSize: +document.getElementById('cc_ep_nsize' + element).value || 14,
+				color: document.getElementById('cc_ep_ncolor' + element).value,
+				angle: +document.getElementById('cc_ep_nangle' + element).value || 0
+			};
+			if (isNew) {
+				props.id = 'note' + (++_ccNoteSeq) + '_' + notes.length;
+				props.x = at.x; props.y = at.y;
+				notes.push(props);
+			} else {
+				notes = notes.map(function(n) {
+					return n.id === datum.id ? Object.assign({}, n, props) : n;
+				});
+			}
+			syncNotes(notes);
+			closePop();
+		};
+		var del = pop.querySelector('[data-cc-del]');
+		if (del) {
+			del.onclick = function() {
+				syncNotes((sig('CC_Notes', []) || []).filter(function(n) { return n.id !== datum.id; }));
+				closePop();
+			};
+		}
+	}
+
+	// ---- legend color dialog -----------------------------------------------
+	function openLegendDialog(event) {
+		var colorBy = sig('Color_By', 'None');
+		if (colorBy === 'None') { return; }
+		if (sig('Cord', false)) {
+			var domain = [];
+			try { domain = view.scale('color_scale_cat').domain() || []; } catch (e) {}
+			if (!domain.length) { return; }
+			var scale = view.scale('color_scale_cat');
+			var rows = domain.map(function(v, i) {
+				return field(String(v), 'cc_ep_cat' + i + element, 'color', ccToHex(scale(v)), 'data-cc-val="' + escapeHtml(String(v)) + '"');
+			}).join('');
+			var pop = openPop(event, popShell('Colors ~ ' + colorBy, rows,
+				'<button data-cc-apply>Apply</button><button data-cc-reset>Reset</button>'));
+			pop.querySelector('[data-cc-apply]').onclick = function() {
+				var map = {};
+				domain.forEach(function(v, i) {
+					map[String(v)] = document.getElementById('cc_ep_cat' + i + element).value;
+				});
+				closePop();
+				ccReinit(element, {CC_Cat_Colors: map});
+			};
+			pop.querySelector('[data-cc-reset]').onclick = function() {
+				closePop();
+				ccReinit(element, {CC_Cat_Colors: {}});
+			};
+		} else {
+			var current = sig('CC_Cont_Range', []);
+			var range = [];
+			try { range = view.scale('color_scale_cont').range() || []; } catch (e) {}
+			var start = current.length === 2 ? current[0] : (range[0] || '#f7fbff');
+			var end = current.length === 2 ? current[1] : (range[range.length - 1] || '#08306b');
+			var body =
+				field('Low', 'cc_ep_glo' + element, 'color', ccToHex(start), '') +
+				field('High', 'cc_ep_ghi' + element, 'color', ccToHex(end), '');
+			var pop = openPop(event, popShell('Gradient ~ ' + colorBy, body,
+				'<button data-cc-apply>Apply</button><button data-cc-reset>Reset</button>'));
+			pop.querySelector('[data-cc-apply]').onclick = function() {
+				closePop();
+				// a picked low→high gradient is absolute: pin Reverse_Color off
+				// (its default flips the scheme) so low really maps to low
+				ccReinit(element, {CC_Cont_Range: [
+					document.getElementById('cc_ep_glo' + element).value,
+					document.getElementById('cc_ep_ghi' + element).value
+				], Reverse_Color: false});
+			};
+			pop.querySelector('[data-cc-reset]').onclick = function() {
+				closePop();
+				ccReinit(element, {CC_Cont_Range: []});
+			};
+		}
+	}
+
+	// ---- drag: axis titles, legend block, labels ---------------------------
+	var drag = null;
+	if (!container.getAttribute('data-cc-editwired')) {
+		container.setAttribute('data-cc-editwired', '1');
+		// a drag that just ended must not fire click actions (legend filters).
+		// State lives on the shared map: this capture listener survives the
+		// Interactive_ rebuild while the rest of this closure is re-wired.
+		container.addEventListener('click', function(e) {
+			if (_ccSuppressClick[element]) { e.stopPropagation(); e.preventDefault(); }
+		}, true);
+	}
+	function onMove(e) {
+		if (!drag) { return; }
+		var dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+		if (!drag.moved && Math.abs(dx) + Math.abs(dy) < 3) { return; }
+		drag.moved = true;
+		if (drag.type === 'title' && drag.orient === 'bottom') {
+			setSignals({CC_XT_DX: drag.s0[0] + dx, CC_XT_DY: drag.s0[1] + dy});
+		} else if (drag.type === 'title') {
+			// left titles render rotated -90°: local +x is up, local +y is right
+			setSignals({CC_YT_DX: drag.s0[0] - dy, CC_YT_DY: drag.s0[1] + dx});
+		} else if (drag.type === 'legend') {
+			setSignals({CC_LEG_DX: drag.s0[0] + dx, CC_LEG_DY: drag.s0[1] + dy});
+		} else if (drag.type === 'note') {
+			var notes = (sig('CC_Notes', []) || []).map(function(n) {
+				return n.id === drag.datum.id ? Object.assign({}, n, {x: drag.s0[0] + dx, y: drag.s0[1] + dy}) : n;
+			});
+			syncNotes(notes);
+		}
+	}
+	function onUp() {
+		if (drag && drag.moved) {
+			_ccSuppressClick[element] = true;
+			setTimeout(function() { _ccSuppressClick[element] = false; }, 60);
+		}
+		drag = null;
+		window.removeEventListener('mousemove', onMove);
+		window.removeEventListener('mouseup', onUp);
+	}
+	// the canvas is recreated on every embed, so these listeners re-wire
+	// per drawGraph and never go stale
+	var canvas = container.querySelector('canvas');
+	if (canvas) {
+		canvas.addEventListener('mousedown', function(event) {
+			var target = ccHitTest(event.clientX, event.clientY);
+			if (!target) { return; }
+			var s0;
+			if (target.type === 'title' && target.orient === 'bottom') { s0 = [sig('CC_XT_DX', 0), sig('CC_XT_DY', 0)]; }
+			else if (target.type === 'title') { s0 = [sig('CC_YT_DX', 0), sig('CC_YT_DY', 0)]; }
+			else if (target.type === 'legend') { s0 = [sig('CC_LEG_DX', 0), sig('CC_LEG_DY', 0)]; }
+			else { s0 = [target.datum.x, target.datum.y]; }
+			drag = {type: target.type, orient: target.orient, datum: target.datum,
+				sx: event.clientX, sy: event.clientY, s0: s0, moved: false};
+			event.preventDefault();
+			window.addEventListener('mousemove', onMove);
+			window.addEventListener('mouseup', onUp);
+		});
+		canvas.addEventListener('dblclick', function(event) {
+			var target = ccHitTest(event.clientX, event.clientY);
+			if (!target) { return; }
+			if (target.type === 'note') { openNoteDialog(event, target.datum); }
+			else if (target.type === 'title') { openAxisDialog(event, target.orient === 'left' ? 'y' : 'x'); }
+			else { openLegendDialog(event); }
+		});
+	}
+
+	// empty space double-click creates a label; Vega's own picking rules out
+	// data marks (their dblclick opens the data table instead)
+	view.addEventListener('dblclick', function(event, item) {
+		if ((!item || !item.datum) && !ccHitTest(event.clientX, event.clientY)) {
+			openNoteDialog(event, null);
+		}
+	});
+
+	_ccDirectEdit[element] = {
+		openAxisDialog: openAxisDialog,
+		openLegendDialog: openLegendDialog,
+		openNoteDialog: openNoteDialog,
+		syncNotes: syncNotes,
+		applyCatColors: function(map) { ccReinit(element, {CC_Cat_Colors: map || {}}); },
+		applyContRange: function(pair) {
+			var state = {CC_Cont_Range: pair || []};
+			if (pair && pair.length === 2) { state.Reverse_Color = false; }
+			ccReinit(element, state);
+		},
+		closePop: closePop
+	};
 }
 
 function corrColTypes(df, cols) {
@@ -3176,6 +3626,8 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 			}
 		});
 	}
+	// color/label overrides from on-chart editing patch the spec pre-parse
+	applyOverridePatches(spec, signalMap, dataMap);
 
 	var embedOpts = {
 		renderer: 'canvas',
@@ -3273,6 +3725,8 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 		setQQFacetDisabled(element, result.view.signal('QQNorm_'));
 		// Brush selection, zoom reset, and the group-difference stats badge
 		wireBrush(element, result.view);
+		// On-chart editing: drag titles/legend/labels, double-click to edit
+		if (!hide_panel) { wireDirectEdit(element, result.view); }
 		var resetZoomBtn = document.getElementById('cc_reset_zoom' + element);
 		if (resetZoomBtn) {
 			resetZoomBtn.onclick = function() {
@@ -3339,7 +3793,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 				myview = result.view;
 			});
 			checkbox.addEventListener('change', (event) => {
-				var new_signals_ar=["X_Axis","Search_By","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","SortX_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","LogY_","Jitter_" ,"Weight_Contour","Tips_","Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point","Min_Point","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Title_Height","X_Axis_Height","Row_Header_Width","Row_Height","Max_Facets","Legend_Height","Legend_Cols","PlotTitle_Height","graph_title","Show_Titles","ContourCounts","resolve","ContourLevels","CellSize_","Line_","ECDF_","QQNorm_"];
+				var new_signals_ar=["X_Axis","Search_By","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","SortX_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","Box_Points_","LogY_","Jitter_" ,"Weight_Contour","Tips_","Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point","Min_Point","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Title_Height","X_Axis_Height","Row_Header_Width","Row_Height","Max_Facets","Legend_Height","Legend_Cols","PlotTitle_Height","graph_title","Show_Titles","ContourCounts","resolve","ContourLevels","CellSize_","Line_","ECDF_","QQNorm_","CC_X_Title","CC_Y_Title","CC_XT_DX","CC_XT_DY","CC_YT_DX","CC_YT_DY","CC_LEG_DX","CC_LEG_DY","CC_Cat_Colors","CC_Cont_Range","CC_Notes"];
 				for (var i = 0; i < new_signals_ar.length; i++) {
 					if (signalMap[new_signals_ar[i]] === undefined) { continue; }
 					try {

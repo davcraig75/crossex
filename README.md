@@ -42,6 +42,7 @@ Most charting libraries require you to decide your chart type and axis mappings 
 - **Automatically detect** whether columns are numeric or categorical and adjust chart types accordingly
 - **Facet data into subplot grids** by any categorical variable
 - **Filter, search, and drill down** without writing code
+- **Edit the chart in place** -- drag titles, legends, and labels; double-click axes and legends to retitle, set limits, and recolor
 - **Export** the current view as PNG or download filtered data as CSV
 - **Review data quality** with duplicate, missing, constant, mixed-type, and identifier checks, then override column types when needed
 
@@ -326,6 +327,17 @@ Toggle **Interactive mode** (checkbox in the control panel) to enable:
 - **Zoom** -- Scroll wheel or pinch gesture
 - **Tooltips** -- Hover over points to see values
 
+### Editing the Chart Directly
+
+Point at the chart itself to restyle it — no panel digging required:
+
+- **Drag an axis title** to reposition it; **drag the legend** to move the whole legend block
+- **Double-click an axis** (its title or labels) to open an editor for the title text, min/max limits, tick count, label angle, font size, and axis area size
+- **Double-click the legend** to edit colors: with a categorical mapping every category gets a color picker (or paste a hex code); with a numeric mapping choose a start and end color for a custom gradient
+- **Double-click empty chart space** to add a free-text label; drag a label to move it, double-click it to edit or delete it
+
+Every direct edit is stored as an *override* on top of the panel settings: it survives toggling Interactive mode, is captured by Saved Views, and persists in the browser like every other setting. Reset buttons in each editor clear the overrides back to the computed defaults.
+
 ### Exporting
 
 Click the export icon (top-right of the chart) to:
@@ -415,9 +427,9 @@ All of the above yields via `requestAnimationFrame` rather than a Web Worker, so
 Tabs on the left rail are grouped: chart building, then appearance (axis, marks, colors, titles, layout), then data work (highlight, filter, interact), then analysis (summary, transforms), then alternate views (table, overview, 3D, pivot). **Tabs and individual controls appear only when they apply to the visible chart** — a scatter plot shows contour and opacity-encoding options but no violin controls; a histogram hides the Marks tab entirely; the correlation matrix pares the panel down to the essentials. Hidden controls keep their values and reappear the moment they become relevant.
 
 ### Charts Tab
-Set X and Y axis columns, facets, color, and size. The **Stat Annotations** toggle overlays fitted r²/slope on scatter plots and n/μ/σ per category — and, on box/violin charts, a badge with the group-difference test: **Welch t-test** for two groups, **one-way ANOVA** for three or more, computed over the full dataset. Chart-type-specific sections appear underneath:
+Set X and Y axis columns, facets, color, size, and outline encodings. The **Stat Annotations** toggle overlays fitted r²/slope on scatter plots and n/μ/σ per category — and, on box/violin charts, a badge with the group-difference test: **Welch t-test** for two groups, **one-way ANOVA** for three or more, computed over the full dataset. Chart-type-specific sections appear underneath:
 - **Scatter** -- Density contours, regression line, points, mean line, marginal histogram
-- **Box/Violin** -- Box plot, violin, outliers, value dashes, bar overlay toggles
+- **Box/Violin** -- Box plot, violin, outliers, value dashes, value points (a centered, shape-aware strip of the raw observations — no jitter needed), bar overlay toggles
 - **Grid** -- Heat map grid toggle (two categorical axes), fixed cell size, cell corner radius
 - **Stacked** -- Sum aggregation column
 - **Distribution** -- Histogram bins, ECDF overlay, normal QQ plot (histogram ratio when a marginal histogram is on)
@@ -431,7 +443,7 @@ Set X and Y axis columns, facets, color, and size. The **Stat Annotations** togg
 
 ### Marks Tab
 - **Jitter** -- Add random offset to overlapping points (configurable radius, both box orientations and heat maps)
-- **Outline** -- Map a column to point outline color, with width control
+- **Outline width** -- Width for the Outline By encoding (the column mapping itself sits on the Charts tab beside Color By)
 - **Point size** -- Max Point Size sets the size of every point (scatter and jittered box points); min size and reverse appear when a Size By column is set
 - **Point shape** -- circle, square, diamond, triangles, … (scatter and jittered points)
 - **Opacity** -- Mark opacity for points, stacked bars, and encoded heat cells, plus an Opacity By column encoding, right beside size and shape
