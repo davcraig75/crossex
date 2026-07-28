@@ -5,7 +5,7 @@
 **[▶ Try the live demo](https://davcraig75.github.io/crossex/)** — the full app runs client-side on GitHub Pages; paste your own data or load the demos.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.20260716-green.svg)](https://github.com/davcraig75/crossex)
+[![Version](https://img.shields.io/badge/version-2.20260728-green.svg)](https://github.com/davcraig75/crossex)
 
 Crossex lets users paste or load tabular data and instantly explore it through dynamically configurable charts. Drop a CSV into the tool and start dragging variables onto axes, facets, colors, and filters -- no code required. Embed it on any web page with a single `<script>` tag, or run the full interactive designer locally.
 

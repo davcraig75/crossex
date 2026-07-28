@@ -4,7 +4,7 @@
 
 **Crossex** is a data visualization tool for interactive exploration of tabular datasets. It enables dynamic chart creation with linked filtering, faceting, and statistical views. The project supports both web-based (Express.js) and Electron desktop deployments.
 
-**Current version:** 1.20260716
+**Current version:** 2.20260728
 
 ## Architecture
 
@@ -62,7 +62,7 @@ Example: `data.crossex_spec = itg_comp("views/crossex."+pjson.version+".vg.json"
 
 Chart behavior is controlled by Vega signals (interactive inputs):
 ```javascript
-// In crossex.1.20260716.vg.json (single-line minified spec; ~156 top-level signals)
+// In crossex.2.20260728.vg.json (single-line minified spec; ~156 top-level signals)
 "signals": [
   {"name": "X_Axis", "value": "island", "bind": {"input": "select", ...}},
   {"name": "Y_Axis", "value": "...", "bind": {...}},
@@ -173,7 +173,7 @@ The export menu (top-right of the chart) offers PNG, SVG, CSV, and "open in Vega
 
 ### Templates & Specs
 - [views/crossex_base.ejs](../views/crossex_base.ejs) - Main app wrapper
-- [views/crossex.1.20260716.vg.json](../views/crossex.1.20260716.vg.json) - Current Vega spec (single-line minified JSON; keep the filename's version suffix in sync with `package.json`)
+- [views/crossex.2.20260728.vg.json](../views/crossex.2.20260728.vg.json) - Current Vega spec (single-line minified JSON; keep the filename's version suffix in sync with `package.json`)
 - [views/wrapper.ejs](../views/wrapper.ejs) - Standalone script builder
 - [views/body.ejs](../views/body.ejs) - UI component HTML (landing page, chart gallery)
 - [views/crossex_html.ejs](../views/crossex_html.ejs) - Control panel tabs & widget chrome
@@ -207,7 +207,7 @@ Verified (2026-07-07) across all three rendering engines — Blink (Chrome/Edge)
 
 ## Notes for Next Developer
 
-1. **Version matching**: File versions in `.vg.json` filename (`crossex.1.20260716.vg.json`) must match `package.json` version. Update both when rolling new releases.
+1. **Version matching**: File versions in `.vg.json` filename (`crossex.2.20260728.vg.json`) must match `package.json` version. Update both when rolling new releases.
 2. **Compression trade-off**: LZ compression saves ~60-70% payload but adds client-side decompression latency. Monitor with prod builds.
 3. **Signal binding**: Vega signals automatically sync with UI controls via `bind` property. Any new interactive feature must follow this pattern.
 4. **Type inference**: The `stats.js` type detection is critical for auto-axis assignment. If adding new data types (e.g., dates), extend `infer()` and `typeAll()` functions.
