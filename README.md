@@ -382,7 +382,7 @@ Like the rest of crossex, the dashboard runs entirely client-side; it's part of 
 | **Line / Time Series** | Two numeric axes + the Line toggle (Scatter options) | Mean line per color group, sorted by X; date columns auto-convert to decimal years |
 | **Histogram** | One numeric axis (Y = "None") | Bin size, Ratio, ECDF overlay, Normal QQ plot |
 | **Box Plot** | Categorical X + Numeric Y | Outliers toggle |
-| **Violin Plot** | Categorical X + Numeric Y | Violin width, Dashes |
+| **Violin Plot** | Categorical X + Numeric Y | Distribution width, Dashes |
 | **Stacked Bar** | Categorical axes with Sum_By | Sum column selection |
 | **Grid / Heatmap** | Two categorical axes | Cells colored by row count by default (hover for the count); map Color_By/Size_By or enable Jitter for per-row views |
 | **Correlation Matrix** | All numeric columns | Show Covariance toggle; click any cell to open that pair's plot |
@@ -426,18 +426,19 @@ Set X and Y axis columns, facets, color, and size. The **Stat Annotations** togg
 - **Log scale** for X and/or Y (numeric axes)
 - **Reverse** axis direction
 - **Sort X By** another column (stacked bars)
-- **Manual limits** -- Set min/max for X and Y axes (pan/zoomable charts)
+- **Manual limits** -- Set min/max for the value axes (scatter, histogram, and box charts)
 - **Shared limits** -- Share axis ranges across facets
 
 ### Marks Tab
-- **Jitter** -- Add random offset to overlapping points (configurable radius)
+- **Jitter** -- Add random offset to overlapping points (configurable radius, both box orientations and heat maps)
 - **Outline** -- Map a column to point outline color, with width control
-- **Point size** -- Max size always; min size and reverse when a Size By column is set
-- **Point shape** -- circle, square, diamond, triangles, …
-- **Opacity** -- Mark opacity for points/marks, plus an Opacity By column encoding, right beside size and shape
+- **Point size** -- Max Point Size sets the size of every point (scatter and jittered box points); min size and reverse appear when a Size By column is set
+- **Point shape** -- circle, square, diamond, triangles, … (scatter and jittered points)
+- **Opacity** -- Mark opacity for points, stacked bars, and encoded heat cells, plus an Opacity By column encoding, right beside size and shape
+- **Distribution width** -- Width of each category's violin/box/bar/dash track on box charts
 - **Contours** -- Resolve, bandwidth, levels, weighting, and cell size (when density contours are on)
 - **Link Points** -- Make scatter points clickable links built from a column value
-- **Dash/violin dimensions** -- Thickness, width, radius of marks (when those marks are on)
+- **Dash dimensions** -- Thickness, width, radius of value dashes (when dashes are on)
 
 ### Coloring Tab
 - **40+ color palettes** including:

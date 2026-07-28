@@ -361,6 +361,129 @@ test('histogram, box, stacked, and heatmap modes facet and unfacet cleanly', asy
   expect(errors).toEqual([]);
 });
 
+// Relevance rules write inline display on each control's wrapper, so read the
+// inline style: it reflects the rules even while the owning tab is closed.
+async function controlDisplay(page, signal) {
+  return page.evaluate(function(nodeId) {
+    const node = document.getElementById(nodeId);
+    return node ? node.style.display : 'missing';
+  }, controlId(signal));
+}
+
+test('point size, width, jitter, and dash controls all drive vertical box marks', async function({ page }, testInfo) {
+  const errors = installErrorCapture(page);
+  await openExample(page, 'box');
+  await setControl(page, 'Y_Axis', 'bill_length_mm');
+  let state = await checkpoint(page, testInfo, 'plain-box');
+  expect(state.modes.box).toBe(true);
+
+  // a plain box chart offers its width control; per-mark extras stay hidden
+  expect(await controlDisplay(page, 'Violin_Width')).toBe('block');
+  expect(await controlDisplay(page, 'Max_Point')).toBe('block');
+  expect(await controlDisplay(page, 'Jitter_Radius')).toBe('none');
+  expect(await controlDisplay(page, 'Dash_Width')).toBe('none');
+
+  await setControl(page, 'Violin_Width', 0.4);
+  state = await checkpoint(page, testInfo, 'narrow-distribution', state.fingerprint);
+  await setControl(page, 'Violin_Width', 0.8);
+
+  await setControl(page, 'Jitter_', true);
+  state = await checkpoint(page, testInfo, 'jittered-box', state.fingerprint);
+  expect(await controlDisplay(page, 'Jitter_Radius')).toBe('block');
+  expect(await controlDisplay(page, 'Shape')).toBe('block');
+
+  await setControl(page, 'Max_Point', 300);
+  state = await checkpoint(page, testInfo, 'bigger-jitter-points', state.fingerprint);
+  await setControl(page, 'Jitter_Radius', '6');
+  state = await checkpoint(page, testInfo, 'wider-jitter-spread', state.fingerprint);
+  await setControl(page, 'Shape', 'diamond');
+  state = await checkpoint(page, testInfo, 'diamond-jitter-points', state.fingerprint);
+
+  await setControl(page, 'Dashes_', true);
+  state = await checkpoint(page, testInfo, 'value-dashes', state.fingerprint);
+  for (const dashControl of ['Dash_Width', 'Dash_Height', 'Dash_Radius', 'Dash_Opacity']) {
+    expect(await controlDisplay(page, dashControl)).toBe('block');
+  }
+  await setControl(page, 'Dash_Width', 1);
+  state = await checkpoint(page, testInfo, 'full-width-dashes', state.fingerprint);
+  await setControl(page, 'Dash_Height', '4');
+  state = await checkpoint(page, testInfo, 'thicker-dashes', state.fingerprint);
+
+  await setControl(page, 'Dashes_', false);
+  state = await checkpoint(page, testInfo, 'dashes-removed', state.fingerprint);
+  expect(await controlDisplay(page, 'Dash_Width')).toBe('none');
+  expect(errors).toEqual([]);
+});
+
+test('horizontal box jitter and dash controls work independently', async function({ page }, testInfo) {
+  const errors = installErrorCapture(page);
+  await openExample(page, 'box');
+  await setControl(page, 'X_Axis', 'body_mass_g');
+  await setControl(page, 'Y_Axis', 'species');
+  let state = await checkpoint(page, testInfo, 'horizontal-box');
+  expect(state.modes.horizontalBox).toBe(true);
+  expect(await controlDisplay(page, 'Violin_Width')).toBe('block');
+
+  // jitter must not require the dash toggle, and must honor size and radius
+  await setControl(page, 'Jitter_', true);
+  state = await checkpoint(page, testInfo, 'jitter-without-dashes', state.fingerprint);
+  expect(await controlDisplay(page, 'Jitter_Radius')).toBe('block');
+  await setControl(page, 'Jitter_Radius', '5');
+  state = await checkpoint(page, testInfo, 'wider-horizontal-spread', state.fingerprint);
+  await setControl(page, 'Max_Point', 30);
+  state = await checkpoint(page, testInfo, 'smaller-horizontal-points', state.fingerprint);
+
+  await setControl(page, 'Dashes_', true);
+  state = await checkpoint(page, testInfo, 'horizontal-dashes', state.fingerprint);
+  expect(await controlDisplay(page, 'Dash_Opacity')).toBe('block');
+  await setControl(page, 'Dash_Opacity', 1);
+  state = await checkpoint(page, testInfo, 'opaque-horizontal-dashes', state.fingerprint);
+  await setControl(page, 'Dashes_', false);
+  state = await checkpoint(page, testInfo, 'horizontal-dashes-removed', state.fingerprint);
+  expect(errors).toEqual([]);
+});
+
+test('max point size resizes unsized scatter points', async function({ page }, testInfo) {
+  const errors = installErrorCapture(page);
+  await openExample(page, 'scatter');
+  await setControl(page, 'X_Axis', 'bill_length_mm');
+  await setControl(page, 'Y_Axis', 'bill_depth_mm');
+  let state = await checkpoint(page, testInfo, 'default-points');
+  expect(await controlDisplay(page, 'Max_Point')).toBe('block');
+  expect(await controlDisplay(page, 'Min_Point')).toBe('none');
+  expect(await controlDisplay(page, 'Reverse_Size')).toBe('none');
+
+  await setControl(page, 'Max_Point', 300);
+  state = await checkpoint(page, testInfo, 'larger-points', state.fingerprint);
+
+  await setControl(page, 'Size_By', 'flipper_length_mm');
+  state = await checkpoint(page, testInfo, 'size-encoded', state.fingerprint);
+  expect(await controlDisplay(page, 'Min_Point')).toBe('block');
+  expect(await controlDisplay(page, 'Reverse_Size')).toBe('block');
+  await setControl(page, 'Min_Point', 60);
+  state = await checkpoint(page, testInfo, 'larger-minimum', state.fingerprint);
+  expect(errors).toEqual([]);
+});
+
+test('heat map hides point-size controls but keeps jitter radius live', async function({ page }, testInfo) {
+  const errors = installErrorCapture(page);
+  await openExample(page, 'heatmap');
+  let state = await checkpoint(page, testInfo, 'heatmap');
+  expect(state.modes.grid).toBe(true);
+  // grid cells size from their own bandwidth scale, not Max/Min point size
+  expect(await controlDisplay(page, 'Max_Point')).toBe('none');
+  expect(await controlDisplay(page, 'Min_Point')).toBe('none');
+  expect(await controlDisplay(page, 'Reverse_Size')).toBe('none');
+  expect(await controlDisplay(page, 'Jitter_')).toBe('block');
+
+  await setControl(page, 'Jitter_', true);
+  state = await checkpoint(page, testInfo, 'jittered-grid', state.fingerprint);
+  expect(await controlDisplay(page, 'Jitter_Radius')).toBe('block');
+  await setControl(page, 'Jitter_Radius', '4');
+  state = await checkpoint(page, testInfo, 'wider-grid-jitter', state.fingerprint);
+  expect(errors).toEqual([]);
+});
+
 test('stacked count, sum, and categorical heatmap transitions work', async function({ page }, testInfo) {
   const errors = installErrorCapture(page);
   await openExample(page, 'stacked');

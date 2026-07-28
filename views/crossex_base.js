@@ -543,13 +543,15 @@ var CONTROL_RELEVANCE = {
 	'Stats_':            function(c) { return c.scatter || c.box || c.hzbox; },
 	// Charts: per-graph-type sections
 	'Stacked_Options':   function(c) { return c.stacked; },
-	'Grid_Options':      function(c) { return c.gridEligible; },
+	'Grid_Options':      function(c) { return c.gridEligible || c.corr; },   // Grid_Radius also rounds matrix cells
+	'Map_XY_Cat_':       function(c) { return c.gridEligible; },
 	'Grid_Spacing':      function(c) { return c.grid; },
-	'Grid_Radius':       function(c) { return c.grid; },
+	'Grid_Radius':       function(c) { return c.grid || c.corr; },
 	'Violin_Options':    function(c) { return c.box || c.hzbox; },
 	'Scatter_Options':   function(c) { return c.scatter; },
 	'Hist_Options':      function(c) { return c.hist || c.qq; },
 	'Histogram_Ratio':   function(c) { return c.margHist; },
+	'Histogram_Bins_Size': function(c) { return c.hist; },   // QQ ignores binning
 	'ECDF_':             function(c) { return c.pureHist; },
 	// Search: the highlight marks only exist on scatter plots
 	'Search_Options':    function(c) { return c.scatter; },
@@ -564,31 +566,38 @@ var CONTROL_RELEVANCE = {
 	'LogX_':             function(c) { return c.scatter || c.hist || c.hzbox; },
 	'Reverse_X':         function(c) { return c.scatter || c.hist || c.hzbox || c.grid || c.corr; },
 	'Reverse_Y':         function(c) { return c.scatter || c.box || c.grid || c.corr; },
-	'Limit_Options':     function(c) { return c.scatter || c.hist || (c.box && c.facetRows) || c.stacked; },
+	'Limit_Options':     function(c) { return c.scatter || c.hist || c.box || c.hzbox || c.stacked; },
 	'Uniform_YLim':      function(c) { return c.box && c.facetRows; },
 	'Uniform_XLim':      function(c) { return c.stacked; },
-	'Y_Upper_Lim':       function(c) { return c.scatter; },
-	'Y_Lower_Lim':       function(c) { return c.scatter; },
-	'X_Upper_Lim':       function(c) { return c.scatter || c.hist; },
-	'X_Lower_Lim':       function(c) { return c.scatter || c.hist; },
+	// the box value scales take their domain from ydom/xdom, so the manual
+	// limits apply to box plots (vertical: Y, horizontal: X) as well
+	'Y_Upper_Lim':       function(c) { return c.scatter || c.box; },
+	'Y_Lower_Lim':       function(c) { return c.scatter || c.box; },
+	'X_Upper_Lim':       function(c) { return c.scatter || c.hist || c.hzbox; },
+	'X_Lower_Lim':       function(c) { return c.scatter || c.hist || c.hzbox; },
 	// Marks
 	'Point_Options':     function(c) { return c.scatter || c.box || c.hzbox || c.grid || c.stacked; },
 	'Jitter_':           function(c) { return c.box || c.hzbox || c.grid; },
 	'Stroke_By':         function(c) { return c.scatter || c.box || c.stacked; },
 	'Stroke_Width':      function(c) { return (c.scatter || c.box || c.stacked) && c.stroked; },
-	'Jitter_Radius':     function(c) { return (c.box || c.grid) && c.jitter; },
+	'Jitter_Radius':     function(c) { return (c.box || c.hzbox || c.grid) && c.jitter; },
 	'Dash_Height':       function(c) { return (c.box || c.hzbox) && c.dashes; },
 	'Dash_Width':        function(c) { return (c.box || c.hzbox) && c.dashes; },
 	'Dash_Radius':       function(c) { return (c.box || c.hzbox) && c.dashes; },
-	'Violin_Width':      function(c) { return (c.box || c.hzbox) && c.violin; },
-	'Max_Point':         function(c) { return c.scatter || c.box || c.hzbox || c.grid; },
-	'Min_Point':         function(c) { return (c.scatter || c.grid) && c.sized; },
-	'Shape':             function(c) { return c.scatter || c.box || c.hzbox; },
-	'Reverse_Size':      function(c) { return (c.scatter || c.grid) && c.sized; },
-	// Opacity is a marker property: base Mark Opacity (scatter + box marks read
-	// Opacity_) and Opacity By (scatter only) sit on the Marks tab beside size/shape
-	'Mark_Opacity':      function(c) { return c.scatter || c.box || c.hzbox; },
-	'Opacity_':          function(c) { return c.scatter || c.box || c.hzbox; },
+	// viol_width/viol_ht scale every distribution mark (violin, box, bars,
+	// dashes, jitter track), so the width control applies to all box charts
+	'Violin_Width':      function(c) { return c.box || c.hzbox; },
+	// the grid heat map sizes cells from its own bandwidth-based scale, so the
+	// point-size controls only apply where marks read Max_Point/size_scale
+	'Max_Point':         function(c) { return c.scatter || c.box || c.hzbox; },
+	'Min_Point':         function(c) { return c.scatter && c.sized; },
+	'Shape':             function(c) { return c.scatter || ((c.box || c.hzbox) && c.jitter); },
+	'Reverse_Size':      function(c) { return c.scatter && c.sized; },
+	// Opacity is a marker property: base Mark Opacity (points, jittered box
+	// points, stacked bars, encoded grid cells) and Opacity By (scatter only)
+	// sit on the Marks tab beside size/shape
+	'Mark_Opacity':      function(c) { return c.scatter || c.stacked || ((c.box || c.hzbox) && c.jitter) || (c.grid && (c.colored || c.sized || c.jitter)); },
+	'Opacity_':          function(c) { return c.scatter || c.stacked || ((c.box || c.hzbox) && c.jitter) || (c.grid && (c.colored || c.sized || c.jitter)); },
 	'Opacity_By':        function(c) { return c.scatter; },
 	'Contour_Options':   function(c) { return c.scatter && c.contours; },
 	'Link_Options':      function(c) { return c.scatter; },
@@ -619,7 +628,7 @@ var CONTROL_RELEVANCE = {
 	'Violin_Opacity':    function(c) { return (c.box || c.hzbox) && c.violin; },
 	'Contour_Opacity':   function(c) { return c.scatter && c.contours; },
 	'Cnt_St_Opacity':    function(c) { return c.scatter && c.contours; },
-	'Dash_Opacity':      function(c) { return c.box && c.dashes; },
+	'Dash_Opacity':      function(c) { return (c.box || c.hzbox) && c.dashes; },
 	'ColorScale_Options': function(c) { return c.colorNumeric; },
 	// Margins
 	'Facet_Options':     function(c) { return c.faceted; },
@@ -3330,7 +3339,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 				myview = result.view;
 			});
 			checkbox.addEventListener('change', (event) => {
-				var new_signals_ar=["X_Axis","Search_By","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","SortX_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","LogY_","Jitter_" ,"Weight_Contour","Tips_","Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point","Min_Point","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Plot_Padding","Title_Height","X_Axis_Height","Row_Header_Width","Row_Height","Max_Facets","Legend_Height","Legend_Cols","PlotTitle_Height","graph_title","Show_Titles","ContourCounts","resolve","ContourLevels","CellSize_","Line_","ECDF_","QQNorm_"];
+				var new_signals_ar=["X_Axis","Search_By","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","SortX_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","LogY_","Jitter_" ,"Weight_Contour","Tips_","Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point","Min_Point","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Title_Height","X_Axis_Height","Row_Header_Width","Row_Height","Max_Facets","Legend_Height","Legend_Cols","PlotTitle_Height","graph_title","Show_Titles","ContourCounts","resolve","ContourLevels","CellSize_","Line_","ECDF_","QQNorm_"];
 				for (var i = 0; i < new_signals_ar.length; i++) {
 					if (signalMap[new_signals_ar[i]] === undefined) { continue; }
 					try {
