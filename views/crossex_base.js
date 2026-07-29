@@ -443,7 +443,13 @@ function setWidth_smart(element,widthNode) {
 	if (!widthNode) {
 		widthNode=document.getElementById(element);
 	}
-	var buf=document.getElementById("cc_tabscontent" + element).offsetWidth+document.getElementById("defaultOpen"+element).offsetWidth;
+	// widget torn down (a closed dashboard editor) or hidden (single-chart UI
+	// behind the dashboard): resize callbacks may still fire — return the
+	// floor instead of crashing on missing nodes or sizing Vega to zero
+	var panel = document.getElementById("cc_tabscontent" + element);
+	var opener = document.getElementById("defaultOpen" + element);
+	if (!widthNode || !panel || !opener) { return 40; }
+	var buf=panel.offsetWidth+opener.offsetWidth;
 	var width=getContentWidth(widthNode)-buf;
 	if (width<40){width=40;}
 	return width;
@@ -3704,6 +3710,11 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 		},
 		defaultStyle: true
 	};
+	// legend chip follows the theme (not saved state) so its text stays readable
+	var legBgIdx = signalMap['CC_LEG_BG'];
+	if (legBgIdx !== undefined) {
+		spec.signals[legBgIdx].value = ccDarkMode() ? 'rgba(30,32,40,0.85)' : 'rgba(255,255,255,0.85)';
+	}
 	if (ccDarkMode()) {
 		embedOpts.config = CC_DARK_VEGA_CONFIG;
 		// only override the chart background when the user hasn't customized it
@@ -3742,7 +3753,9 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 			window.removeEventListener('resize', _resizeHandlers[element]);
 		}
 		_resizeHandlers[element] = function() {
-			result.view.width(setWidth_smart(element,widthNode)).run();
+			// the Interactive_ rebuild deletes result.view before this handler
+			// is replaced — a resize in that window must not crash
+			if (result.view) { result.view.width(setWidth_smart(element,widthNode)).run(); }
 		};
 		window.addEventListener('resize', _resizeHandlers[element]);
 		// The control panel grows when contextual controls appear (e.g. Sum_By
@@ -3763,7 +3776,9 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 				lastPanelW = w;
 				clearTimeout(_panelResizeTimers[element]);
 				_panelResizeTimers[element] = setTimeout(function() {
-					result.view.width(setWidth_smart(element, widthNode)).run();
+					// result.view is deleted during the Interactive_ rebuild;
+					// a pending panel-resize tick must not touch it
+					if (result.view) { result.view.width(setWidth_smart(element, widthNode)).run(); }
 				}, 120);
 			});
 			_panelObservers[element].observe(document.getElementById('cc_tabscontent' + element));

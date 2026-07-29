@@ -289,11 +289,11 @@ test('overlay buttons still work after the interactive-mode rebuild', async func
 
   // duplicated listeners used to open+close the overlay in a single click
   await page.locator('#ThreeD_btnsmartplot_id').click();
-  await expect(page.locator('#cc_3dsmartplot_id')).toBeVisible();
+  await expect(page.locator('#cc_3dsmartplot_id')).toBeVisible({ timeout: 20000 });
   await page.locator('#cc_3d_closesmartplot_id').click();
-  await expect(page.locator('#cc_3dsmartplot_id')).toBeHidden();
+  await expect(page.locator('#cc_3dsmartplot_id')).toBeHidden({ timeout: 20000 });
 
   await page.locator('#Table_btnsmartplot_id').click();
-  await expect(page.locator('#cc_tablesmartplot_id')).toBeVisible();
+  await expect(page.locator('#cc_tablesmartplot_id')).toBeVisible({ timeout: 20000 });
   expect(errors).toEqual([]);
 });

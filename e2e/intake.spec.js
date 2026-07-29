@@ -7,8 +7,20 @@ test('landing page exposes a keyboard-ready intake workflow', async function({ p
   await expect(page).toHaveTitle('Crossex | Private, no-code data explorer');
   await expect(page.getByRole('heading', { name: /Turn any table into an analysis workspace/ })).toBeVisible();
   await expect(page.getByLabel('Preview of the Crossex data explorer')).toBeVisible();
-  await expect(page.getByRole('heading', { name: /From raw rows to a defensible answer/ })).toBeVisible();
+  // branding sits above the data input, and the intake buttons collapse
+  // file/url/demo loading into one Load Data menu
+  const nav = page.locator('#cc_topnav');
+  await expect(nav).toBeVisible();
+  expect(await page.evaluate(function() {
+    return document.getElementById('cc_topnav').getBoundingClientRect().top <
+      document.getElementById('cc_start_section').getBoundingClientRect().top;
+  })).toBe(true);
   await expect(page.getByRole('button', { name: 'Graph Data' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Load Data/ })).toBeVisible();
+  await page.getByRole('button', { name: /Load Data/ }).click();
+  await expect(page.getByRole('menuitem', { name: 'Load File…' })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: 'Load URL…' })).toBeVisible();
+  await page.keyboard.press('Escape');
   await expect(page.getByLabel('Paste CSV, TSV, or JSON data')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Open Scatter example' })).toHaveAttribute('tabindex', '0');
 });
@@ -17,7 +29,6 @@ test('landing page communicates the workflow without horizontal overflow', async
   await page.goto('/');
   await expect(page.getByText('Automatic chart selection')).toBeVisible();
   await expect(page.getByText('Undoable analysis history')).toBeVisible();
-  await expect(page.getByText('Keep the analysis, not just the screenshot.')).toBeVisible();
   const dimensions = await page.evaluate(function() {
     return { viewport: document.documentElement.clientWidth, content: document.documentElement.scrollWidth };
   });

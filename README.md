@@ -359,13 +359,15 @@ Click **Clear Settings** to reset everything to defaults — the chart redraws i
 
 Beyond the single-chart explorer, the **Dashboard** button turns crossex into a lightweight dashboard builder: a grid of independent charts, each a full crossex widget, driven from one or more datasets.
 
-Click **Dashboard** in the button row to enter. If a dataset is already loaded it becomes "Dataset 1" and a first chart is added automatically; otherwise the empty canvas walks you through adding data.
+Click **Dashboard** in the button row to enter. If a dataset is already loaded it becomes "Dataset 1" and a first chart is added automatically; otherwise the **Add data** dialog opens by itself.
 
 **Building a dashboard**
 
-- **+ Add chart** drops a new tile onto the grid, laid out in the first free slot (no overlaps). Every tile is a real crossex chart, so it gets the full engine — automatic chart-type selection, sampling for large data, and its own PNG/SVG/CSV export menu.
-- **Reposition** a chart by dragging its title bar; **resize** it by dragging the bottom-right corner. Tiles snap to a column grid (6/8/12/16 columns, selectable), and resizing re-fits the chart to its new size. **Tidy** repacks every tile into a clean, gap-free layout.
-- **Configure** a chart with the ⚙ button. The **Chart** tab sets the title, chart type (scatter, line, regression, histogram, box, violin, bar, heatmap), X/Y columns, color, size, facets, palette, and a stats overlay. Changes apply live.
+- **+ Add chart** drops a new tile onto the grid, laid out in the first free slot (no overlaps). Every tile is a real crossex chart, sized so the whole chart — legend included — fits its tile, with automatic chart-type selection, sampling for large data, and its own PNG/SVG/CSV export menu.
+- **Reposition** a chart by dragging its title bar; **resize** it by dragging the bottom-right corner. Tiles snap to a column grid (6/8/12/16 columns, selectable), and resizing re-fits the chart to its new size. **Tidy** repacks every tile into a clean, gap-free layout, and **Width** caps the whole board (full window down to 800px, centered).
+- **Rename** a chart by clicking its title; click below the chart to add a **caption**.
+- **Configure** a chart with the ⚙ button. The **Chart** tab sets the title, caption, chart type (scatter, line, regression, histogram, box, violin, bar, heatmap), X/Y columns, color, size, facets, palette, and a stats overlay. Changes apply live.
+- **🛠 opens the full control panel** for that chart in a large editor — every tab of the single-chart explorer, including on-chart direct editing (drag titles/legend, double-click axes and colors). Closing the editor applies the changes to the tile as overrides.
 - **⧉ duplicate** and **✕ remove** are on each tile's header.
 
 **Viewing and replacing a chart's data**
@@ -380,7 +382,8 @@ The ⚙ config popover's **Data** tab shows the dataset behind that chart — it
 **Saving and sharing**
 
 - The layout, every chart's configuration, and small/URL datasets **auto-save to the browser** and restore on your next visit (URL datasets are re-fetched).
-- **Export** downloads the whole dashboard — layout, configs, and all rows — as a `.json` file; **Import** restores it. Nothing is sent to any server.
+- **Share link** publishes the dashboard as a URL: the layout, every tile's settings, and — when they compress small enough (the penguins demo fits easily) — the datasets themselves ride the link's fragment. URL-loaded datasets always travel as their URL and are re-fetched on open, so those links stay tiny at any data size. Opening the link rebuilds the dashboard in the recipient's browser; nothing is sent to any server.
+- **Export** downloads the whole dashboard — layout, configs, and all rows — as a `.json` file; **Import** restores it.
 - **Dark** switches the whole board (and every chart) to the dark palette.
 
 Like the rest of crossex, the dashboard runs entirely client-side; it's part of the standalone site (`crossex_site.js`), not the embeddable `crossex.js` library.

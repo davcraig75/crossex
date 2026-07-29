@@ -1,8 +1,15 @@
-<section id="cc_start_section" class="cc_start" aria-labelledby="cc_start_title">
+<div class="cc_topnav" id="cc_topnav">
+    <nav class="cc_marketing_nav" aria-label="Landing page navigation">
+        <a class="cc_wordmark" href="#cc_topnav" aria-label="Crossex home"><strong><span>cross</span>ex</strong><small>browser data explorer</small></a>
+        <div class="cc_marketing_links">
+            <a href="#cc_gallery">Examples</a>
+            <a href="https://github.com/davcraig75/crossex" target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span></a>
+        </div>
+    </nav>
+</div>
+<section id="cc_start_section" class="cc_start" aria-label="Load your data">
 <div id="cc_start_intro" class="cc_start_intro">
-    <span class="cc_section_kicker">Try it now</span>
-    <h2 id="cc_start_title">Start with your data—or ours.</h2>
-    <p>Paste a table below, drop in a file, fetch a public URL, or open the demo. Your data is processed locally in this tab.</p>
+    <p>Paste a table below, load a file or URL, or open the demo. Your data is processed locally in this tab.</p>
 </div>
 <form id="cc_data_form">
     <label class="cc_sr_only" for="myccinput">Paste CSV, TSV, or JSON data</label>
@@ -10,13 +17,13 @@
     <input type="file" id="ccfileinput" accept=".csv,.tsv,.txt,.tab,.json" style="display:none">
     <div class="cc_input_actions">
         <button type="button" id="graph_button" class="cc_button active">Graph Data</button>
-        <button type="button" id="load_file" class="cc_button">Load File</button>
         <div class="cc_menu" id="cc_source_menu">
-            <button type="button" id="cc_source_toggle" class="cc_button" aria-haspopup="true" aria-expanded="false" aria-controls="cc_source_list">Data Sources ▾</button>
+            <button type="button" id="cc_source_toggle" class="cc_button" aria-haspopup="true" aria-expanded="false" aria-controls="cc_source_list">Load Data ▾</button>
             <ul class="cc_menu_list" id="cc_source_list" role="menu" aria-label="Data sources">
+                <li role="none"><button type="button" role="menuitem" id="load_file" class="cc_button">Load File…</button></li>
+                <li role="none"><button type="button" role="menuitem" id="load_url" class="cc_button" aria-expanded="false" aria-controls="cc_url_bar">Load URL…</button></li>
                 <li role="none"><button type="button" role="menuitem" id="default_data" class="cc_button">Load Demo Data</button></li>
                 <li role="none"><button type="button" role="menuitem" id="large_demo" class="cc_button">Load 5M Demo</button></li>
-                <li role="none"><button type="button" role="menuitem" id="load_url" class="cc_button" aria-expanded="false" aria-controls="cc_url_bar">Load URL…</button></li>
                 <li role="none"><button type="button" role="menuitem" id="share_link" class="cc_button">Share Link</button></li>
             </ul>
         </div>
@@ -35,15 +42,6 @@
 </section>
 
 <section id="cc_hero" class="cc_hero">
-    <nav class="cc_marketing_nav" aria-label="Landing page navigation">
-        <a class="cc_wordmark" href="#cc_hero" aria-label="Crossex home"><strong><span>cross</span>ex</strong><small>browser data explorer</small></a>
-        <div class="cc_marketing_links">
-            <a href="#cc_capabilities">Capabilities</a>
-            <a href="#cc_gallery">Examples</a>
-            <a href="https://github.com/davcraig75/crossex" target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span></a>
-        </div>
-    </nav>
-
     <div class="cc_hero_grid">
         <div class="cc_hero_copy">
             <div class="cc_hero_badge"><span aria-hidden="true"></span> Your data stays in your browser</div>
@@ -102,37 +100,6 @@
         <div><b>Transform</b><span>formula, sort, dedupe, group, append, and join</span></div>
         <div><b>Reproduce</b><span>undo, redo, provenance, and portable projects</span></div>
     </div>
-
-    <section id="cc_capabilities" class="cc_capabilities" aria-labelledby="cc_capabilities_title">
-        <div class="cc_section_heading">
-            <span class="cc_section_kicker">More than a chart maker</span>
-            <h2 id="cc_capabilities_title">From raw rows to a defensible answer.</h2>
-            <p>Crossex keeps the entire exploratory workflow together, so the path from source data to final view stays visible and repeatable.</p>
-        </div>
-        <div class="cc_capability_grid">
-            <article class="cc_capability_card">
-                <div class="cc_capability_icon" aria-hidden="true">✓</div>
-                <span class="cc_capability_label">Understand the data</span>
-                <h3>See quality issues before they become chart issues.</h3>
-                <p>Inspect inferred types, missing values, distinct counts, examples, and warnings. Override types safely, then use summaries, statistical annotations, normality checks, and correlations.</p>
-            </article>
-            <article class="cc_capability_card">
-                <div class="cc_capability_icon" aria-hidden="true">ƒx</div>
-                <span class="cc_capability_label">Prepare and reshape</span>
-                <h3>Do the useful table work without leaving the browser.</h3>
-                <p>Create formula columns, filter, sort, deduplicate, group, append, and join. Every operation creates a new immutable state that you can undo or redo.</p>
-            </article>
-            <article class="cc_capability_card cc_capability_wide">
-                <div class="cc_capability_icon" aria-hidden="true">↗</div>
-                <div>
-                    <span class="cc_capability_label">Reproduce and communicate</span>
-                    <h3>Keep the analysis, not just the screenshot.</h3>
-                    <p>Export a portable project with data, settings, formulas, and provenance; restore it later; share a compressed view; arrange dashboards; or embed the same explorer in a web page, RStudio, Shiny, or R Markdown.</p>
-                </div>
-                <div class="cc_repro_stack" aria-hidden="true"><span>03 · grouped by species</span><span>02 · added BMI formula</span><span>01 · loaded penguins.csv</span></div>
-            </article>
-        </div>
-    </section>
 
 </section>
 

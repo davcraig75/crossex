@@ -28,14 +28,20 @@
 		active: false,
 		title: 'My Dashboard',
 		cols: 12,          // grid columns
+		width: 0,          // px max width of the canvas; 0 = full window
 		cellH: 40,         // px per grid row
 		gap: 12,           // px gutter between tiles
 		datasets: {},      // key -> {name, rows(with .columns), source, _pending}
 		dsOrder: [],       // dataset keys, insertion order
-		tiles: [],         // {id,title,titleManual,dsKey,cfg,gx,gy,gw,gh}
+		tiles: [],         // {id,title,titleManual,caption,dsKey,cfg,overrides,gx,gy,gw,gh}
 		seq: 0,            // tile id counter
 		dsSeq: 0           // dataset key counter
 	};
+
+	// Vertical chrome inside a tile's chart: canvas title + x axis + legend.
+	// tileSignalState seeds these compact values so a tile's full chart —
+	// including its legend — fits the tile body instead of clipping.
+	var TILE_TITLE_H = 22, TILE_AXIS_H = 42, TILE_LEGEND_H = 44;
 
 	// The chart type a tile can be. Each maps to a combination of X/Y column
 	// types plus Vega toggle signals — crossex has no single "chart type" signal.
@@ -154,6 +160,7 @@
 			Outliers_: false, Histogram_: false, Contours_: false, Regression_: false,
 			Jitter_: false, ECDF_: false, QQNorm_: false, Points_: true,
 			Stats_: !!c.stats, Show_Covariance: false,
+			Title_Height: TILE_TITLE_H, X_Axis_Height: TILE_AXIS_H, Legend_Height: TILE_LEGEND_H,
 			Max_Plot_Height: tile._plotH || 240
 		};
 		switch (c.type) {
@@ -235,8 +242,14 @@
 			return;
 		}
 		tile._renderTries = 0;
-		tile._plotH = Math.max(120, body.clientHeight - 44);
-		saveSignalState('vegaSignals_' + chartId, tileSignalState(tile));
+		// leave room for the in-canvas title, x axis, and legend so the whole
+		// chart — legend included — is visible inside the tile
+		tile._plotH = Math.max(100, body.clientHeight - TILE_TITLE_H - TILE_AXIS_H - TILE_LEGEND_H - 16);
+		// full-editor tweaks (tile.overrides) sit on top of the quick config;
+		// the computed plot height always wins so the chart keeps fitting
+		var state = Object.assign({}, tileSignalState(tile), tile.overrides || {});
+		state.Max_Plot_Height = tile._plotH;
+		saveSignalState('vegaSignals_' + chartId, state);
 		try {
 			crossex(chartId, tileRows(tile), tileOptions(tile), 'dash_body_' + tile.id);
 		} catch (e) {
@@ -422,9 +435,10 @@
 		node.innerHTML =
 			'<div class="dash_head" id="dash_head_' + tile.id + '">' +
 				'<span class="dash_grip"></span>' +
-				'<span class="dash_title" id="dash_title_' + tile.id + '"></span>' +
+				'<span class="dash_title" id="dash_title_' + tile.id + '" contenteditable="true" spellcheck="false" title="Click to rename"></span>' +
 				'<span class="dash_tools">' +
-					'<button class="dash_tbtn dash_cfg" title="Configure chart &amp; data">⚙</button>' +
+					'<button class="dash_tbtn dash_edit" title="Open with the full control panel">🛠</button>' +
+					'<button class="dash_tbtn dash_cfg" title="Quick chart &amp; data setup">⚙</button>' +
 					'<button class="dash_tbtn dash_dup" title="Duplicate">⧉</button>' +
 					'<button class="dash_tbtn dash_del" title="Remove">✕</button>' +
 				'</span>' +
@@ -432,10 +446,27 @@
 			'<div class="dash_body" id="dash_body_' + tile.id + '">' +
 				'<div class="dash_chart" id="dash_chart_' + tile.id + '"></div>' +
 			'</div>' +
+			'<div class="dash_caption" id="dash_caption_' + tile.id + '" contenteditable="true" spellcheck="false" data-placeholder="Add a caption…"></div>' +
 			'<div class="dash_resize" id="dash_resize_' + tile.id + '" title="Drag to resize"></div>';
 		canvasEl().appendChild(node);
 		byId('dash_title_' + tile.id).textContent = tile.title;
 		byId('dash_head_' + tile.id).querySelector('.dash_grip').textContent = '⠿';
+		var titleEl = byId('dash_title_' + tile.id);
+		titleEl.addEventListener('input', function () {
+			tile.title = titleEl.textContent.trim() || tile.title;
+			tile.titleManual = true;
+			persist();
+		});
+		titleEl.addEventListener('keydown', function (e) {
+			if (e.key === 'Enter') { e.preventDefault(); titleEl.blur(); }
+		});
+		var cap = byId('dash_caption_' + tile.id);
+		cap.textContent = tile.caption || '';
+		cap.addEventListener('input', function () {
+			tile.caption = cap.textContent.trim();
+			persist();
+		});
+		node.querySelector('.dash_edit').onclick = function () { openFullEditor(tile); };
 		node.querySelector('.dash_cfg').onclick = function () { openConfig(tile); };
 		node.querySelector('.dash_dup').onclick = function () { duplicateTile(tile); };
 		node.querySelector('.dash_del').onclick = function () { removeTile(tile); };
@@ -457,8 +488,8 @@
 		cfg = cfg || defaultCfg(dsKey);
 		var gw = Math.min(6, DASH.cols), gh = 8;
 		var pos = firstFit(gw, gh);
-		var tile = { id: id, title: chartTitle(cfg), titleManual: false, dsKey: dsKey,
-			cfg: cfg, gx: pos.gx, gy: pos.gy, gw: gw, gh: gh };
+		var tile = { id: id, title: chartTitle(cfg), titleManual: false, caption: '', dsKey: dsKey,
+			cfg: cfg, overrides: null, gx: pos.gx, gy: pos.gy, gw: gw, gh: gh };
 		DASH.tiles.push(tile);
 		buildTileDom(tile);
 		layoutTile(tile);
@@ -482,12 +513,29 @@
 	function duplicateTile(tile) {
 		var copy = JSON.parse(JSON.stringify(tile.cfg));
 		var t = addTile(tile.dsKey, copy);
-		if (t && tile.titleManual) { setTileTitle(t, tile.title + ' (copy)', true); }
+		if (!t) { return; }
+		if (tile.titleManual) { setTileTitle(t, tile.title + ' (copy)', true); }
+		t.caption = tile.caption || '';
+		t.overrides = tile.overrides ? JSON.parse(JSON.stringify(tile.overrides)) : null;
+		var cap = byId('dash_caption_' + t.id);
+		if (cap) { cap.textContent = t.caption; }
+		renderTile(t);
+		persist();
 	}
 
 	// Reapply a tile's config after an edit: refresh title (unless renamed),
 	// re-render its chart, and persist.
 	function applyTile(tile) {
+		if (tile.overrides) {
+			// quick-config choices must beat stale full-editor state for the
+			// fields both understand, or ⚙ edits would appear to do nothing
+			var st = tileSignalState(tile);
+			['X_Axis', 'Y_Axis', 'Color_By', 'Size_By', 'Facet_Cols_By', 'Facet_Rows_By',
+				'Palette', 'Stats_', 'Line_', 'Boxplot_', 'Violin_', 'Barplot_',
+				'Histogram_', 'Regression_', 'Points_'].forEach(function (k) {
+				if (k in tile.overrides) { tile.overrides[k] = st[k]; }
+			});
+		}
 		if (!tile.titleManual) { setTileTitle(tile, chartTitle(tile.cfg), false); }
 		renderTile(tile);
 		persist();
@@ -563,8 +611,10 @@
 
 	// ---- Modal shell ---------------------------------------------------------
 	var _modalReturnFocus = null;
-	function openModal(title, bodyNode, wide) {
+	var _modalOnClose = null;
+	function openModal(title, bodyNode, wide, onClose) {
 		closeModal();
+		_modalOnClose = onClose || null;
 		_modalReturnFocus = document.activeElement;
 		var bg = el('div', 'dash_modal_bg');
 		bg.id = 'dash_modal_bg';
@@ -593,6 +643,11 @@
 		if (bg) { bg.remove(); }
 		if (_modalReturnFocus && document.contains(_modalReturnFocus)) { _modalReturnFocus.focus(); }
 		_modalReturnFocus = null;
+		if (_modalOnClose) {
+			var cb = _modalOnClose;
+			_modalOnClose = null;
+			cb();
+		}
 	}
 
 	// ---- Reusable data-loader controls (paste / URL / file / current) --------
@@ -691,6 +746,63 @@
 		openModal('Add data', body);
 	}
 
+	// ---- Full-panel editor ---------------------------------------------------
+	// Opens the tile's chart as a complete crossex widget — every tab of the
+	// control panel, plus on-chart direct editing. The editor works on a
+	// scratch signal store seeded from the tile; closing the modal captures
+	// that state back onto the tile as overrides and re-renders it.
+	var EDITOR_ID = 'dash_editor_host';
+	function openFullEditor(tile) {
+		if (!tileHasRows(tile)) { ccToast('Load data for this chart first (⚙ ▸ Data)'); return; }
+		var body = el('div', 'dash_modal_body dash_editor_body');
+		var host = el('div');
+		host.id = EDITOR_ID;
+		body.appendChild(el('p', 'dash_hint',
+			'Full control panel for this chart — changes apply to the tile when you close this window. You can also drag titles and the legend, and double-click axes, the legend, or empty space to edit them in place.'));
+		body.appendChild(host);
+		openModal('Edit chart — ' + tile.title, body, true, function () {
+			var edited = loadSignalsFromCookie('vegaSignals_' + EDITOR_ID);
+			try { if (_views[EDITOR_ID]) { _views[EDITOR_ID].finalize(); delete _views[EDITOR_ID]; } } catch (e) {}
+			if (!edited) { return; }
+			tile.overrides = edited;
+			// reflect the mapped fields back into the quick config
+			var c = tile.cfg;
+			c.x = edited.X_Axis || c.x;
+			c.y = edited.Y_Axis || c.y;
+			c.color = edited.Color_By || c.color;
+			c.size = edited.Size_By || c.size;
+			c.facetCol = edited.Facet_Cols_By || c.facetCol;
+			c.facetRow = edited.Facet_Rows_By || c.facetRow;
+			c.palette = edited.Palette || c.palette;
+			c.stats = !!edited.Stats_;
+			if (!tile.titleManual) { setTileTitle(tile, chartTitle(c), false); }
+			renderTile(tile);
+			persist();
+		});
+		byId('dash_modal_bg').classList.add('dash_modal_full');
+		// seed the editor with the tile's effective state, minus the tile-fit
+		// height so the editor uses its own, larger plot area
+		var seed = Object.assign({}, tileSignalState(tile), tile.overrides || {});
+		delete seed.Max_Plot_Height;
+		seed.Title_Height = 34;
+		seed.Legend_Height = 60;
+		saveSignalState('vegaSignals_' + EDITOR_ID, seed);
+		var opts = tileOptions(tile).filter(function (o) {
+			return !(o && Object.prototype.hasOwnProperty.call(o, 'hide_panel'));
+		});
+		opts.push({ editable: 1 });
+		// render on the next frame: the modal needs a layout pass first or the
+		// widget measures a zero-width host ("invalid size")
+		requestAnimationFrame(function () {
+			if (!document.contains(host)) { return; }
+			try {
+				crossex(EDITOR_ID, tileRows(tile), opts, EDITOR_ID);
+			} catch (e) {
+				host.innerHTML = '<div class="dash_msg">Could not open the editor for this chart.</div>';
+			}
+		});
+	}
+
 	// ---- Per-tile config: Chart + Data tabs ----------------------------------
 	function openConfig(tile) {
 		var body = el('div', 'dash_modal_body');
@@ -747,6 +859,20 @@
 		titleIn.oninput = function () { setTileTitle(tile, titleIn.value, true); persist(); };
 		titleF.appendChild(titleIn);
 		pane.appendChild(titleF);
+
+		var capF = el('label', 'dash_fld');
+		capF.appendChild(el('span', null, 'Caption'));
+		var capIn = el('input');
+		capIn.type = 'text'; capIn.value = tile.caption || '';
+		capIn.placeholder = 'Shown under the chart';
+		capIn.oninput = function () {
+			tile.caption = capIn.value.trim();
+			var cap = byId('dash_caption_' + tile.id);
+			if (cap) { cap.textContent = tile.caption; }
+			persist();
+		};
+		capF.appendChild(capIn);
+		pane.appendChild(capF);
 
 		var grid = el('div', 'dash_cfg_grid');
 		grid.appendChild(selectField('Chart type', cfg.type, CHART_TYPES, function (v) {
@@ -855,7 +981,8 @@
 	// are stored separately and reattached on load.
 	function serializable(includeAllRows) {
 		return {
-			v: 1, title: DASH.title, cols: DASH.cols, seq: DASH.seq, dsSeq: DASH.dsSeq,
+			v: 1, title: DASH.title, cols: DASH.cols, width: DASH.width || 0,
+			seq: DASH.seq, dsSeq: DASH.dsSeq,
 			datasets: DASH.dsOrder.map(function (k) {
 				var d = DASH.datasets[k];
 				var cols = d.columns || [];
@@ -869,8 +996,9 @@
 				};
 			}),
 			tiles: DASH.tiles.map(function (t) {
-				return { id: t.id, title: t.title, titleManual: t.titleManual,
-					dsKey: t.dsKey, cfg: t.cfg, gx: t.gx, gy: t.gy, gw: t.gw, gh: t.gh };
+				return { id: t.id, title: t.title, titleManual: t.titleManual, caption: t.caption || '',
+					dsKey: t.dsKey, cfg: t.cfg, overrides: t.overrides || null,
+					gx: t.gx, gy: t.gy, gw: t.gw, gh: t.gh };
 			})
 		};
 	}
@@ -905,6 +1033,7 @@
 		DASH.datasets = {}; DASH.dsOrder = []; DASH.tiles = [];
 		DASH.title = p.title || 'My Dashboard';
 		DASH.cols = p.cols || 12;
+		DASH.width = p.width || 0;
 		DASH.seq = p.seq || 0;
 		DASH.dsSeq = p.dsSeq || 0;
 		(p.datasets || []).forEach(function (d) {
@@ -921,11 +1050,15 @@
 		});
 		(p.tiles || []).forEach(function (t) {
 			DASH.tiles.push({ id: t.id, title: t.title, titleManual: t.titleManual,
-				dsKey: t.dsKey, cfg: t.cfg, gx: t.gx, gy: t.gy, gw: t.gw, gh: t.gh });
+				caption: t.caption || '', dsKey: t.dsKey, cfg: t.cfg,
+				overrides: t.overrides || null, gx: t.gx, gy: t.gy, gw: t.gw, gh: t.gh });
 		});
-		// reflect grid columns in the toolbar select
+		// reflect grid columns and width in the toolbar controls
 		var colsSel = byId('dash_cols');
 		if (colsSel) { colsSel.value = String(DASH.cols); }
+		var widthSel = byId('dash_width');
+		if (widthSel) { widthSel.value = String(DASH.width || 0); }
+		applyDashWidth();
 		var titleEl = byId('dash_dtitle');
 		if (titleEl) { titleEl.textContent = DASH.title; }
 		renderDsBar();
@@ -986,6 +1119,78 @@
 		reader.readAsText(file);
 	}
 
+	// ---- Publish: the whole dashboard in a link ------------------------------
+	// The layout, every tile's config/overrides, and — when they compress small
+	// enough — the datasets themselves ride the URL fragment. URL-sourced
+	// datasets always travel as their URL and are refetched on open, so those
+	// links stay tiny regardless of data size. Nothing is sent to any server.
+	var DASH_HASH_MAX = 60000;
+	function shareLink() {
+		if (!DASH.tiles.length && !DASH.dsOrder.length) { ccToast('Build a dashboard first, then share'); return; }
+		function encode(p) { return '#dash=' + itgz.compressToEncodedURIComponent(JSON.stringify(p)); }
+		var note = '';
+		var payload = serializable(true);
+		var hash = encode(payload);
+		if (hash.length > DASH_HASH_MAX) {
+			// keep inline rows only for datasets that can't be refetched
+			payload.datasets.forEach(function (d) {
+				if (d.source && d.source.type === 'url') { d.rows = null; }
+			});
+			hash = encode(payload);
+		}
+		if (hash.length > DASH_HASH_MAX) {
+			payload.datasets.forEach(function (d) { d.rows = null; });
+			note = ' (layout only — the data is too large for a link; load it from a URL or use Export)';
+			hash = encode(payload);
+		}
+		try { history.replaceState(null, '', hash); } catch (e) {}
+		var url = location.href.split('#')[0] + hash;
+		if (navigator.clipboard && navigator.clipboard.writeText) {
+			navigator.clipboard.writeText(url).then(function () {
+				ccToast('Dashboard link copied' + note);
+			}, function () {
+				ccToast('Link is in the address bar — copy it from there' + note);
+			});
+		} else {
+			ccToast('Link is in the address bar — copy it from there' + note);
+		}
+	}
+
+	function restoreFromHash() {
+		var m = location.hash.match(/^#dash=(.+)$/);
+		if (!m) { return false; }
+		var p = null;
+		try { p = JSON.parse(itgz.decompressFromEncodedURIComponent(m[1])); } catch (e) {}
+		if (!p || p.v !== 1 || !p.tiles) { return false; }
+		if (!DASH.built) { buildShell(); DASH.built = true; }
+		DASH.seeded = true;
+		DASH.active = true;
+		showSingleUi(false);
+		byId('cc_dashboard').style.display = 'block';
+		DASH._deferRender = true;
+		loadState(p);
+		DASH._deferRender = false;
+		refreshEmpty();
+		requestAnimationFrame(function () { relayoutAll(); renderAllCharts(); });
+		persist();
+		ccToast('Opened shared dashboard');
+		return true;
+	}
+
+	function applyDashWidth() {
+		var c = canvasEl();
+		var bar = byId('dash_ds_bar');
+		if (!c) { return; }
+		c.style.maxWidth = DASH.width ? DASH.width + 'px' : '';
+		c.style.marginLeft = DASH.width ? 'auto' : '';
+		c.style.marginRight = DASH.width ? 'auto' : '';
+		if (bar) {
+			bar.style.maxWidth = DASH.width ? DASH.width + 'px' : '';
+			bar.style.marginLeft = DASH.width ? 'auto' : '';
+			bar.style.marginRight = DASH.width ? 'auto' : '';
+		}
+	}
+
 	// ---- Toolbar / shell -----------------------------------------------------
 	function buildShell() {
 		var root = byId('cc_dashboard');
@@ -999,6 +1204,16 @@
 					'<label class="dash_tb_lbl">Grid ' +
 						'<select id="dash_cols"><option>6</option><option>8</option><option selected>12</option><option>16</option></select>' +
 					'</label>' +
+					'<label class="dash_tb_lbl">Width ' +
+						'<select id="dash_width">' +
+							'<option value="0" selected>Full</option>' +
+							'<option value="1500">1500px</option>' +
+							'<option value="1200">1200px</option>' +
+							'<option value="1000">1000px</option>' +
+							'<option value="800">800px</option>' +
+						'</select>' +
+					'</label>' +
+					'<button class="cc_button" id="dash_share">Share link</button>' +
 					'<button class="cc_button" id="dash_export">Export</button>' +
 					'<button class="cc_button" id="dash_import">Import</button>' +
 					'<input type="file" id="dash_import_file" accept=".json" style="display:none">' +
@@ -1024,6 +1239,14 @@
 		byId('dash_empty_data').onclick = openAddData;
 		byId('dash_empty_chart').onclick = function () { addTile(); };
 		byId('dash_tidy').onclick = tidy;
+		byId('dash_share').onclick = shareLink;
+		byId('dash_width').onchange = function () {
+			DASH.width = parseInt(this.value, 10) || 0;
+			applyDashWidth();
+			relayoutAll();
+			renderAllCharts();
+			persist();
+		};
 		byId('dash_export').onclick = exportJson;
 		byId('dash_import').onclick = function () { byId('dash_import_file').click(); };
 		byId('dash_import_file').addEventListener('change', function (e) {
@@ -1047,7 +1270,7 @@
 
 	// Show/hide the single-chart UI vs. the dashboard.
 	function showSingleUi(show) {
-		['cc_hero', 'cc_gallery', 'cc_start_section', 'About'].forEach(function (id) {
+		['cc_topnav', 'cc_hero', 'cc_gallery', 'cc_start_section', 'About'].forEach(function (id) {
 			var n = byId(id); if (n) { n.style.display = show ? '' : 'none'; }
 		});
 		var form = document.querySelector('#crossex form');
@@ -1076,9 +1299,15 @@
 			}
 			DASH._deferRender = false;
 		}
+		applyDashWidth();
 		refreshEmpty();
 		// canvas width is known now that it is visible
 		requestAnimationFrame(function () { relayoutAll(); renderAllCharts(); });
+		// nothing to work with yet: open the data loader instead of making the
+		// user hunt for the button
+		if (!DASH.dsOrder.length && !DASH.tiles.length) {
+			setTimeout(openAddData, 50);
+		}
 	}
 
 	function exitDashboard() {
@@ -1100,11 +1329,13 @@
 	function wireEntry() {
 		var btn = byId('build_dashboard');
 		if (btn) { btn.onclick = enterDashboard; }
+		// a #dash= link opens straight into the shared dashboard
+		setTimeout(restoreFromHash, 0);
 	}
 	if (document.readyState === 'loading') {
 		document.addEventListener('DOMContentLoaded', wireEntry);
 	} else {
 		wireEntry();
 	}
-	window.crossexDash = { enter: enterDashboard, exit: exitDashboard };
+	window.crossexDash = { enter: enterDashboard, exit: exitDashboard, share: shareLink };
 })();
