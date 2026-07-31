@@ -855,7 +855,9 @@ var GALLERY_BASE_SIGNALS = {
 	Include_Only: ' ', Term: '-',
 	Line_: false, Boxplot_: true, Violin_: false, Outliers_: false,
 	Histogram_: false, Contours_: false, Regression_: false, Jitter_: false,
-	ECDF_: false, QQNorm_: false, Show_Covariance: false
+	ECDF_: false, QQNorm_: false, Show_Covariance: false,
+	Cat_Layout: 'bars', Stack_Grouped_: false, Density_: false,
+	Ridgeline_: false, Box_Points_: false, Histogram_Y_: false
 };
 
 var GALLERY_PRESETS = {
@@ -867,6 +869,12 @@ var GALLERY_PRESETS = {
 	box:       { signals: { X_Axis: 'species', Color_By: 'species' } },
 	violin:    { signals: { X_Axis: 'species', Color_By: 'species', Violin_: true, Boxplot_: false } },
 	stacked:   { signals: { X_Axis: 'island', Y_Axis: 'Count', Color_By: 'species' } },
+	grouped:   { signals: { X_Axis: 'island', Y_Axis: 'Count', Color_By: 'species', Stack_Grouped_: true } },
+	pie:       { signals: { X_Axis: 'species', Y_Axis: 'Count', Cat_Layout: 'donut' } },
+	treemap:   { signals: { X_Axis: 'island', Y_Axis: 'Count', Color_By: 'species', Cat_Layout: 'treemap' } },
+	density:   { signals: { X_Axis: 'body_mass_g', Y_Axis: 'None', Color_By: 'None', Density_: true } },
+	ridgeline: { signals: { X_Axis: 'body_mass_g', Y_Axis: 'species', Color_By: 'species', Violin_: true, Ridgeline_: true, Boxplot_: false } },
+	strip:     { signals: { X_Axis: 'species', Y_Axis: 'bill_length_mm', Color_By: 'species', Boxplot_: false, Box_Points_: true } },
 	heatmap:   { signals: { X_Axis: 'island', Y_Axis: 'species' } },
 	facet:     { signals: { X_Axis: 'bill_length_mm', Y_Axis: 'bill_depth_mm', Color_By: 'species', Facet_Cols_By: 'island' } },
 	corr:      { click: 'covariance' },

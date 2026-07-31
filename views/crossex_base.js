@@ -535,6 +535,10 @@ function optionContext(view) {
 		jitter: !!sig('Jitter_', false),
 		boxPoints: !!sig('Box_Points_', false),
 		yHist: !!sig('Histogram_Y_', false),
+		parts: !!sig('show_parts_graph', false),
+		catLayout: sig('Cat_Layout', 'bars'),
+		density: !!sig('Density_', false),
+		ridge: !!sig('Ridgeline_', false),
 		linked: !!sig('Link', false),
 		gridsOn: !!sig('Grids_', false)
 	};
@@ -552,7 +556,7 @@ function optionContext(view) {
 	// grid-eligible even while the heat map toggle is off, so Map_XY_Cat_
 	// stays reachable to turn the grid back on
 	ctx.gridEligible = plain && ctx.xCat && ctx.yCat && yPlotted;
-	ctx.anyChart = ctx.scatter || ctx.pureHist || ctx.box || ctx.hzbox || ctx.stacked || ctx.grid;
+	ctx.anyChart = ctx.scatter || ctx.pureHist || ctx.box || ctx.hzbox || ctx.stacked || ctx.grid || ctx.parts;
 	return ctx;
 }
 
@@ -565,8 +569,16 @@ var CONTROL_RELEVANCE = {
 	'Color_By':          function(c) { return !c.corr; },
 	'Size_By':           function(c) { return c.scatter || c.grid; },
 	'Stats_':            function(c) { return c.scatter || c.box || c.hzbox; },
-	// Charts: per-graph-type sections
-	'Stacked_Options':   function(c) { return c.stacked; },
+	// Charts: per-graph-type sections. The categorical section stays visible
+	// for every part-of-whole layout so the Layout selector can switch back.
+	'Stacked_Options':   function(c) { return c.stacked || c.parts; },
+	'Stack_Grouped_':    function(c) { return c.stacked && c.colored; },
+	'Donut_Ratio':       function(c) { return c.parts && c.catLayout === 'donut'; },
+	'Cloud_Options':     function(c) { return c.parts && c.catLayout === 'cloud'; },
+	'Density_':          function(c) { return c.hist; },
+	'Density_Bandwidth': function(c) { return c.hist && c.density; },
+	'Ridgeline_':        function(c) { return c.hzbox && c.violin; },
+	'Ridge_Overlap':     function(c) { return c.hzbox && c.violin && c.ridge; },
 	'Grid_Options':      function(c) { return c.gridEligible || c.corr; },   // Grid_Radius also rounds matrix cells
 	'Map_XY_Cat_':       function(c) { return c.gridEligible; },
 	'Grid_Spacing':      function(c) { return c.grid; },
@@ -677,7 +689,8 @@ var RELEVANCE_TRIGGERS = ['show_scatter_graph', 'show_hist_graph', 'show_box_gra
 	'QQNorm_', 'Xord', 'Yord', 'X_Axis', 'Y_Axis', 'Color_By', 'Cord', 'Size_By',
 	'Stroke_By', 'Facet_Rows_By', 'Facet_Cols_By', 'Filter_Out_From', 'Filter_Additional',
 	'Filter_By_Value', 'Contours_', 'Violin_', 'Boxplot_', 'Dashes_', 'Jitter_',
-	'Box_Points_', 'Link', 'Grids_', 'Histogram_', 'Histogram_Y_'];
+	'Box_Points_', 'Link', 'Grids_', 'Histogram_', 'Histogram_Y_',
+	'Cat_Layout', 'Density_', 'Ridgeline_'];
 
 function updateOptionRelevance(element, view) {
 	var ctx = optionContext(view);
@@ -3868,7 +3881,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 				myview = result.view;
 			});
 			checkbox.addEventListener('change', (event) => {
-				var new_signals_ar=["X_Axis","Search_By","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","SortX_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","Box_Points_","Histogram_Y_","Violin_Bandwidth","steps","Median_Thickness","LogY_","Jitter_" ,"Weight_Contour","Tips_","Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point","Min_Point","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Title_Height","X_Axis_Height","Row_Header_Width","Row_Height","Max_Facets","Legend_Height","Legend_Cols","PlotTitle_Height","graph_title","Show_Titles","ContourCounts","resolve","ContourLevels","CellSize_","Line_","ECDF_","QQNorm_","CC_X_Title","CC_Y_Title","CC_XT_DX","CC_XT_DY","CC_YT_DX","CC_YT_DY","CC_LEG_DX","CC_LEG_DY","CC_Cat_Colors","CC_Cont_Range","CC_Notes","CC_Title","CC_Subtitle","CC_TI_DX","CC_TI_DY"];
+				var new_signals_ar=["X_Axis","Search_By","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","SortX_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","Box_Points_","Histogram_Y_","Violin_Bandwidth","steps","Median_Thickness","Cat_Layout","Stack_Grouped_","Donut_Ratio","Density_","Density_Bandwidth","Ridgeline_","Ridge_Overlap","Cloud_Min_Font","Cloud_Max_Font","Cloud_Angle","Cloud_Padding","LogY_","Jitter_" ,"Weight_Contour","Tips_","Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point","Min_Point","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Title_Height","X_Axis_Height","Row_Header_Width","Row_Height","Max_Facets","Legend_Height","Legend_Cols","PlotTitle_Height","graph_title","Show_Titles","ContourCounts","resolve","ContourLevels","CellSize_","Line_","ECDF_","QQNorm_","CC_X_Title","CC_Y_Title","CC_XT_DX","CC_XT_DY","CC_YT_DX","CC_YT_DY","CC_LEG_DX","CC_LEG_DY","CC_Cat_Colors","CC_Cont_Range","CC_Notes","CC_Title","CC_Subtitle","CC_TI_DX","CC_TI_DY"];
 				for (var i = 0; i < new_signals_ar.length; i++) {
 					if (signalMap[new_signals_ar[i]] === undefined) { continue; }
 					try {

@@ -50,9 +50,17 @@
 		{ key: 'regression', label: 'Scatter + regression' },
 		{ key: 'line',       label: 'Line / time series' },
 		{ key: 'histogram',  label: 'Histogram' },
+		{ key: 'density',    label: 'Density curve' },
 		{ key: 'box',        label: 'Box plot' },
 		{ key: 'violin',     label: 'Violin plot' },
+		{ key: 'ridgeline',  label: 'Ridgeline (num X, category Y)' },
+		{ key: 'strip',      label: 'Strip plot' },
 		{ key: 'bar',        label: 'Bar (count / sum)' },
+		{ key: 'grouped',    label: 'Grouped bar' },
+		{ key: 'pie',        label: 'Pie' },
+		{ key: 'donut',      label: 'Donut' },
+		{ key: 'treemap',    label: 'Treemap' },
+		{ key: 'cloud',      label: 'Word cloud' },
 		{ key: 'heatmap',    label: 'Heatmap / grid' }
 	];
 
@@ -138,8 +146,12 @@
 
 	function chartTitle(cfg) {
 		var t = cfg.type;
-		if (t === 'histogram') { return 'Distribution of ' + cfg.x; }
-		if (t === 'bar') { return (cfg.y === 'Count' ? 'Count' : cfg.y) + ' by ' + cfg.x; }
+		if (t === 'histogram' || t === 'density') { return 'Distribution of ' + cfg.x; }
+		if (t === 'bar' || t === 'grouped') { return (cfg.y === 'Count' ? 'Count' : cfg.y) + ' by ' + cfg.x; }
+		if (t === 'pie' || t === 'donut') { return 'Share of ' + cfg.x; }
+		if (t === 'treemap') { return 'Composition of ' + cfg.x; }
+		if (t === 'cloud') { return 'Word cloud of ' + cfg.x; }
+		if (t === 'ridgeline') { return cfg.x + ' by ' + cfg.y; }
 		if (t === 'heatmap') { return cfg.x + ' × ' + cfg.y; }
 		if (cfg.y && cfg.y !== 'None') { return cfg.y + ' vs ' + cfg.x; }
 		return cfg.x || 'Chart';
@@ -160,6 +172,8 @@
 			Outliers_: false, Histogram_: false, Contours_: false, Regression_: false,
 			Jitter_: false, ECDF_: false, QQNorm_: false, Points_: true,
 			Stats_: !!c.stats, Show_Covariance: false,
+			Cat_Layout: 'bars', Stack_Grouped_: false, Density_: false,
+			Ridgeline_: false, Box_Points_: false, Histogram_Y_: false,
 			Title_Height: TILE_TITLE_H, X_Axis_Height: TILE_AXIS_H, Legend_Height: TILE_LEGEND_H,
 			Max_Plot_Height: tile._plotH || 240
 		};
@@ -168,12 +182,20 @@
 			case 'regression': s.Regression_ = true; break;
 			case 'line': s.Line_ = true; break;
 			case 'histogram': s.Y_Axis = 'None'; s.Histogram_ = true; break;
+			case 'density': s.Y_Axis = 'None'; s.Density_ = true; break;
 			case 'box': s.Boxplot_ = true; break;
 			case 'violin': s.Violin_ = true; s.Points_ = false; break;
+			case 'ridgeline': s.Violin_ = true; s.Ridgeline_ = true; s.Boxplot_ = false; s.Points_ = false; break;
+			case 'strip': s.Boxplot_ = false; s.Box_Points_ = true; break;
 			case 'bar':
 				if (c.y && c.y !== 'None' && c.y !== 'Count') { s.Barplot_ = true; s.Points_ = false; }
 				else { s.Y_Axis = 'Count'; }
 				break;
+			case 'grouped': s.Y_Axis = 'Count'; s.Stack_Grouped_ = true; break;
+			case 'pie': s.Y_Axis = 'Count'; s.Cat_Layout = 'pie'; break;
+			case 'donut': s.Y_Axis = 'Count'; s.Cat_Layout = 'donut'; break;
+			case 'treemap': s.Y_Axis = 'Count'; s.Cat_Layout = 'treemap'; break;
+			case 'cloud': s.Y_Axis = 'Count'; s.Cat_Layout = 'cloud'; break;
 			case 'heatmap': break;
 		}
 		return s;
@@ -898,7 +920,7 @@
 		pane.appendChild(statsF);
 
 		pane.appendChild(el('p', 'dash_hint',
-			'The chart type follows your column choices — pick two numeric columns for a scatter, a category + number for box/violin, one column for a histogram.'));
+			'The chart type follows your column choices — two numeric columns for a scatter; a category + number for box/violin/strip; one numeric column for a histogram or density; one categorical column for bar, pie, donut, treemap, or word cloud; a number on X and a category on Y for a ridgeline.'));
 	}
 
 	function buildDataPane(tile, pane) {

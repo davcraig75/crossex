@@ -394,14 +394,33 @@ Like the rest of crossex, the dashboard runs entirely client-side; it's part of 
 
 | Type | When Used | Key Options |
 |------|-----------|-------------|
-| **Scatter Plot** | Two numeric axes | Points, Regression, Contours (per facet cell, grouped by color), Jitter |
+| **Scatter Plot** | Two numeric axes | Points, Regression, Contours (per facet cell, grouped by color), Jitter, marginal histograms on X and Y |
 | **Line / Time Series** | Two numeric axes + the Line toggle (Scatter options) | Mean line per color group, sorted by X; date columns auto-convert to decimal years |
-| **Histogram** | One numeric axis (Y = "None") | Bin size, Ratio, ECDF overlay, Normal QQ plot |
-| **Box Plot** | Categorical X + Numeric Y | Outliers toggle |
-| **Violin Plot** | Categorical X + Numeric Y | Distribution width, Dashes |
-| **Stacked Bar** | Categorical axes with Sum_By | Sum column selection |
+| **Histogram** | One numeric axis (Y = "None") | Bin size, Ratio, ECDF overlay, Density curve (KDE with adjustable bandwidth), Normal QQ plot |
+| **Box Plot** | Categorical X + Numeric Y | Outliers, value dashes, value points (strip plot when the box is off) |
+| **Violin Plot** | Categorical X + Numeric Y | Distribution width, bandwidth and resolution, Dashes |
+| **Ridgeline** | Numeric X + Categorical Y, Violin + Ridgeline toggles | Overlapping per-category densities; Ridge Height sets the overlap |
+| **Stacked / Grouped Bar** | Categorical X with Count or Sum | Sum column selection; Grouped Bars puts color groups side by side instead of stacking |
+| **Pie / Donut / Rose** | Categorical X with Count or Sum, via the Layout selector | Slice labels with shares; Donut Hole size; the rose (Nightingale) scales radius by value |
+| **Treemap / Sunburst** | Categorical X with Count or Sum, via the Layout selector | Color By adds a second hierarchy level (nested rectangles / outer ring) |
+| **Word Cloud** | Categorical X with Count or Sum, via the Layout selector | Font size range, word angles, and spacing under Marks ▸ Word Cloud |
 | **Grid / Heatmap** | Two categorical axes | Cells colored by row count by default (hover for the count); map Color_By/Size_By or enable Jitter for per-row views |
 | **Correlation Matrix** | All numeric columns | Show Covariance toggle; click any cell to open that pair's plot |
+
+**One shape, many layouts.** Whenever X is categorical and Y is Count or Sum, a **Layout** selector appears beside the Sum column: `bars` (stacked or grouped), `pie`, `donut`, `rose`, `treemap`, `sunburst`, or `cloud`. All seven read the same aggregation, so you can flip between them freely — and the panel shows only the controls the current layout uses.
+
+### Planned chart types
+
+These follow the same trigger philosophy — each appears only when its data shape is on screen — and are next in line:
+
+- **Waffle chart** — joins the categorical Layout selector (share of a category as a grid of squares).
+- **Marimekko / mosaic** — two categorical axes + Count: variable-width stacked columns; would join the heat map's section as an alternate layout.
+- **Stream chart / stacked area** — numeric (time) X + Count/Sum + Color: an offset option on the Line chart.
+- **Waterfall (bridge)** — categorical X + a signed Sum column: an option beside Grouped Bars.
+- **Gantt** — needs two mapped columns (start and end); planned as a dedicated section that appears when a second numeric/date "End" column is mapped.
+- **One-dimensional heatmap** — one categorical or binned numeric column: a compact strip in the Distribution section.
+- **Dendrogram** — hierarchical clustering over the numeric columns; pairs with the correlation matrix view.
+- **Venn / Euler** — needs set-membership semantics (boolean columns); planned to trigger when 2–3 boolean columns are selected.
 
 ---
 
@@ -433,10 +452,10 @@ Tabs on the left rail are grouped: chart building, then appearance (axis & text,
 ### Charts Tab
 Set X and Y axis columns, facets, color, size, and outline encodings. The **Stat Annotations** toggle overlays fitted r²/slope on scatter plots and n/μ/σ per category — and, on box/violin charts, a badge with the group-difference test: **Welch t-test** for two groups, **one-way ANOVA** for three or more, computed over the full dataset. Chart-type-specific sections appear underneath:
 - **Scatter** -- Density contours, regression line, points, mean line, marginal histograms on X and Y
-- **Box/Violin** -- Box plot, violin, outliers, value dashes, value points (a centered, shape-aware strip of the raw observations — no jitter needed), bar overlay toggles, violin bandwidth (0 = auto) and resolution for tuning how much detail the density shows
+- **Box/Violin** -- Box plot, violin, outliers, value dashes, value points (a centered, shape-aware strip of the raw observations — no jitter needed), ridgeline mode with adjustable ridge height (horizontal charts), bar overlay toggles, violin bandwidth (0 = auto) and resolution
 - **Grid** -- Heat map grid toggle (two categorical axes), fixed cell size, cell corner radius
-- **Stacked** -- Sum aggregation column
-- **Distribution** -- Histogram bins, ECDF overlay, normal QQ plot (histogram ratio when a marginal histogram is on)
+- **Categorical** -- Sum aggregation column, the **Layout** selector (bars / pie / donut / rose / treemap / sunburst / word cloud), Grouped Bars, and Donut Hole size
+- **Distribution** -- Histogram bins, ECDF overlay, density curve with bandwidth, normal QQ plot (histogram ratio when a marginal histogram is on)
 
 ### Axis & Text Tab
 - **Log scale** for X and/or Y (numeric axes)
