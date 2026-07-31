@@ -489,13 +489,13 @@ textarea#myccinput.cc_dragover {
 /* Start area and chart gallery */
 .cc_start,
 #cc_gallery { max-width: 1180px; margin-left: auto; margin-right: auto; }
-.cc_start { margin-bottom: 35px; }
-.cc_start_intro { max-width: 640px; margin-bottom: 18px; }
-#cc_data_form { padding: 14px; border: 1px solid #e1dce3; border-radius: 13px; background: #fbfafc; box-shadow: 0 8px 24px rgba(52, 31, 55, .05); }
-textarea#myccinput { box-sizing: border-box; width: 100% !important; height: 112px !important; resize: vertical; padding: 13px 14px; border: 1px solid #d5cfd8; border-radius: 8px; background: #fff; color: #28232b; font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important; transition: border-color .15s, box-shadow .15s; }
+.cc_start { margin-bottom: 20px; }
+.cc_start_intro { max-width: 640px; margin-bottom: 8px; }
+#cc_data_form { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+textarea#myccinput { box-sizing: border-box; width: 100% !important; height: 84px !important; resize: vertical; padding: 13px 14px; border: 1px solid #d5cfd8; border-radius: 8px; background: #fff; color: #28232b; font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important; transition: border-color .15s, box-shadow .15s; }
 textarea#myccinput:focus { border-color: var(--cc-plum, #8b1768); box-shadow: 0 0 0 3px rgba(139, 23, 104, .1); outline: none; }
-.cc_start .cc_input_actions { display: flex; margin-top: 9px; gap: 6px; }
-.cc_start button.cc_button { min-height: 29px; border-radius: 6px; padding: 5px 10px; letter-spacing: .01em; }
+.cc_start .cc_input_actions { display: flex; flex-wrap: wrap; margin-top: 6px; gap: 4px; }
+.cc_start button.cc_button { min-height: 23px; border-radius: 5px; padding: 3px 8px; font-size: 10px; letter-spacing: .01em; }
 #cc_gallery { margin-top: 28px; padding-top: 31px; border-top: 1px solid #e8e4e9; }
 .cc_gallery_head { margin-bottom: 18px; max-width: 720px; color: #625c66; font-size: 12px; line-height: 1.55; }
 .cc_gallery_head b { color: #211d24; font-size: 18px; }
@@ -1348,8 +1348,8 @@ html.cc-dark .dash_caption:empty::before {
 	padding: 4px 12px 0;
 }
 .cc_topnav .cc_marketing_nav {
-	min-height: 52px;
-	margin-bottom: 4px;
+	min-height: 34px;
+	margin-bottom: 2px;
 	border-bottom: 1px solid #e9e5ec;
 }
 html.cc-dark .cc_topnav .cc_marketing_nav {
@@ -1487,3 +1487,10 @@ html.cc-dark .dash_textbody:empty::before {
 .dash_viewing .dash_canvas {
 	background-image: none;
 }
+
+/* compact landing chrome: the intake row is the page's toolbar, not a card */
+.cc_topnav { padding-top: 2px; }
+.cc_topnav .cc_wordmark { font-size: 17px; }
+.cc_topnav .cc_wordmark small { font-size: 9px; }
+.cc_topnav .cc_marketing_links a { font-size: 11px; }
+.cc_start_intro p { font-size: 12px; }

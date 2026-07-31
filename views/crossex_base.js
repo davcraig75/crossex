@@ -576,6 +576,9 @@ var CONTROL_RELEVANCE = {
 	'Donut_Ratio':       function(c) { return c.parts && c.catLayout === 'donut'; },
 	'Cloud_Options':     function(c) { return c.parts && c.catLayout === 'cloud'; },
 	'Density_':          function(c) { return c.hist; },
+	// the count scale belongs to the histogram itself, so it appears for a
+	// pure histogram or a scatter's X marginal — the Y marginal reports counts on hover
+	'Count_Axis_':       function(c) { return c.pureHist || c.margHist || c.qq === false && c.hist && !c.scatter; },
 	'Density_Bandwidth': function(c) { return c.hist && c.density; },
 	'Ridgeline_':        function(c) { return c.hzbox && c.violin; },
 	'Ridge_Overlap':     function(c) { return c.hzbox && c.violin && c.ridge; },
@@ -690,7 +693,7 @@ var RELEVANCE_TRIGGERS = ['show_scatter_graph', 'show_hist_graph', 'show_box_gra
 	'Stroke_By', 'Facet_Rows_By', 'Facet_Cols_By', 'Filter_Out_From', 'Filter_Additional',
 	'Filter_By_Value', 'Contours_', 'Violin_', 'Boxplot_', 'Dashes_', 'Jitter_',
 	'Box_Points_', 'Link', 'Grids_', 'Histogram_', 'Histogram_Y_',
-	'Cat_Layout', 'Density_', 'Ridgeline_'];
+	'Cat_Layout', 'Density_', 'Ridgeline_', 'Count_Axis_'];
 
 function updateOptionRelevance(element, view) {
 	var ctx = optionContext(view);
@@ -3425,16 +3428,22 @@ var crossex = function crossex(element, data, options,widthid) {
 			facetCapped = true;
 		}
 		var noticeEl = document.getElementById('cc_sample_notice' + element);
+		var sampleMsg = '';
 		if (sampleN > 0 && data.length > sampleN) {
 			renderData = sampleRows(data, sampleN);
-			if (noticeEl) {
-				noticeEl.textContent = 'Rendering ' + sampleN.toLocaleString() + ' of ' + data.length.toLocaleString() +
-					' rows (uniform sample' + (facetCapped ? '; faceted views are capped for responsiveness' : '') +
-					'). Summary tab uses all rows. Change under Filtering ▸ Render sample.';
-				noticeEl.style.display = 'block';
-			}
+			sampleMsg = 'Rendering ' + sampleN.toLocaleString() + ' of ' + data.length.toLocaleString() +
+				' rows (uniform sample' + (facetCapped ? '; faceted views are capped for responsiveness' : '') +
+				'). Summary tab uses all rows. Change under Filtering ▸ Render sample.';
+		}
+		// The host page (standalone site) folds this into the banner above the
+		// chart; embedded widgets have no banner, so they keep the inline strip.
+		var hostNotice = typeof window !== 'undefined' && window.ccSampleNotice;
+		if (hostNotice) {
+			if (noticeEl) { noticeEl.style.display = 'none'; }
+			try { window.ccSampleNotice(sampleMsg); } catch (e) {}
 		} else if (noticeEl) {
-			noticeEl.style.display = 'none';
+			noticeEl.textContent = sampleMsg;
+			noticeEl.style.display = sampleMsg ? 'block' : 'none';
 		}
 		_renderCount[element] = renderData.length;
 		spec.data[dataMap["mydata"]].values = renderData;
@@ -3881,7 +3890,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 				myview = result.view;
 			});
 			checkbox.addEventListener('change', (event) => {
-				var new_signals_ar=["X_Axis","Search_By","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","SortX_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","Box_Points_","Histogram_Y_","Violin_Bandwidth","steps","Median_Thickness","Cat_Layout","Stack_Grouped_","Donut_Ratio","Density_","Density_Bandwidth","Ridgeline_","Ridge_Overlap","Cloud_Min_Font","Cloud_Max_Font","Cloud_Angle","Cloud_Padding","LogY_","Jitter_" ,"Weight_Contour","Tips_","Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point","Min_Point","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Title_Height","X_Axis_Height","Row_Header_Width","Row_Height","Max_Facets","Legend_Height","Legend_Cols","PlotTitle_Height","graph_title","Show_Titles","ContourCounts","resolve","ContourLevels","CellSize_","Line_","ECDF_","QQNorm_","CC_X_Title","CC_Y_Title","CC_XT_DX","CC_XT_DY","CC_YT_DX","CC_YT_DY","CC_LEG_DX","CC_LEG_DY","CC_Cat_Colors","CC_Cont_Range","CC_Notes","CC_Title","CC_Subtitle","CC_TI_DX","CC_TI_DY"];
+				var new_signals_ar=["X_Axis","Search_By","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","SortX_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","Box_Points_","Histogram_Y_","Violin_Bandwidth","steps","Median_Thickness","Cat_Layout","Stack_Grouped_","Donut_Ratio","Density_","Count_Axis_","Density_Bandwidth","Ridgeline_","Ridge_Overlap","Cloud_Min_Font","Cloud_Max_Font","Cloud_Angle","Cloud_Padding","LogY_","Jitter_" ,"Weight_Contour","Tips_","Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point","Min_Point","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Title_Height","X_Axis_Height","Row_Header_Width","Row_Height","Max_Facets","Legend_Height","Legend_Cols","PlotTitle_Height","graph_title","Show_Titles","ContourCounts","resolve","ContourLevels","CellSize_","Line_","ECDF_","QQNorm_","CC_X_Title","CC_Y_Title","CC_XT_DX","CC_XT_DY","CC_YT_DX","CC_YT_DY","CC_LEG_DX","CC_LEG_DY","CC_Cat_Colors","CC_Cont_Range","CC_Notes","CC_Title","CC_Subtitle","CC_TI_DX","CC_TI_DY"];
 				for (var i = 0; i < new_signals_ar.length; i++) {
 					if (signalMap[new_signals_ar[i]] === undefined) { continue; }
 					try {

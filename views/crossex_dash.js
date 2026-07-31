@@ -1620,7 +1620,7 @@
 
 	// Show/hide the single-chart UI vs. the dashboard.
 	function showSingleUi(show) {
-		['cc_topnav', 'cc_hero', 'cc_gallery', 'cc_start_section', 'About'].forEach(function (id) {
+		['cc_topnav', 'cc_gallery', 'cc_start_section', 'About'].forEach(function (id) {
 			var n = byId(id); if (n) { n.style.display = show ? '' : 'none'; }
 		});
 		var form = document.querySelector('#crossex form');

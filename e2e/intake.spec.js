@@ -5,8 +5,6 @@ test('landing page exposes a keyboard-ready intake workflow', async function({ p
   await page.goto('/');
 
   await expect(page).toHaveTitle('Crossex | Private, no-code data explorer');
-  await expect(page.getByRole('heading', { name: /Turn any table into an analysis workspace/ })).toBeVisible();
-  await expect(page.getByLabel('Preview of the Crossex data explorer')).toBeVisible();
   // branding sits above the data input, and the intake buttons collapse
   // file/url/demo loading into one Load Data menu
   const nav = page.locator('#cc_topnav');
@@ -23,21 +21,22 @@ test('landing page exposes a keyboard-ready intake workflow', async function({ p
   await page.keyboard.press('Escape');
   await expect(page.getByLabel('Paste CSV, TSV, or JSON data')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Open Scatter example' })).toHaveAttribute('tabindex', '0');
+  await expect(page.getByRole('button', { name: 'Reset' })).toBeVisible();
 });
 
-test('landing page communicates the workflow without horizontal overflow', async function({ page }) {
+test('the example gallery leads with every chart family, without overflow', async function({ page }) {
   await page.goto('/');
-  await expect(page.getByText('Automatic chart selection')).toBeVisible();
-  await expect(page.getByText('Undoable analysis history')).toBeVisible();
+  // the gallery is the landing page's main content now that the hero is gone
+  for (const example of ['scatter', 'histogram', 'density', 'ridgeline', 'strip',
+                         'grouped', 'pie', 'treemap', 'heatmap']) {
+    await expect(page.locator('[data-gallery="' + example + '"]')).toBeVisible();
+  }
   const dimensions = await page.evaluate(function() {
     return { viewport: document.documentElement.clientWidth, content: document.documentElement.scrollWidth };
   });
   expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport);
 
-  const previewButton = page.getByRole('button', { name: /Open this view/ });
-  if (await previewButton.isVisible()) await previewButton.click();
-  else await page.getByRole('button', { name: /Explore the penguins demo/ }).click();
-  await expect(page.locator('#cc_hero')).toBeHidden();
+  await page.locator('[data-gallery="scatter"]').click();
   await expect(page.locator('#cc_start_intro')).toBeHidden();
   await expect(page.locator('#cc_data_notice')).toContainText('Loaded 344 rows × 8 columns');
 });
@@ -84,7 +83,7 @@ test('gallery cards can launch a demo from the keyboard', async function({ page 
   await page.keyboard.press('Enter');
 
   await expect(page.locator('#data_quality')).toBeEnabled();
-  await expect(page.locator('#cc_hero')).toBeHidden();
+  await expect(page.locator('#cc_gallery')).toBeHidden();
 });
 
 test('landing and quality workflows have no serious automated accessibility violations', async function({ page }) {

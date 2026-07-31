@@ -29,7 +29,7 @@
         </div>
         <button type="button" id="build_dashboard" class="cc_button">Dashboard</button>
         <button type="button" id="data_quality" class="cc_button" disabled>Data Quality</button>
-        <button type="button" id="clear_cookies" class="cc_button" title="Clear saved settings and cookies for this tool">Clear Settings</button>
+        <button type="button" id="clear_cookies" class="cc_button" title="Reset this chart to its default settings and clear saved state">Reset</button>
     </div>
     <div id="cc_url_bar" class="cc_url_bar" role="region" aria-label="Load data from URL" style="display:none">
         <label class="cc_sr_only" for="cc_url_field">CSV, TSV, or JSON URL</label>
@@ -39,68 +39,6 @@
         <button type="button" id="cc_url_cancel" class="cc_button">Cancel</button>
     </div>
 </form>
-</section>
-
-<section id="cc_hero" class="cc_hero">
-    <div class="cc_hero_grid">
-        <div class="cc_hero_copy">
-            <div class="cc_hero_badge"><span aria-hidden="true"></span> Your data stays in your browser</div>
-            <h1 class="cc_hero_title">Turn any table into an <em>analysis workspace.</em></h1>
-            <p class="cc_hero_sub">Open CSV, TSV, or JSON and move from raw rows to interactive charts,
-                data-quality checks, transformations, statistics, and a reproducible project—without code,
-                uploads, or an account.</p>
-            <div class="cc_hero_cta">
-                <button type="button" class="cc_hero_btn cc_hero_btn_primary" id="hero_demo_btn">Explore the penguins demo <span aria-hidden="true">→</span></button>
-                <button type="button" class="cc_hero_btn cc_hero_btn_secondary" id="hero_paste_btn">Use my own data</button>
-            </div>
-            <ul class="cc_hero_proof" aria-label="Product highlights">
-                <li><span aria-hidden="true">✓</span> Automatic chart selection</li>
-                <li><span aria-hidden="true">✓</span> 5M rows tested</li>
-                <li><span aria-hidden="true">✓</span> Undoable analysis history</li>
-            </ul>
-        </div>
-
-        <div class="cc_product_preview" aria-label="Preview of the Crossex data explorer">
-            <div class="cc_preview_topbar">
-                <div class="cc_preview_brand"><i aria-hidden="true"></i> crossex</div>
-                <div class="cc_preview_status"><span aria-hidden="true"></span> 344 rows · 8 columns</div>
-            </div>
-            <div class="cc_preview_body">
-                <div class="cc_preview_rail" aria-hidden="true"><b>⌕</b><b>↔</b><b>⌁</b><b>ƒx</b><b>▦</b></div>
-                <div class="cc_preview_main">
-                    <div class="cc_preview_fields">
-                        <span><small>X</small> bill length</span>
-                        <span><small>Y</small> bill depth</span>
-                        <span><small>COLOR</small> species</span>
-                        <span><small>FACET</small> none</span>
-                    </div>
-                    <div class="cc_preview_chart">
-                        <div class="cc_preview_chart_title"><b>Bill length vs. bill depth</b><span>Colored by species</span></div>
-                        <svg viewBox="0 0 560 260" role="img" aria-label="Example scatter plot of penguin measurements">
-                            <g stroke="#e9e7eb" stroke-width="1"><line x1="56" y1="34" x2="538" y2="34"/><line x1="56" y1="92" x2="538" y2="92"/><line x1="56" y1="150" x2="538" y2="150"/><line x1="56" y1="208" x2="538" y2="208"/><line x1="145" y1="20" x2="145" y2="220"/><line x1="258" y1="20" x2="258" y2="220"/><line x1="371" y1="20" x2="371" y2="220"/><line x1="484" y1="20" x2="484" y2="220"/></g>
-                            <g stroke="#a09aa4" stroke-width="1.4"><line x1="56" y1="20" x2="56" y2="220"/><line x1="56" y1="220" x2="538" y2="220"/></g>
-                            <g fill="#6954c2" fill-opacity=".72"><circle cx="158" cy="89" r="5"/><circle cx="176" cy="107" r="5"/><circle cx="191" cy="93" r="4"/><circle cx="205" cy="119" r="5"/><circle cx="222" cy="100" r="4"/><circle cx="238" cy="124" r="5"/><circle cx="254" cy="111" r="4"/><circle cx="268" cy="135" r="5"/><circle cx="285" cy="116" r="4"/></g>
-                            <g fill="#cf4f89" fill-opacity=".72"><circle cx="270" cy="75" r="5"/><circle cx="292" cy="88" r="4"/><circle cx="310" cy="68" r="5"/><circle cx="329" cy="95" r="5"/><circle cx="346" cy="81" r="4"/><circle cx="366" cy="103" r="5"/><circle cx="388" cy="86" r="4"/><circle cx="405" cy="111" r="5"/></g>
-                            <g fill="#ee875c" fill-opacity=".76"><circle cx="317" cy="168" r="5"/><circle cx="339" cy="151" r="4"/><circle cx="355" cy="179" r="5"/><circle cx="376" cy="158" r="5"/><circle cx="396" cy="185" r="4"/><circle cx="417" cy="166" r="5"/><circle cx="438" cy="194" r="5"/><circle cx="458" cy="175" r="4"/><circle cx="477" cy="202" r="5"/></g>
-                            <g fill="#777" font-size="10" font-family="system-ui, sans-serif"><text x="44" y="38" text-anchor="end">20</text><text x="44" y="96" text-anchor="end">18</text><text x="44" y="154" text-anchor="end">16</text><text x="44" y="212" text-anchor="end">14</text><text x="137" y="239">35</text><text x="250" y="239">40</text><text x="363" y="239">45</text><text x="476" y="239">50</text></g>
-                        </svg>
-                    </div>
-                    <div class="cc_preview_footer">
-                        <span><i class="cc_dot cc_dot_one"></i>Adelie</span><span><i class="cc_dot cc_dot_two"></i>Chinstrap</span><span><i class="cc_dot cc_dot_three"></i>Gentoo</span>
-                        <button type="button" id="hero_preview_btn">Open this view <span aria-hidden="true">→</span></button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="cc_value_strip" aria-label="Core capabilities">
-        <div><b>13</b><span>visual modes that adapt to your columns</span></div>
-        <div><b>Profile</b><span>types, missingness, cardinality, and anomalies</span></div>
-        <div><b>Transform</b><span>formula, sort, dedupe, group, append, and join</span></div>
-        <div><b>Reproduce</b><span>undo, redo, provenance, and portable projects</span></div>
-    </div>
-
 </section>
 
 <div id="cc_data_notice" class="cc_data_notice" role="status" aria-live="polite" hidden>

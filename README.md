@@ -351,7 +351,7 @@ Click the export icon (top-right of the chart) to:
 
 All settings (axis selections, filters, palettes, etc.) are saved to browser localStorage and restored automatically on your next visit. Saved column selections that don't exist in the currently loaded dataset are ignored, so switching datasets always produces a valid chart.
 
-Click **Clear Settings** to reset everything to defaults — the chart redraws immediately with the widget's default configuration.
+Click **Reset** to return everything to defaults — the chart redraws immediately with the widget's default configuration.
 
 ---
 
@@ -405,9 +405,9 @@ Like the rest of crossex, the dashboard runs entirely client-side; it's part of 
 
 | Type | When Used | Key Options |
 |------|-----------|-------------|
-| **Scatter Plot** | Two numeric axes | Points, Regression, Contours (per facet cell, grouped by color), Jitter, marginal histograms on X and Y |
+| **Scatter Plot** | Two numeric axes | Points, Regression, Contours (per facet cell, grouped by color), Jitter, marginal histograms on X and Y (both stacked and colored by the same scale) |
 | **Line / Time Series** | Two numeric axes + the Line toggle (Scatter options) | Mean line per color group, sorted by X; date columns auto-convert to decimal years |
-| **Histogram** | One numeric axis (Y = "None") | Bin size, Ratio, ECDF overlay, Density curve (KDE with adjustable bandwidth), Normal QQ plot |
+| **Histogram** | One numeric axis (Y = "None") | Bin size, Ratio, ECDF overlay, Density curve (KDE with adjustable bandwidth), an optional count axis, Normal QQ plot |
 | **Box Plot** | Categorical X + Numeric Y | Outliers, value dashes, value points (strip plot when the box is off) |
 | **Violin Plot** | Categorical X + Numeric Y | Distribution width, bandwidth and resolution, Dashes |
 | **Ridgeline** | Numeric X + Categorical Y, Violin + Ridgeline toggles | Overlapping per-category densities; Ridge Height sets the overlap |
@@ -466,7 +466,7 @@ Set X and Y axis columns, facets, color, size, and outline encodings. The **Stat
 - **Box/Violin** -- Box plot, violin, outliers, value dashes, value points (a centered, shape-aware strip of the raw observations — no jitter needed), ridgeline mode with adjustable ridge height (horizontal charts), bar overlay toggles, violin bandwidth (0 = auto) and resolution
 - **Grid** -- Heat map grid toggle (two categorical axes), fixed cell size, cell corner radius
 - **Categorical** -- Sum aggregation column, the **Layout** selector (bars / pie / donut / rose / treemap / sunburst / word cloud), Grouped Bars, and Donut Hole size
-- **Distribution** -- Histogram bins, ECDF overlay, density curve with bandwidth, normal QQ plot (histogram ratio when a marginal histogram is on)
+- **Distribution** -- Histogram bins, ECDF overlay, density curve with bandwidth, a **count axis** toggle for the drawn histogram, normal QQ plot (histogram ratio when a marginal histogram is on)
 
 ### Axis & Text Tab
 - **Log scale** for X and/or Y (numeric axes)

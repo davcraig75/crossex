@@ -383,15 +383,32 @@ function ccToast(text) {
 
 // Persistent data status and quality report. Errors remain visible until the
 // user dismisses them; transient toasts are reserved for completed actions.
+var _lastDataNotice = '';
+var _sampleNotice = '';
 function showDataNotice(text, isError) {
 	var notice = document.getElementById('cc_data_notice');
 	var message = document.getElementById('cc_data_notice_text');
 	if (!notice || !message) { return; }
-	message.textContent = text;
+	_lastDataNotice = text;
+	if (isError) { _sampleNotice = ''; }
+	message.textContent = _sampleNotice ? text + ' ' + _sampleNotice : text;
 	notice.classList.toggle('is-error', !!isError);
 	notice.setAttribute('role', isError ? 'alert' : 'status');
 	notice.hidden = false;
 }
+
+// The render-sample line belongs with the "Loaded N rows" banner above the
+// chart, not on a second strip inside the widget. crossex_base calls this
+// whenever it decides how many rows to draw.
+window.ccSampleNotice = function(text) {
+	_sampleNotice = text || '';
+	var message = document.getElementById('cc_data_notice_text');
+	var notice = document.getElementById('cc_data_notice');
+	if (!message || !notice) { return; }
+	if (!_lastDataNotice && !_sampleNotice) { return; }
+	message.textContent = _sampleNotice ? (_lastDataNotice + ' ' + _sampleNotice).trim() : _lastDataNotice;
+	if (_sampleNotice) { notice.hidden = false; }
+};
 
 var dataNoticeClose = document.getElementById('cc_data_notice_close');
 if (dataNoticeClose) {
@@ -735,8 +752,6 @@ function graphStruct(struct) {
 	// the gallery start page and the marketing hero only belong to the empty state
 	var gal = document.getElementById('cc_gallery');
 	if (gal) { gal.style.display = 'none'; }
-	var hero = document.getElementById('cc_hero');
-	if (hero) { hero.style.display = 'none'; }
 	var startIntro = document.getElementById('cc_start_intro');
 	if (startIntro) { startIntro.style.display = 'none'; }
 	toggle("myccinput");
@@ -930,26 +945,3 @@ document.querySelectorAll('#cc_gallery [data-gallery]').forEach(function(card) {
 	});
 });
 
-// Hero CTAs: one loads the demo straight away, the other jumps to the paste box
-var heroDemoBtn = document.getElementById('hero_demo_btn');
-var heroPreviewBtn = document.getElementById('hero_preview_btn');
-[heroDemoBtn, heroPreviewBtn].forEach(function(demoButton) {
-	if (demoButton) {
-		demoButton.addEventListener('click', function() {
-		document.getElementById('default_data').click();
-		document.getElementById('myccinput').style.display = 'block';
-		var btn = document.getElementById('graph_button');
-		btn.innerHTML = 'Graph Data';
-		btn.click();
-		});
-	}
-});
-var heroPasteBtn = document.getElementById('hero_paste_btn');
-if (heroPasteBtn) {
-	heroPasteBtn.addEventListener('click', function() {
-		var input = document.getElementById('myccinput');
-		var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		input.scrollIntoView({behavior: reduceMotion ? 'auto' : 'smooth', block: 'center'});
-		input.focus();
-	});
-}

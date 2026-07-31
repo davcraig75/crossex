@@ -189,3 +189,78 @@ test('the strip plot preset shows raw value points without boxes', async functio
   expect(await fingerprint(page), 'jitter spreads the strip').not.toBe(strip);
   expect(errors).toEqual([]);
 });
+
+test('both marginal histograms share one visual style, with an optional count axis', async function({ page }) {
+  const errors = installErrorCapture(page);
+  await openExample(page, 'scatter');
+  await setControl(page, 'Color_By', 'species');
+
+  await setControl(page, 'Histogram_', true);
+  const xOnly = await fingerprint(page);
+  await setControl(page, 'Histogram_Y_', true);
+  const both = await fingerprint(page);
+  expect(both, 'the Y marginal draws').not.toBe(xOnly);
+
+  // the Y marginal is stacked and colored by the same categorical scale as the
+  // X one (yhist_stack is group-scoped, so read the rendered marks instead)
+  const encoding = await page.evaluate(function() {
+    const fills = { x: new Set(), y: new Set() };
+    (function walk(mark) {
+      if (!mark) return;
+      if (mark.name === 'yhist_mark') {
+        mark.items.forEach(function(i) { if (i.fillOpacity !== 0) fills.y.add(i.fill); });
+      }
+      if (mark.role === 'mark' && mark.marktype === 'rect' && mark.group &&
+          mark.group.mark && mark.group.mark.name === 'hist_plot_clip') {
+        mark.items.forEach(function(i) { fills.x.add(i.fill); });
+      }
+      (mark.items || []).forEach(function(item) {
+        if (mark.marktype === 'group' && item.items) item.items.forEach(walk);
+      });
+    })(window._views.smartplot_id.scenegraph().root);
+    return { y: [...fills.y].sort(), bars: fills.y.size };
+  });
+  const catColors = await page.evaluate(function() {
+    return window._views.smartplot_id.scale('color_scale_cat').range().slice(0, 3).sort();
+  });
+  expect(encoding.bars, 'Y marginal is split by color, not one flat grey').toBeGreaterThan(1);
+  expect(encoding.y, 'Y marginal uses the categorical palette').toEqual(catColors);
+
+  // the count axis is offered for the drawn histogram and changes the render
+  expect(await display(page, 'Count_Axis_')).toBe('block');
+  await setControl(page, 'Count_Axis_', true);
+  expect(await fingerprint(page), 'count axis appears').not.toBe(both);
+  expect(errors).toEqual([]);
+});
+
+test('a pure histogram can show its count axis', async function({ page }) {
+  const errors = installErrorCapture(page);
+  await openExample(page, 'histogram');
+  expect(await display(page, 'Count_Axis_')).toBe('block');
+  const plain = await fingerprint(page);
+  await setControl(page, 'Count_Axis_', true);
+  expect(await fingerprint(page), 'count scale is drawn').not.toBe(plain);
+
+  // toggling the axis on adds vertical (left-hand) count labels that were not
+  // on the chart before
+  const verticalLabels = await page.evaluate(function() {
+    const found = [];
+    (function walk(mark) {
+      if (!mark) return;
+      if (mark.role === 'axis-label') {
+        mark.items.forEach(function(i) {
+          const text = String(i.text || '').trim();
+          if (text !== '' && i.angle !== 90 && i.align === 'right') { found.push(text); }
+        });
+      }
+      (mark.items || []).forEach(function(item) {
+        if (mark.marktype === 'group' && item.items) item.items.forEach(walk);
+      });
+    })(window._views.smartplot_id.scenegraph().root);
+    return found;
+  });
+  expect(verticalLabels.length, 'count labels render beside the bars').toBeGreaterThan(1);
+  expect(verticalLabels.every(function(t) { return /^[\d,]+$/.test(t); }),
+    'they are counts: ' + verticalLabels.join(',')).toBe(true);
+  expect(errors).toEqual([]);
+});
