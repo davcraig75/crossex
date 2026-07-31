@@ -366,6 +366,8 @@ Click **Dashboard** in the button row to enter. If a dataset is already loaded i
 - **+ Add chart** drops a new tile onto the grid, laid out in the first free slot (no overlaps). Every tile is a real crossex chart, sized so the whole chart — legend included — fits its tile, with automatic chart-type selection, sampling for large data, and its own PNG/SVG/CSV export menu.
 - **Reposition** a chart by dragging its title bar; **resize** it by dragging the bottom-right corner. Tiles snap to a column grid (6/8/12/16 columns, selectable), and resizing re-fits the chart to its new size. **Tidy** repacks every tile into a clean, gap-free layout, and **Width** caps the whole board (full window down to 800px, centered).
 - **Rename** a chart by clicking its title; click below the chart to add a **caption**.
+- **+ Add text** drops a text panel onto the grid for headings, commentary, or call-outs — moved and resized like any chart, with its own font size, color, family, alignment, bold/italic, and background under **Aa**.
+- **Style** themes the whole board: tile header background/text/size, dashboard font, title size and color, canvas and tile backgrounds, corner radius, and whether the design grid shows.
 - **Configure** a chart with the ⚙ button. The **Chart** tab sets the title, caption, chart type (scatter, line, regression, histogram, box, violin, bar, heatmap), X/Y columns, color, size, facets, palette, and a stats overlay. Changes apply live.
 - **🛠 opens the full control panel** for that chart in a large editor — every tab of the single-chart explorer, including on-chart direct editing (drag titles/legend, double-click axes and colors). Closing the editor applies the changes to the tile as overrides.
 - **⧉ duplicate** and **✕ remove** are on each tile's header.
@@ -378,6 +380,15 @@ The ⚙ config popover's **Data** tab shows the dataset behind that chart — it
 
 - **+ Add data** loads a dataset into the dashboard (paste, file, URL, the built-in demo, or the data already open in the single-chart view). Each source appears as a chip in the **Data sources** bar; click a chip to add a chart from it.
 - Different charts can read different datasets, so one board can combine, say, a live CSV feed and a pasted table.
+
+**Design mode and published mode**
+
+A board is either being *designed* or being *read*, the same split every BI tool draws between Edit and View:
+
+- **Publish** switches to the reader's view: no toolbar actions, no drag handles, no grid, nothing editable — just the dashboard, with **Share link** and **Exit** left in reach.
+- To get back, **right-click** anywhere on the board (or **long-press** on touch) and choose **Edit dashboard**.
+- Publishing can set an optional **passcode**, asked for inline before editing reopens. Everything here runs in the reader's own browser, so treat this as a lock on the door rather than a safe: it keeps a shared board from being nudged out of shape by accident, and it is not a security boundary. Never reuse a real password.
+- The mode travels with the board, so a shared link, an export, and the browser's auto-save all reopen exactly as published.
 
 **Saving and sharing**
 

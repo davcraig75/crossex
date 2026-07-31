@@ -23,6 +23,11 @@
 	var STORE_KEY = 'crossexDashboard_v1';
 
 	// ---- Central state -------------------------------------------------------
+	// A dashboard is either being designed or being read. Design mode carries
+	// the full toolbar and per-tile controls; view mode is the "real dashboard"
+	// — chrome-free and immovable, the way a published board should look.
+	// Right-clicking a view-mode board offers Edit (behind the passcode, when
+	// one is set), mirroring the Edit/View split every BI tool ships.
 	var DASH = {
 		built: false,
 		active: false,
@@ -31,17 +36,37 @@
 		width: 0,          // px max width of the canvas; 0 = full window
 		cellH: 40,         // px per grid row
 		gap: 12,           // px gutter between tiles
+		mode: 'design',    // 'design' | 'view'
+		lock: '',          // passcode digest guarding the return to design mode
+		theme: null,       // see DEFAULT_THEME
 		datasets: {},      // key -> {name, rows(with .columns), source, _pending}
 		dsOrder: [],       // dataset keys, insertion order
-		tiles: [],         // {id,title,titleManual,caption,dsKey,cfg,overrides,gx,gy,gw,gh}
+		tiles: [],         // {id,kind,title,...,dsKey,cfg,overrides,gx,gy,gw,gh}
 		seq: 0,            // tile id counter
 		dsSeq: 0           // dataset key counter
 	};
 
-	// Vertical chrome inside a tile's chart: canvas title + x axis + legend.
-	// tileSignalState seeds these compact values so a tile's full chart —
-	// including its legend — fits the tile body instead of clipping.
-	var TILE_TITLE_H = 22, TILE_AXIS_H = 42, TILE_LEGEND_H = 44;
+	// Every value here maps to a CSS custom property on the dashboard root, so
+	// restyling is one repaint with no re-render of any chart.
+	var DEFAULT_THEME = {
+		headBg: '#830862', headFg: '#ffffff', headSize: 12,
+		font: 'system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+		titleSize: 19, titleColor: '#1c1f2a',
+		canvasBg: '#f6f6f9', tileBg: '#ffffff', radius: 8, grid: true
+	};
+	var FONT_CHOICES = [
+		{ key: 'system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif', label: 'System sans' },
+		{ key: '"Helvetica Neue", Helvetica, Arial, sans-serif', label: 'Helvetica' },
+		{ key: 'Georgia, "Times New Roman", serif', label: 'Georgia serif' },
+		{ key: '"Iowan Old Style", "Palatino Linotype", Palatino, serif', label: 'Palatino serif' },
+		{ key: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', label: 'Monospace' },
+		{ key: 'Verdana, Geneva, sans-serif', label: 'Verdana' }
+	];
+
+	// Vertical chrome inside a tile's chart. The tile header already names the
+	// chart, so the in-canvas title is switched off (it duplicated the header
+	// and, with the export-menu offset, pushed the legend out of the tile).
+	var TILE_TITLE_H = 0, TILE_AXIS_H = 42, TILE_LEGEND_H = 44, TILE_CHROME = 18;
 
 	// The chart type a tile can be. Each maps to a combination of X/Y column
 	// types plus Vega toggle signals — crossex has no single "chart type" signal.
@@ -247,6 +272,7 @@
 		// rendered once from renderAllCharts() — rendering here too would tear
 		// down and rebuild each view (a churn that flickers "invalid size").
 		if (DASH._deferRender) { return; }
+		if (tile.kind === 'text') { return; }   // text panels have no Vega view
 		var chartId = 'dash_chart_' + tile.id;
 		if (!tileHasRows(tile)) { showTilePending(tile); return; }
 		var body = byId('dash_body_' + tile.id);
@@ -264,9 +290,9 @@
 			return;
 		}
 		tile._renderTries = 0;
-		// leave room for the in-canvas title, x axis, and legend so the whole
-		// chart — legend included — is visible inside the tile
-		tile._plotH = Math.max(100, body.clientHeight - TILE_TITLE_H - TILE_AXIS_H - TILE_LEGEND_H - 16);
+		// leave room for the x axis and legend so the whole chart — legend
+		// included — sits inside the tile rather than scrolling out of it
+		tile._plotH = Math.max(100, body.clientHeight - TILE_TITLE_H - TILE_AXIS_H - TILE_LEGEND_H - TILE_CHROME);
 		// full-editor tweaks (tile.overrides) sit on top of the quick config;
 		// the computed plot height always wins so the chart keeps fitting
 		var state = Object.assign({}, tileSignalState(tile), tile.overrides || {});
@@ -381,6 +407,7 @@
 		var head = byId('dash_head_' + tile.id);
 		var node = byId('dash_tile_' + tile.id);
 		head.addEventListener('pointerdown', function (e) {
+			if (DASH.mode !== 'design') { return; }
 			if (e.target.closest('.dash_tbtn') || e.target.isContentEditable || e.button !== 0) { return; }
 			e.preventDefault();
 			var startX = e.clientX, startY = e.clientY;
@@ -417,7 +444,7 @@
 		var handle = byId('dash_resize_' + tile.id);
 		var node = byId('dash_tile_' + tile.id);
 		handle.addEventListener('pointerdown', function (e) {
-			if (e.button !== 0) { return; }
+			if (DASH.mode !== 'design' || e.button !== 0) { return; }
 			e.preventDefault(); e.stopPropagation();
 			var startX = e.clientX, startY = e.clientY;
 			var p = tilePx(tile), w0 = p.width, h0 = p.height;
@@ -452,23 +479,30 @@
 
 	// ---- Tile DOM ------------------------------------------------------------
 	function buildTileDom(tile) {
-		var node = el('div', 'dash_tile');
+		var isText = tile.kind === 'text';
+		var node = el('div', 'dash_tile' + (isText ? ' dash_tile_text' : ''));
 		node.id = 'dash_tile_' + tile.id;
+		var tools = isText
+			? '<button class="dash_tbtn dash_style" title="Text style">Aa</button>' +
+			  '<button class="dash_tbtn dash_dup" title="Duplicate">⧉</button>' +
+			  '<button class="dash_tbtn dash_del" title="Remove">✕</button>'
+			: '<button class="dash_tbtn dash_edit" title="Open with the full control panel">🛠</button>' +
+			  '<button class="dash_tbtn dash_cfg" title="Quick chart &amp; data setup">⚙</button>' +
+			  '<button class="dash_tbtn dash_dup" title="Duplicate">⧉</button>' +
+			  '<button class="dash_tbtn dash_del" title="Remove">✕</button>';
+		var bodyHtml = isText
+			? '<div class="dash_textbody" id="dash_text_' + tile.id + '" contenteditable="true" spellcheck="false" data-placeholder="Type a heading, note, or commentary…"></div>'
+			: '<div class="dash_body" id="dash_body_' + tile.id + '">' +
+					'<div class="dash_chart" id="dash_chart_' + tile.id + '"></div>' +
+			  '</div>' +
+			  '<div class="dash_caption" id="dash_caption_' + tile.id + '" contenteditable="true" spellcheck="false" data-placeholder="Add a caption…"></div>';
 		node.innerHTML =
 			'<div class="dash_head" id="dash_head_' + tile.id + '">' +
 				'<span class="dash_grip"></span>' +
 				'<span class="dash_title" id="dash_title_' + tile.id + '" contenteditable="true" spellcheck="false" title="Click to rename"></span>' +
-				'<span class="dash_tools">' +
-					'<button class="dash_tbtn dash_edit" title="Open with the full control panel">🛠</button>' +
-					'<button class="dash_tbtn dash_cfg" title="Quick chart &amp; data setup">⚙</button>' +
-					'<button class="dash_tbtn dash_dup" title="Duplicate">⧉</button>' +
-					'<button class="dash_tbtn dash_del" title="Remove">✕</button>' +
-				'</span>' +
+				'<span class="dash_tools">' + tools + '</span>' +
 			'</div>' +
-			'<div class="dash_body" id="dash_body_' + tile.id + '">' +
-				'<div class="dash_chart" id="dash_chart_' + tile.id + '"></div>' +
-			'</div>' +
-			'<div class="dash_caption" id="dash_caption_' + tile.id + '" contenteditable="true" spellcheck="false" data-placeholder="Add a caption…"></div>' +
+			bodyHtml +
 			'<div class="dash_resize" id="dash_resize_' + tile.id + '" title="Drag to resize"></div>';
 		canvasEl().appendChild(node);
 		byId('dash_title_' + tile.id).textContent = tile.title;
@@ -482,18 +516,81 @@
 		titleEl.addEventListener('keydown', function (e) {
 			if (e.key === 'Enter') { e.preventDefault(); titleEl.blur(); }
 		});
-		var cap = byId('dash_caption_' + tile.id);
-		cap.textContent = tile.caption || '';
-		cap.addEventListener('input', function () {
-			tile.caption = cap.textContent.trim();
-			persist();
-		});
-		node.querySelector('.dash_edit').onclick = function () { openFullEditor(tile); };
-		node.querySelector('.dash_cfg').onclick = function () { openConfig(tile); };
+		if (isText) {
+			var tb = byId('dash_text_' + tile.id);
+			tb.textContent = tile.text || '';
+			applyTextStyle(tile);
+			tb.addEventListener('input', function () { tile.text = tb.textContent; persist(); });
+			node.querySelector('.dash_style').onclick = function () { openTextStyle(tile); };
+		} else {
+			var cap = byId('dash_caption_' + tile.id);
+			cap.textContent = tile.caption || '';
+			cap.addEventListener('input', function () {
+				tile.caption = cap.textContent.trim();
+				persist();
+			});
+			node.querySelector('.dash_edit').onclick = function () { openFullEditor(tile); };
+			node.querySelector('.dash_cfg').onclick = function () { openConfig(tile); };
+		}
 		node.querySelector('.dash_dup').onclick = function () { duplicateTile(tile); };
 		node.querySelector('.dash_del').onclick = function () { removeTile(tile); };
 		attachDrag(tile);
 		attachResize(tile);
+		applyTileMode(tile);
+	}
+
+	// Text panels: headings, commentary, and call-outs placed anywhere on the
+	// grid, styled independently of the chart tiles.
+	function applyTextStyle(tile) {
+		var tb = byId('dash_text_' + tile.id);
+		if (!tb) { return; }
+		var s = tile.style || {};
+		tb.style.fontSize = (s.size || 16) + 'px';
+		tb.style.color = s.color || '';
+		tb.style.fontFamily = s.font || '';
+		tb.style.textAlign = s.align || 'left';
+		tb.style.fontWeight = s.bold ? '700' : '400';
+		tb.style.fontStyle = s.italic ? 'italic' : 'normal';
+		var node = byId('dash_tile_' + tile.id);
+		if (node) { node.style.background = s.bg || ''; }
+	}
+
+	function addText() {
+		var id = ++DASH.seq;
+		var gw = Math.min(4, DASH.cols), gh = 3;
+		var pos = firstFit(gw, gh);
+		var tile = { id: id, kind: 'text', title: 'Text', titleManual: true,
+			text: '', style: { size: 16, color: DEFAULT_THEME.titleColor, font: '', align: 'left', bold: false, italic: false, bg: '' },
+			gx: pos.gx, gy: pos.gy, gw: gw, gh: gh };
+		DASH.tiles.push(tile);
+		buildTileDom(tile);
+		layoutTile(tile);
+		updateCanvasHeight();
+		refreshEmpty();
+		persist();
+		var tb = byId('dash_text_' + id);
+		if (tb) { tb.focus(); }
+		return tile;
+	}
+
+	function openTextStyle(tile) {
+		var body = el('div', 'dash_modal_body');
+		var s = tile.style || (tile.style = {});
+		function apply() { applyTextStyle(tile); persist(); }
+		var grid = el('div', 'dash_cfg_grid');
+		grid.appendChild(numberField('Font size', s.size || 16, 8, 96, function (v) { s.size = v; apply(); }));
+		grid.appendChild(colorField('Text color', s.color || '#1c1f2a', function (v) { s.color = v; apply(); }));
+		grid.appendChild(selectField('Font', s.font || '', [{ key: '', label: 'Dashboard font' }].concat(FONT_CHOICES),
+			function (v) { s.font = v; apply(); }));
+		grid.appendChild(selectField('Align', s.align || 'left',
+			[{ key: 'left', label: 'Left' }, { key: 'center', label: 'Center' }, { key: 'right', label: 'Right' }],
+			function (v) { s.align = v; apply(); }));
+		grid.appendChild(colorField('Panel background', s.bg || '#ffffff', function (v) { s.bg = v; apply(); }));
+		body.appendChild(grid);
+		body.appendChild(checkField('Bold', !!s.bold, function (v) { s.bold = v; apply(); }));
+		body.appendChild(checkField('Italic', !!s.italic, function (v) { s.italic = v; apply(); }));
+		body.appendChild(el('p', 'dash_hint', 'Type directly in the panel to edit its text. Drag its header to move it and its corner to resize it, like any chart.'));
+		openModal('Text style', body);
 	}
 
 	function setTileTitle(tile, title, manual) {
@@ -851,6 +948,37 @@
 		openModal('Configure chart', body, true);
 	}
 
+	function numberField(label, value, min, max, onChange) {
+		var f = el('label', 'dash_fld');
+		f.appendChild(el('span', null, label));
+		var input = el('input');
+		input.type = 'number'; input.min = min; input.max = max; input.value = value;
+		input.oninput = function () {
+			var v = parseFloat(input.value);
+			if (!isNaN(v)) { onChange(Math.max(min, Math.min(max, v))); }
+		};
+		f.appendChild(input);
+		return f;
+	}
+	function colorField(label, value, onChange) {
+		var f = el('label', 'dash_fld');
+		f.appendChild(el('span', null, label));
+		var input = el('input');
+		input.type = 'color'; input.value = value;
+		input.oninput = function () { onChange(input.value); };
+		f.appendChild(input);
+		return f;
+	}
+	function checkField(label, value, onChange) {
+		var f = el('label', 'dash_check');
+		var cb = el('input');
+		cb.type = 'checkbox'; cb.checked = !!value;
+		cb.onchange = function () { onChange(cb.checked); };
+		f.appendChild(cb);
+		f.appendChild(el('span', null, label));
+		return f;
+	}
+
 	function selectField(label, value, options, onChange) {
 		var f = el('label', 'dash_fld');
 		f.appendChild(el('span', null, label));
@@ -1004,6 +1132,7 @@
 	function serializable(includeAllRows) {
 		return {
 			v: 1, title: DASH.title, cols: DASH.cols, width: DASH.width || 0,
+			mode: DASH.mode, lock: DASH.lock || '', theme: theme(),
 			seq: DASH.seq, dsSeq: DASH.dsSeq,
 			datasets: DASH.dsOrder.map(function (k) {
 				var d = DASH.datasets[k];
@@ -1018,7 +1147,8 @@
 				};
 			}),
 			tiles: DASH.tiles.map(function (t) {
-				return { id: t.id, title: t.title, titleManual: t.titleManual, caption: t.caption || '',
+				return { id: t.id, kind: t.kind || 'chart', title: t.title, titleManual: t.titleManual,
+					caption: t.caption || '', text: t.text || '', style: t.style || null,
 					dsKey: t.dsKey, cfg: t.cfg, overrides: t.overrides || null,
 					gx: t.gx, gy: t.gy, gw: t.gw, gh: t.gh };
 			})
@@ -1056,6 +1186,8 @@
 		DASH.title = p.title || 'My Dashboard';
 		DASH.cols = p.cols || 12;
 		DASH.width = p.width || 0;
+		DASH.lock = p.lock || '';
+		DASH.theme = Object.assign(JSON.parse(JSON.stringify(DEFAULT_THEME)), p.theme || {});
 		DASH.seq = p.seq || 0;
 		DASH.dsSeq = p.dsSeq || 0;
 		(p.datasets || []).forEach(function (d) {
@@ -1071,8 +1203,9 @@
 			DASH.dsOrder.push(d.key);
 		});
 		(p.tiles || []).forEach(function (t) {
-			DASH.tiles.push({ id: t.id, title: t.title, titleManual: t.titleManual,
-				caption: t.caption || '', dsKey: t.dsKey, cfg: t.cfg,
+			DASH.tiles.push({ id: t.id, kind: t.kind || 'chart', title: t.title, titleManual: t.titleManual,
+				caption: t.caption || '', text: t.text || '', style: t.style || null,
+				dsKey: t.dsKey, cfg: t.cfg,
 				overrides: t.overrides || null, gx: t.gx, gy: t.gy, gw: t.gw, gh: t.gh });
 		});
 		// reflect grid columns and width in the toolbar controls
@@ -1081,6 +1214,7 @@
 		var widthSel = byId('dash_width');
 		if (widthSel) { widthSel.value = String(DASH.width || 0); }
 		applyDashWidth();
+		applyTheme();
 		var titleEl = byId('dash_dtitle');
 		if (titleEl) { titleEl.textContent = DASH.title; }
 		renderDsBar();
@@ -1105,6 +1239,7 @@
 			}
 		});
 		refreshEmpty();
+		setMode(p.mode === 'view' ? 'view' : 'design');
 		return DASH.tiles.length > 0 || DASH.dsOrder.length > 0;
 	}
 
@@ -1199,6 +1334,165 @@
 		return true;
 	}
 
+	// ---- Theme ---------------------------------------------------------------
+	function theme() {
+		if (!DASH.theme) { DASH.theme = JSON.parse(JSON.stringify(DEFAULT_THEME)); }
+		return DASH.theme;
+	}
+	function applyTheme() {
+		var root = byId('cc_dashboard');
+		if (!root) { return; }
+		var t = theme();
+		root.style.setProperty('--dash-head-bg', t.headBg);
+		root.style.setProperty('--dash-head-fg', t.headFg);
+		root.style.setProperty('--dash-head-size', t.headSize + 'px');
+		root.style.setProperty('--dash-font', t.font);
+		root.style.setProperty('--dash-title-size', t.titleSize + 'px');
+		root.style.setProperty('--dash-title-color', t.titleColor);
+		root.style.setProperty('--dash-canvas-bg', t.canvasBg);
+		root.style.setProperty('--dash-tile-bg', t.tileBg);
+		root.style.setProperty('--dash-radius', t.radius + 'px');
+		root.classList.toggle('dash_nogrid', !t.grid);
+	}
+	function openTheme() {
+		var t = theme();
+		var body = el('div', 'dash_modal_body');
+		function apply() { applyTheme(); persist(); }
+		var grid = el('div', 'dash_cfg_grid');
+		grid.appendChild(colorField('Header background', t.headBg, function (v) { t.headBg = v; apply(); }));
+		grid.appendChild(colorField('Header text', t.headFg, function (v) { t.headFg = v; apply(); }));
+		grid.appendChild(numberField('Header text size', t.headSize, 8, 28, function (v) { t.headSize = v; apply(); }));
+		grid.appendChild(selectField('Dashboard font', t.font, FONT_CHOICES, function (v) { t.font = v; apply(); }));
+		grid.appendChild(numberField('Dashboard title size', t.titleSize, 12, 48, function (v) { t.titleSize = v; apply(); }));
+		grid.appendChild(colorField('Dashboard title color', t.titleColor, function (v) { t.titleColor = v; apply(); }));
+		grid.appendChild(colorField('Canvas background', t.canvasBg, function (v) { t.canvasBg = v; apply(); }));
+		grid.appendChild(colorField('Tile background', t.tileBg, function (v) { t.tileBg = v; apply(); }));
+		grid.appendChild(numberField('Corner radius', t.radius, 0, 24, function (v) { t.radius = v; apply(); }));
+		body.appendChild(grid);
+		body.appendChild(checkField('Show the grid pattern behind tiles', t.grid, function (v) { t.grid = v; apply(); }));
+		var reset = el('button', 'cc_button', 'Reset to defaults');
+		reset.type = 'button';
+		reset.onclick = function () {
+			DASH.theme = JSON.parse(JSON.stringify(DEFAULT_THEME));
+			applyTheme(); persist(); closeModal(); openTheme();
+		};
+		body.appendChild(el('div', 'dash_sep'));
+		body.appendChild(reset);
+		openModal('Dashboard style', body);
+	}
+
+	// ---- Design vs. view mode ------------------------------------------------
+	// A soft lock, not a security boundary: everything here runs in the reader's
+	// own browser, so a determined visitor can always get back in. It exists to
+	// keep a published board from being nudged out of shape by accident.
+	function digest(text) {
+		var h = 5381;
+		for (var i = 0; i < text.length; i++) { h = ((h << 5) + h + text.charCodeAt(i)) | 0; }
+		return String(h >>> 0);
+	}
+	function applyTileMode(tile) {
+		var node = byId('dash_tile_' + tile.id);
+		if (!node) { return; }
+		var editing = DASH.mode === 'design';
+		node.querySelectorAll('[contenteditable]').forEach(function (n) {
+			n.setAttribute('contenteditable', editing ? 'true' : 'false');
+		});
+	}
+	function setMode(mode) {
+		DASH.mode = mode === 'view' ? 'view' : 'design';
+		var root = byId('cc_dashboard');
+		if (root) { root.classList.toggle('dash_viewing', DASH.mode === 'view'); }
+		var dtitle = byId('dash_dtitle');
+		if (dtitle) { dtitle.setAttribute('contenteditable', DASH.mode === 'design' ? 'true' : 'false'); }
+		DASH.tiles.forEach(applyTileMode);
+		var toggle = byId('dash_mode_btn');
+		if (toggle) {
+			toggle.textContent = DASH.mode === 'view' ? 'Edit' : 'Publish';
+			toggle.className = 'cc_button' + (DASH.mode === 'view' ? '' : ' active');
+		}
+		closeContextMenu();
+		relayoutAll();
+	}
+	function openPublish() {
+		var body = el('div', 'dash_modal_body');
+		body.appendChild(el('p', 'dash_hint',
+			'Publishing switches to the reader’s view: no toolbar, no drag handles, nothing editable — just the dashboard. ' +
+			'To come back, right-click anywhere on the board and choose <b>Edit dashboard</b>.'));
+		var passF = el('label', 'dash_fld');
+		passF.appendChild(el('span', null, 'Edit passcode (optional)'));
+		var passIn = el('input');
+		passIn.type = 'password';
+		passIn.placeholder = DASH.lock ? 'unchanged — type to replace' : 'leave blank for no passcode';
+		passF.appendChild(passIn);
+		body.appendChild(passF);
+		body.appendChild(el('p', 'dash_hint',
+			'A passcode keeps casual viewers from rearranging the board. It travels with the link and is checked in the browser, so treat it as a lock on the door, not a safe — never reuse a real password.'));
+		var row = el('div', 'dash_row');
+		var go = el('button', 'cc_button active', 'Publish');
+		go.type = 'button';
+		go.onclick = function () {
+			var v = passIn.value.trim();
+			if (v) { DASH.lock = digest(v); }
+			closeModal();
+			setMode('view');
+			persistNow();
+			ccToast('Published — right-click the board to edit again');
+		};
+		var clear = el('button', 'cc_button', 'Remove passcode');
+		clear.type = 'button';
+		clear.onclick = function () { DASH.lock = ''; passIn.value = ''; persist(); ccToast('Passcode removed'); };
+		row.appendChild(go);
+		if (DASH.lock) { row.appendChild(clear); }
+		body.appendChild(row);
+		openModal('Publish dashboard', body);
+	}
+	function closeContextMenu() {
+		var m = byId('dash_ctx');
+		if (m) { m.remove(); }
+	}
+	function openContextMenu(x, y) {
+		closeContextMenu();
+		var m = el('div', 'dash_ctx');
+		m.id = 'dash_ctx';
+		var host = byId('cc_dashboard');
+		var box = host.getBoundingClientRect();
+		m.style.left = Math.max(4, Math.min(x - box.left, box.width - 230)) + 'px';
+		m.style.top = Math.max(4, y - box.top) + 'px';
+		var btn = el('button', 'dash_ctx_item', 'Edit dashboard');
+		btn.type = 'button';
+		m.appendChild(btn);
+		host.appendChild(m);
+		function unlock() {
+			setMode('design');
+			persist();
+			ccToast('Editing enabled');
+		}
+		btn.onclick = function () {
+			if (!DASH.lock) { unlock(); return; }
+			btn.style.display = 'none';
+			var f = el('div', 'dash_ctx_pass');
+			var input = el('input');
+			input.type = 'password';
+			input.placeholder = 'Passcode';
+			var ok = el('button', 'cc_button active', 'Unlock');
+			ok.type = 'button';
+			function tryUnlock() {
+				if (digest(input.value.trim()) === DASH.lock) { closeContextMenu(); unlock(); }
+				else { input.value = ''; input.placeholder = 'Wrong passcode'; f.classList.add('dash_ctx_bad'); }
+			}
+			ok.onclick = tryUnlock;
+			input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { tryUnlock(); } });
+			f.appendChild(input); f.appendChild(ok);
+			m.appendChild(f);
+			input.focus();
+		};
+		setTimeout(function () {
+			document.addEventListener('pointerdown', function once(e) {
+				if (!m.contains(e.target)) { closeContextMenu(); document.removeEventListener('pointerdown', once, true); }
+			}, true);
+		}, 0);
+	}
+
 	function applyDashWidth() {
 		var c = canvasEl();
 		var bar = byId('dash_ds_bar');
@@ -1221,8 +1515,10 @@
 				'<div class="dash_brand">📊 <span class="dash_dtitle" id="dash_dtitle" contenteditable="true" spellcheck="false">My Dashboard</span></div>' +
 				'<div class="dash_tb_actions">' +
 					'<button class="cc_button active" id="dash_add_chart">+ Add chart</button>' +
+					'<button class="cc_button" id="dash_add_text">+ Add text</button>' +
 					'<button class="cc_button" id="dash_add_data">+ Add data</button>' +
 					'<button class="cc_button" id="dash_tidy">Tidy</button>' +
+					'<button class="cc_button" id="dash_theme">Style</button>' +
 					'<label class="dash_tb_lbl">Grid ' +
 						'<select id="dash_cols"><option>6</option><option>8</option><option selected>12</option><option>16</option></select>' +
 					'</label>' +
@@ -1235,11 +1531,12 @@
 							'<option value="800">800px</option>' +
 						'</select>' +
 					'</label>' +
-					'<button class="cc_button" id="dash_share">Share link</button>' +
+					'<button class="cc_button active" id="dash_mode_btn">Publish</button>' +
+					'<button class="cc_button dash_keep" id="dash_share">Share link</button>' +
 					'<button class="cc_button" id="dash_export">Export</button>' +
 					'<button class="cc_button" id="dash_import">Import</button>' +
 					'<input type="file" id="dash_import_file" accept=".json" style="display:none">' +
-					'<button class="cc_button" id="dash_exit">Exit ✕</button>' +
+					'<button class="cc_button dash_keep" id="dash_exit">Exit ✕</button>' +
 				'</div>' +
 			'</div>' +
 			'<div class="dash_ds_bar" id="dash_ds_bar" style="display:none"></div>' +
@@ -1257,10 +1554,41 @@
 			'</div>';
 
 		byId('dash_add_chart').onclick = function () { addTile(); };
+		byId('dash_add_text').onclick = function () { addText(); };
 		byId('dash_add_data').onclick = openAddData;
 		byId('dash_empty_data').onclick = openAddData;
 		byId('dash_empty_chart').onclick = function () { addTile(); };
 		byId('dash_tidy').onclick = tidy;
+		byId('dash_theme').onclick = openTheme;
+		byId('dash_mode_btn').onclick = function () {
+			if (DASH.mode === 'design') { openPublish(); }
+			else { setMode('design'); persist(); }
+		};
+		// right-click a published board to get back to editing…
+		root.addEventListener('contextmenu', function (e) {
+			if (DASH.mode !== 'view') { return; }
+			e.preventDefault();
+			openContextMenu(e.clientX, e.clientY);
+		});
+		// …and long-press for the same thing on touch, where there is no
+		// right-click at all (a published board would otherwise be a one-way
+		// door on a phone)
+		var pressTimer = null, pressAt = null;
+		function cancelPress() { clearTimeout(pressTimer); pressTimer = null; }
+		root.addEventListener('touchstart', function (e) {
+			if (DASH.mode !== 'view' || e.touches.length !== 1) { return; }
+			var t = e.touches[0];
+			pressAt = { x: t.clientX, y: t.clientY };
+			cancelPress();
+			pressTimer = setTimeout(function () { openContextMenu(pressAt.x, pressAt.y); }, 650);
+		}, { passive: true });
+		root.addEventListener('touchmove', function (e) {
+			if (!pressTimer || !pressAt) { return; }
+			var t = e.touches[0];
+			if (Math.abs(t.clientX - pressAt.x) + Math.abs(t.clientY - pressAt.y) > 12) { cancelPress(); }
+		}, { passive: true });
+		root.addEventListener('touchend', cancelPress);
+		root.addEventListener('touchcancel', cancelPress);
 		byId('dash_share').onclick = shareLink;
 		byId('dash_width').onchange = function () {
 			DASH.width = parseInt(this.value, 10) || 0;
@@ -1322,12 +1650,14 @@
 			DASH._deferRender = false;
 		}
 		applyDashWidth();
+		applyTheme();
+		setMode(DASH.mode);
 		refreshEmpty();
 		// canvas width is known now that it is visible
 		requestAnimationFrame(function () { relayoutAll(); renderAllCharts(); });
 		// nothing to work with yet: open the data loader instead of making the
 		// user hunt for the button
-		if (!DASH.dsOrder.length && !DASH.tiles.length) {
+		if (!DASH.dsOrder.length && !DASH.tiles.length && DASH.mode === 'design') {
 			setTimeout(openAddData, 50);
 		}
 	}

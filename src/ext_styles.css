@@ -902,7 +902,7 @@ html.cc-dark .cc_quality_table select {
 	position: relative;
 	width: 100%;
 	min-height: 320px;
-	background-color: #f6f6f9;
+	background-color: var(--dash-canvas-bg, #f6f6f9);
 	background-image:
 		linear-gradient(rgba(131, 8, 98, 0.05) 1px, transparent 1px),
 		linear-gradient(90deg, rgba(131, 8, 98, 0.05) 1px, transparent 1px);
@@ -913,9 +913,10 @@ html.cc-dark .cc_quality_table select {
 	position: absolute;
 	display: flex;
 	flex-direction: column;
-	background: #fff;
+	background: var(--dash-tile-bg, #fff);
 	border: 1px solid #e2e2ea;
-	border-radius: 8px;
+	border-radius: var(--dash-radius, 8px);
+	font-family: var(--dash-font, inherit);
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 	overflow: hidden;
 	transition: box-shadow 0.12s;
@@ -933,11 +934,15 @@ html.cc-dark .cc_quality_table select {
 	align-items: center;
 	gap: 6px;
 	padding: 4px 6px;
-	background: #830862;
-	color: #fff;
+	background: var(--dash-head-bg, #830862);
+	color: var(--dash-head-fg, #fff);
 	cursor: move;
 	user-select: none;
-	font-size: 12px;
+	font-size: var(--dash-head-size, 12px);
+	font-family: var(--dash-font, inherit);
+	/* .cc sets a 0.9em line-height for the control panel; headers need room
+	   for descenders once the theme raises the header text size */
+	line-height: 1.45;
 	touch-action: none;
 }
 .dash_grip {
@@ -1349,4 +1354,136 @@ html.cc-dark .dash_caption:empty::before {
 }
 html.cc-dark .cc_topnav .cc_marketing_nav {
 	border-bottom-color: #33363f;
+}
+
+
+/* ---- dashboard: themed title, view mode, text panels, context menu ---- */
+.dash_dtitle {
+	font-size: var(--dash-title-size, 19px);
+	color: var(--dash-title-color, #1c1f2a);
+	font-family: var(--dash-font, inherit);
+	outline: none;
+}
+.dash_nogrid .dash_canvas {
+	background-image: none;
+}
+
+/* Published board: no chrome, nothing draggable — it reads as a finished
+   artifact. Right-click restores the toolbar (see openContextMenu). */
+.dash_viewing .dash_tb_actions > *:not(.dash_keep),
+.dash_viewing .dash_ds_bar,
+.dash_viewing .dash_tools,
+.dash_viewing .dash_grip,
+.dash_viewing .dash_resize,
+.dash_viewing .dash_empty {
+	display: none !important;
+}
+.dash_viewing .dash_head {
+	cursor: default;
+}
+.dash_viewing .dash_toolbar {
+	border-bottom: none;
+	padding-bottom: 2px;
+	background: transparent;
+}
+.dash_viewing .dash_tile:hover {
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.dash_viewing .dash_caption:empty {
+	display: none;
+}
+
+.dash_tile_text .dash_head {
+	opacity: 0.75;
+}
+.dash_viewing .dash_tile_text {
+	border-color: transparent;
+	box-shadow: none;
+	background: transparent;
+}
+.dash_viewing .dash_tile_text .dash_head {
+	display: none;
+}
+.dash_textbody {
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+	padding: 8px 10px;
+	line-height: 1.4;
+	outline: none;
+	font-family: var(--dash-font, inherit);
+}
+.dash_textbody:empty::before {
+	content: attr(data-placeholder);
+	color: #b8bcc8;
+}
+
+.dash_ctx {
+	position: absolute;
+	z-index: 1400;
+	min-width: 210px;
+	background: #fff;
+	border: 1px solid #c9cdd4;
+	border-radius: 8px;
+	box-shadow: 0 10px 30px rgba(20, 24, 34, 0.22);
+	padding: 5px;
+	font-size: 13px;
+}
+.dash_ctx_item {
+	display: block;
+	width: 100%;
+	padding: 7px 10px;
+	border: 0;
+	border-radius: 5px;
+	background: transparent;
+	text-align: left;
+	font: inherit;
+	cursor: pointer;
+}
+.dash_ctx_item:hover {
+	background: #f0eef2;
+}
+.dash_ctx_pass {
+	display: flex;
+	gap: 5px;
+	padding: 5px;
+}
+.dash_ctx_pass input {
+	flex: 1;
+	min-width: 0;
+	padding: 4px 6px;
+	border: 1px solid #c9cdd4;
+	border-radius: 5px;
+	font-size: 12px;
+}
+.dash_ctx_bad input {
+	border-color: #c0392b;
+}
+html.cc-dark .dash_ctx {
+	background: #23252c;
+	border-color: #3a3d47;
+	color: #d6d9e0;
+}
+html.cc-dark .dash_ctx_item:hover {
+	background: #2f323b;
+}
+html.cc-dark .dash_ctx_pass input {
+	background: #2c2f38;
+	border-color: #3a3d47;
+	color: #d6d9e0;
+}
+html.cc-dark .dash_textbody:empty::before {
+	color: #5b6070;
+}
+
+/* The export-menu offset that keeps the button clear of the chart title in the
+   main app would push a tile's legend out of view — tiles place it inline. */
+.dash_body .vega-embed,
+.dash_tile .vega-embed {
+	padding-top: 0 !important;
+}
+
+/* the design grid is scaffolding — a published board shows a clean surface */
+.dash_viewing .dash_canvas {
+	background-image: none;
 }
