@@ -54,6 +54,8 @@ var SIGNAL_HEADER_FILTERS = {
 	"SortX_By":        {},
 	"Y_Axis":          {},
 	"Stroke_By":       {},
+	"End_By":          { numericOnly: true },
+	"Gantt_Progress_By": { numericOnly: true },
 	"Color_By":        {}
 };
 
@@ -476,12 +478,19 @@ function ccOpenCity(evt, cityName,element) {
 }
 
 // The chart area hosts mutually-exclusive overlays (overview, 3D, table, pivot)
+var _overviewActiveSetters = {};
+function setOverviewTabActive(element, on) {
+	var fn = _overviewActiveSetters[element];
+	if (fn) { fn(on); }
+}
+
 function hideOverlays(element, except) {
 	['cc_overview', 'cc_3d', 'cc_table', 'cc_pivot'].forEach(function(id) {
 		if (id === except) { return; }
 		var el = document.getElementById(id + element);
 		if (el) { el.style.display = 'none'; }
 	});
+	if (except !== 'cc_overview') { setOverviewTabActive(element, false); }
 	var tip = document.getElementById('cc_3d_tip');
 	if (tip) { tip.style.display = 'none'; }
 	// opening an overlay: overlays anchor to the container's visible box, so
@@ -536,6 +545,8 @@ function optionContext(view) {
 		boxPoints: !!sig('Box_Points_', false),
 		yHist: !!sig('Histogram_Y_', false),
 		parts: !!sig('show_parts_graph', false),
+		gantt: !!sig('show_gantt', false),
+		stream: !!sig('Stream_', false),
 		catLayout: sig('Cat_Layout', 'bars'),
 		density: !!sig('Density_', false),
 		ridge: !!sig('Ridgeline_', false),
@@ -556,7 +567,7 @@ function optionContext(view) {
 	// grid-eligible even while the heat map toggle is off, so Map_XY_Cat_
 	// stays reachable to turn the grid back on
 	ctx.gridEligible = plain && ctx.xCat && ctx.yCat && yPlotted;
-	ctx.anyChart = ctx.scatter || ctx.pureHist || ctx.box || ctx.hzbox || ctx.stacked || ctx.grid || ctx.parts;
+	ctx.anyChart = ctx.scatter || ctx.pureHist || ctx.box || ctx.hzbox || ctx.stacked || ctx.grid || ctx.parts || ctx.gantt;
 	return ctx;
 }
 
@@ -574,6 +585,11 @@ var CONTROL_RELEVANCE = {
 	'Stacked_Options':   function(c) { return c.stacked || c.parts; },
 	'Stack_Grouped_':    function(c) { return c.stacked && c.colored; },
 	'Donut_Ratio':       function(c) { return c.parts && c.catLayout === 'donut'; },
+	'Waffle_Cols':       function(c) { return c.parts && c.catLayout === 'waffle'; },
+	// Gantt: a second time column turns a category-vs-number chart into a schedule
+	'End_By':            function(c) { return c.gantt || (c.hzbox && !c.parts); },
+	'Gantt_Progress_By': function(c) { return c.gantt; },
+	'Stream_':           function(c) { return c.hist && c.colored; },
 	'Cloud_Options':     function(c) { return c.parts && c.catLayout === 'cloud'; },
 	'Density_':          function(c) { return c.hist; },
 	// the count scale belongs to the histogram itself, so it appears for a
@@ -693,7 +709,7 @@ var RELEVANCE_TRIGGERS = ['show_scatter_graph', 'show_hist_graph', 'show_box_gra
 	'Stroke_By', 'Facet_Rows_By', 'Facet_Cols_By', 'Filter_Out_From', 'Filter_Additional',
 	'Filter_By_Value', 'Contours_', 'Violin_', 'Boxplot_', 'Dashes_', 'Jitter_',
 	'Box_Points_', 'Link', 'Grids_', 'Histogram_', 'Histogram_Y_',
-	'Cat_Layout', 'Density_', 'Ridgeline_', 'Count_Axis_'];
+	'Cat_Layout', 'Density_', 'Ridgeline_', 'Count_Axis_', 'Stream_', 'End_By', 'show_gantt'];
 
 function updateOptionRelevance(element, view) {
 	var ctx = optionContext(view);
@@ -2312,7 +2328,7 @@ function wireOverviewActions(element) {
 	var container = document.getElementById('cc_overview' + element);
 	var closer = document.getElementById('cc_ovclose' + element);
 	if (closer) {
-		closer.onclick = function() { container.style.display = 'none'; };
+		closer.onclick = function() { container.style.display = 'none'; setOverviewTabActive(element, false); };
 	}
 	container.querySelectorAll('.cc_ovcard').forEach(function(card) {
 		card.onclick = function() {
@@ -3608,17 +3624,28 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 	wireOnce('Summary_tablinks', 'click', function() {
 		renderSummary(element, _fullData[element] || spec.data[dataMap['mydata']].values, spec.data[dataMap['mycolumns']].values);
 	});
-	// Overview toggles a column-distribution overlay over the chart area
+	// Data overview: a column-distribution panel over the chart area. It reads
+	// as a tab in the rail, so it carries the same pressed/active state the
+	// panel tabs do rather than looking like a one-shot button.
+	function setOverviewActive(on) {
+		var btn = document.getElementById('Overview_btn' + element);
+		if (!btn) { return; }
+		btn.className = on ? 'cc_tablinks active' : btn.className.replace(' active', '');
+		btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+	}
 	wireOnce('Overview_btn', 'click', function() {
 		var ov = document.getElementById('cc_overview' + element);
 		if (ov.style.display === 'none') {
 			hideOverlays(element, 'cc_overview');
 			renderOverview(element, _fullData[element] || spec.data[dataMap['mydata']].values, spec.data[dataMap['mycolumns']].values);
 			ov.style.display = 'block';
+			setOverviewActive(true);
 		} else {
 			ov.style.display = 'none';
+			setOverviewActive(false);
 		}
 	});
+	_overviewActiveSetters[element] = setOverviewActive;
 	// 3D view toggles a WebGL unit-visualization overlay over the chart area
 	wireOnce('ThreeD_btn', 'click', function() {
 		var td = document.getElementById('cc_3d' + element);
@@ -3890,7 +3917,7 @@ function drawGraph(myview,element,spec,widthNode,hide_panel,editable,exportable)
 				myview = result.view;
 			});
 			checkbox.addEventListener('change', (event) => {
-				var new_signals_ar=["X_Axis","Search_By","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","SortX_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","Box_Points_","Histogram_Y_","Violin_Bandwidth","steps","Median_Thickness","Cat_Layout","Stack_Grouped_","Donut_Ratio","Density_","Count_Axis_","Density_Bandwidth","Ridgeline_","Ridge_Overlap","Cloud_Min_Font","Cloud_Max_Font","Cloud_Angle","Cloud_Padding","LogY_","Jitter_" ,"Weight_Contour","Tips_","Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point","Min_Point","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Title_Height","X_Axis_Height","Row_Header_Width","Row_Height","Max_Facets","Legend_Height","Legend_Cols","PlotTitle_Height","graph_title","Show_Titles","ContourCounts","resolve","ContourLevels","CellSize_","Line_","ECDF_","QQNorm_","CC_X_Title","CC_Y_Title","CC_XT_DX","CC_XT_DY","CC_YT_DX","CC_YT_DY","CC_LEG_DX","CC_LEG_DY","CC_Cat_Colors","CC_Cont_Range","CC_Notes","CC_Title","CC_Subtitle","CC_TI_DX","CC_TI_DY"];
+				var new_signals_ar=["X_Axis","Search_By","Y_Axis","Facet_Rows_By","Facet_Cols_By","Color_By","Size_By","SortX_By","Stats_","LogY_","LogX_","Interactive_","Points_","Map_XY_Cat_","Grid_Radius","Boxplot_","Violin_","Outliers_","Dashes_","Box_Points_","Histogram_Y_","Violin_Bandwidth","steps","Median_Thickness","Cat_Layout","Stack_Grouped_","Donut_Ratio","Waffle_Cols","Stream_","End_By","Gantt_Progress_By","Density_","Count_Axis_","Density_Bandwidth","Ridgeline_","Ridge_Overlap","Cloud_Min_Font","Cloud_Max_Font","Cloud_Angle","Cloud_Padding","LogY_","Jitter_" ,"Weight_Contour","Tips_","Contours_","Regression_","Histogram_","Histogram_Ratio","Histogram_Bins_Size","Sum_By","AxisTitle_Font","AxisFontSize","X_Axis_Angle","Y_Axis_Angle","Title_Font","Legend_Font","TickCount","Opacity_By","Jitter_Radius","Dash_Height","Violin_Width","Dash_Width","Dash_Radius","Max_Point","Min_Point","Reverse_X","Reverse_Y","Reverse_Size","Filter_Out_From","Filter_Additional","Filter_If","Datatype_X","Datatype_Y","Datatype_Color","Filter_By_Value","filter_min","filter_max","Palette","Reverse_Color","Grid_Opacity","Boxplot_Opacity","Opacity_","Contour_Opacity","Cnt_St_Opacity","Dash_Opacity","Max_Color","Min_Color","Max_Plot_Width","Max_Plot_Height","Title_Height","X_Axis_Height","Row_Header_Width","Row_Height","Max_Facets","Legend_Height","Legend_Cols","PlotTitle_Height","graph_title","Show_Titles","ContourCounts","resolve","ContourLevels","CellSize_","Line_","ECDF_","QQNorm_","CC_X_Title","CC_Y_Title","CC_XT_DX","CC_XT_DY","CC_YT_DX","CC_YT_DY","CC_LEG_DX","CC_LEG_DY","CC_Cat_Colors","CC_Cont_Range","CC_Notes","CC_Title","CC_Subtitle","CC_TI_DX","CC_TI_DY"];
 				for (var i = 0; i < new_signals_ar.length; i++) {
 					if (signalMap[new_signals_ar[i]] === undefined) { continue; }
 					try {

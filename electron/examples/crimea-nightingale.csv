@@ -1,0 +1,73 @@
+month,year,month_num,cause,deaths,army_size
+Apr 1854,1854,4,Preventable disease,1,8571
+Apr 1854,1854,4,Wounds,0,8571
+Apr 1854,1854,4,Other causes,5,8571
+May 1854,1854,5,Preventable disease,12,23333
+May 1854,1854,5,Wounds,0,23333
+May 1854,1854,5,Other causes,9,23333
+Jun 1854,1854,6,Preventable disease,11,28333
+Jun 1854,1854,6,Wounds,0,28333
+Jun 1854,1854,6,Other causes,6,28333
+Jul 1854,1854,7,Preventable disease,359,28722
+Jul 1854,1854,7,Wounds,0,28722
+Jul 1854,1854,7,Other causes,23,28722
+Aug 1854,1854,8,Preventable disease,828,30246
+Aug 1854,1854,8,Wounds,1,30246
+Aug 1854,1854,8,Other causes,30,30246
+Sep 1854,1854,9,Preventable disease,788,30290
+Sep 1854,1854,9,Wounds,81,30290
+Sep 1854,1854,9,Other causes,70,30290
+Oct 1854,1854,10,Preventable disease,503,30643
+Oct 1854,1854,10,Wounds,132,30643
+Oct 1854,1854,10,Other causes,128,30643
+Nov 1854,1854,11,Preventable disease,844,29736
+Nov 1854,1854,11,Wounds,287,29736
+Nov 1854,1854,11,Other causes,106,29736
+Dec 1854,1854,12,Preventable disease,1725,32779
+Dec 1854,1854,12,Wounds,114,32779
+Dec 1854,1854,12,Other causes,131,32779
+Jan 1855,1855,1,Preventable disease,2761,32393
+Jan 1855,1855,1,Wounds,83,32393
+Jan 1855,1855,1,Other causes,324,32393
+Feb 1855,1855,2,Preventable disease,2120,30919
+Feb 1855,1855,2,Wounds,42,30919
+Feb 1855,1855,2,Other causes,361,30919
+Mar 1855,1855,3,Preventable disease,1205,30107
+Mar 1855,1855,3,Wounds,32,30107
+Mar 1855,1855,3,Other causes,172,30107
+Apr 1855,1855,4,Preventable disease,477,32252
+Apr 1855,1855,4,Wounds,48,32252
+Apr 1855,1855,4,Other causes,57,32252
+May 1855,1855,5,Preventable disease,508,35473
+May 1855,1855,5,Wounds,49,35473
+May 1855,1855,5,Other causes,37,35473
+Jun 1855,1855,6,Preventable disease,802,38863
+Jun 1855,1855,6,Wounds,209,38863
+Jun 1855,1855,6,Other causes,31,38863
+Jul 1855,1855,7,Preventable disease,382,42647
+Jul 1855,1855,7,Wounds,134,42647
+Jul 1855,1855,7,Other causes,33,42647
+Aug 1855,1855,8,Preventable disease,483,44614
+Aug 1855,1855,8,Wounds,164,44614
+Aug 1855,1855,8,Other causes,25,44614
+Sep 1855,1855,9,Preventable disease,189,47751
+Sep 1855,1855,9,Wounds,276,47751
+Sep 1855,1855,9,Other causes,20,47751
+Oct 1855,1855,10,Preventable disease,128,46852
+Oct 1855,1855,10,Wounds,53,46852
+Oct 1855,1855,10,Other causes,18,46852
+Nov 1855,1855,11,Preventable disease,178,37853
+Nov 1855,1855,11,Wounds,33,37853
+Nov 1855,1855,11,Other causes,32,37853
+Dec 1855,1855,12,Preventable disease,91,43217
+Dec 1855,1855,12,Wounds,18,43217
+Dec 1855,1855,12,Other causes,28,43217
+Jan 1856,1856,1,Preventable disease,42,44212
+Jan 1856,1856,1,Wounds,2,44212
+Jan 1856,1856,1,Other causes,48,44212
+Feb 1856,1856,2,Preventable disease,24,43485
+Feb 1856,1856,2,Wounds,0,43485
+Feb 1856,1856,2,Other causes,19,43485
+Mar 1856,1856,3,Preventable disease,15,46140
+Mar 1856,1856,3,Wounds,0,46140
+Mar 1856,1856,3,Other causes,35,46140

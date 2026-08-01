@@ -852,6 +852,18 @@ function graphStruct(struct) {
 			"bind": {
 				"options": headers
 			}
+		}, {
+			"name": "End_By",
+			"value": "None",
+			"bind": {
+				"options": headers
+			}
+		}, {
+			"name": "Gantt_Progress_By",
+			"value": "None",
+			"bind": {
+				"options": headers
+			}
 		}
 	],"About");
 }
@@ -871,7 +883,8 @@ var GALLERY_BASE_SIGNALS = {
 	Line_: false, Boxplot_: true, Violin_: false, Outliers_: false,
 	Histogram_: false, Contours_: false, Regression_: false, Jitter_: false,
 	ECDF_: false, QQNorm_: false, Show_Covariance: false,
-	Cat_Layout: 'bars', Stack_Grouped_: false, Density_: false,
+	Cat_Layout: 'bars', Stack_Grouped_: false, Density_: false, Stream_: false,
+	End_By: 'None', Gantt_Progress_By: 'None',
 	Ridgeline_: false, Box_Points_: false, Histogram_Y_: false
 };
 

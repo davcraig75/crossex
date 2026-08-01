@@ -125,6 +125,20 @@ function copyPageAssets(destRoot) {
     fs.mkdirSync(destDir, { recursive: true });
     fs.copyFileSync(fromRoot(asset[0]), path.join(destDir, path.basename(asset[0])));
   });
+  copyExamples(destRoot);
+}
+
+// The example library is fetched on demand rather than bundled, so every build
+// target needs its own copy of the folder (build_pages wipes docs/ first).
+function copyExamples(destRoot) {
+  var src = fromRoot("examples");
+  if (!fs.existsSync(src)) { return; }
+  var dest = fromRoot(destRoot, "examples");
+  fs.mkdirSync(dest, { recursive: true });
+  fs.readdirSync(src).forEach(function(name) {
+    if (!/\.(csv|json)$/.test(name)) { return; }
+    fs.copyFileSync(path.join(src, name), path.join(dest, name));
+  });
 }
 
 function renderToString(view) {
@@ -139,6 +153,7 @@ if (process.argv[2] == "build_site") {
   renderToString("wrapper").then(function(javascript) {
     javascript = javascript.trimEnd() + "\n";
     fs.writeFileSync(fromRoot("public", app_name + "_site.js"), javascript);
+    copyExamples("public");
     console.log("Built crossex_site.js -> public/");
     fs.writeFileSync(fromRoot(app_name + "_site.js"), javascript);
     console.log("Built crossex_site.js -> root");

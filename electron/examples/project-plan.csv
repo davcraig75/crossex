@@ -1,0 +1,19 @@
+task,team,phase,start_day,end_day,percent_complete
+Stakeholder interviews,Research,Discovery,0,12,100
+Competitive teardown,Research,Discovery,6,20,100
+Data audit,Engineering,Discovery,10,24,100
+Requirements sign-off,Product,Discovery,22,28,100
+Information architecture,Design,Design,26,42,100
+Wireframes,Design,Design,34,55,90
+Visual language,Design,Design,48,70,75
+Design system build,Design,Design,62,86,55
+Schema migration,Engineering,Build,40,68,100
+Ingest pipeline,Engineering,Build,58,96,80
+Chart engine,Engineering,Build,64,124,60
+Dashboard shell,Engineering,Build,88,136,40
+Accessibility pass,Design,Build,110,140,20
+Instrumentation,Engineering,Build,120,148,10
+Closed beta,Product,Launch,140,168,0
+Docs and tutorials,Product,Launch,146,176,0
+Performance hardening,Engineering,Launch,152,182,0
+Public launch,Product,Launch,180,188,0

@@ -415,23 +415,24 @@ Like the rest of crossex, the dashboard runs entirely client-side; it's part of 
 | **Pie / Donut / Rose** | Categorical X with Count or Sum, via the Layout selector | Slice labels with shares; Donut Hole size; the rose (Nightingale) scales radius by value |
 | **Treemap / Sunburst** | Categorical X with Count or Sum, via the Layout selector | Color By adds a second hierarchy level (nested rectangles / outer ring) |
 | **Word Cloud** | Categorical X with Count or Sum, via the Layout selector | Font size range, word angles, and spacing under Marks ▸ Word Cloud |
+| **Waffle** | Categorical X with Count or Sum, via the Layout selector | One square per unit of share; adjustable grid width |
+| **Waterfall** | Categorical X summing a signed column, via the Layout selector | Running total with connector lines; rises and falls colored apart |
+| **Marimekko** | Categorical X + Color, via the Layout selector | Column width from each category's total, segments stacked inside |
+| **One-dimensional heatmap** | Categorical X with Count or Sum, via the Layout selector | A single colour-coded band — a compact ranking strip |
+| **Stream graph** | Numeric X + Color, Stream toggle | Centered stacked bands over the binned axis |
+| **Gantt** | Numeric/date X + categorical Y + an **End Column** | Bars from start to end per row, optional progress overlay |
 | **Grid / Heatmap** | Two categorical axes | Cells colored by row count by default (hover for the count); map Color_By/Size_By or enable Jitter for per-row views |
 | **Correlation Matrix** | All numeric columns | Show Covariance toggle; click any cell to open that pair's plot |
 
-**One shape, many layouts.** Whenever X is categorical and Y is Count or Sum, a **Layout** selector appears beside the Sum column: `bars` (stacked or grouped), `pie`, `donut`, `rose`, `treemap`, `sunburst`, or `cloud`. All seven read the same aggregation, so you can flip between them freely — and the panel shows only the controls the current layout uses.
+**One shape, many layouts.** Whenever X is categorical and Y is Count or Sum, a **Layout** selector appears beside the Sum column: `bars` (stacked or grouped), `pie`, `donut`, `rose`, `waffle`, `waterfall`, `marimekko`, `strip1d`, `treemap`, `sunburst`, or `cloud`. All seven read the same aggregation, so you can flip between them freely — and the panel shows only the controls the current layout uses.
 
-### Planned chart types
+### Example library
 
-These follow the same trigger philosophy — each appears only when its data shape is on screen — and are next in line:
+Every chart above has a real dataset that produces it, in [`examples/`](examples/). `examples/manifest.json` records each dataset's source and license plus the exact column mapping that yields each chart — and the test suite executes every one of those claims, so the table is verified rather than asserted. See the [example library README](examples/README.md).
 
-- **Waffle chart** — joins the categorical Layout selector (share of a category as a grid of squares).
-- **Marimekko / mosaic** — two categorical axes + Count: variable-width stacked columns; would join the heat map's section as an alternate layout.
-- **Stream chart / stacked area** — numeric (time) X + Count/Sum + Color: an offset option on the Line chart.
-- **Waterfall (bridge)** — categorical X + a signed Sum column: an option beside Grouped Bars.
-- **Gantt** — needs two mapped columns (start and end); planned as a dedicated section that appears when a second numeric/date "End" column is mapped.
-- **One-dimensional heatmap** — one categorical or binned numeric column: a compact strip in the Distribution section.
-- **Dendrogram** — hierarchical clustering over the numeric columns; pairs with the correlation matrix view.
-- **Venn / Euler** — needs set-membership semantics (boolean columns); planned to trigger when 2–3 boolean columns are selected.
+### Deliberately not built
+
+**Dendrogram** and **Venn/Euler** were considered and declined: both need bespoke layout mathematics for a narrow payoff. If hierarchical clustering matters it belongs in the statistics surface rather than the chart menu. See [ADVISORY_REVIEW.md](ADVISORY_REVIEW.md) §6.
 
 ---
 

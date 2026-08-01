@@ -1,0 +1,391 @@
+{
+  "version": 1,
+  "note": "Example datasets for crossex. Each entry names the chart it is meant to produce and the exact column mapping that produces it, so the gallery, the docs, and the test suite all read the same source of truth. Nothing here is embedded in the application bundle; these files are fetched on demand.",
+  "datasets": [
+    {
+      "id": "penguins",
+      "file": "penguins.csv",
+      "title": "Palmer Archipelago penguins",
+      "rows": 344,
+      "description": "Body measurements for three penguin species across three islands. The default demo dataset.",
+      "source": "Palmer Station Antarctica LTER (Gorman, Williams & Fraser 2014), via Allison Horst's palmerpenguins",
+      "source_url": "https://allisonhorst.github.io/palmerpenguins/",
+      "license": "CC0-1.0",
+      "demonstrates": [
+        {
+          "chart": "Scatter",
+          "mapping": {
+            "X_Axis": "bill_length_mm",
+            "Y_Axis": "bill_depth_mm",
+            "Color_By": "species"
+          },
+          "expect": "show_scatter_graph"
+        },
+        {
+          "chart": "Box plot",
+          "mapping": {
+            "X_Axis": "species",
+            "Y_Axis": "body_mass_g",
+            "Color_By": "species"
+          },
+          "expect": "show_box_graphs"
+        },
+        {
+          "chart": "Violin",
+          "mapping": {
+            "X_Axis": "species",
+            "Y_Axis": "body_mass_g",
+            "Violin_": true,
+            "Boxplot_": false
+          },
+          "expect": "show_box_graphs"
+        },
+        {
+          "chart": "Strip plot",
+          "mapping": {
+            "X_Axis": "species",
+            "Y_Axis": "bill_length_mm",
+            "Box_Points_": true,
+            "Boxplot_": false
+          },
+          "expect": "show_box_graphs"
+        }
+      ]
+    },
+    {
+      "id": "seattle-weather",
+      "file": "seattle-weather.csv",
+      "title": "Seattle daily weather, 2012\u20132015",
+      "rows": 1461,
+      "description": "Four years of daily precipitation, temperature range, wind, and a categorical weather label for Seattle.",
+      "source": "NOAA National Climatic Data Center, via vega-datasets",
+      "source_url": "https://github.com/vega/vega-datasets",
+      "license": "Public domain (U.S. Government work)",
+      "demonstrates": [
+        {
+          "chart": "Histogram + density",
+          "mapping": {
+            "X_Axis": "temp_max",
+            "Y_Axis": "None",
+            "Density_": true
+          },
+          "expect": "show_hist_graph"
+        },
+        {
+          "chart": "Ridgeline",
+          "mapping": {
+            "X_Axis": "temp_max",
+            "Y_Axis": "weather",
+            "Color_By": "weather",
+            "Violin_": true,
+            "Ridgeline_": true,
+            "Boxplot_": false
+          },
+          "expect": "show_hzbox_graphs"
+        },
+        {
+          "chart": "Waffle",
+          "mapping": {
+            "X_Axis": "weather",
+            "Y_Axis": "Count",
+            "Cat_Layout": "waffle"
+          },
+          "expect": "show_parts_graph"
+        },
+        {
+          "chart": "One-dimensional heatmap",
+          "mapping": {
+            "X_Axis": "weather",
+            "Y_Axis": "Count",
+            "Cat_Layout": "strip1d"
+          },
+          "expect": "show_parts_graph"
+        },
+        {
+          "chart": "Box plot",
+          "mapping": {
+            "X_Axis": "weather",
+            "Y_Axis": "temp_max",
+            "Color_By": "weather"
+          },
+          "expect": "show_box_graphs"
+        }
+      ]
+    },
+    {
+      "id": "crimea",
+      "file": "crimea-nightingale.csv",
+      "title": "Nightingale's Crimean War mortality, 1854\u20131856",
+      "rows": 24,
+      "description": "Monthly British Army deaths in the Crimea split into preventable disease, wounds, and other causes \u2014 the dataset Florence Nightingale drew as the original polar-area diagram.",
+      "source": "Florence Nightingale, 'A contribution to the sanitary history of the British army during the late war with Russia' (1859)",
+      "source_url": "https://en.wikipedia.org/wiki/Florence_Nightingale#Statistics_and_sanitary_reform",
+      "license": "Public domain (published 1859)",
+      "demonstrates": [
+        {
+          "chart": "Nightingale rose",
+          "mapping": {
+            "X_Axis": "month",
+            "Y_Axis": "Sum",
+            "Sum_By": "deaths",
+            "Cat_Layout": "rose"
+          },
+          "expect": "show_parts_graph"
+        },
+        {
+          "chart": "Stacked bar",
+          "mapping": {
+            "X_Axis": "month",
+            "Y_Axis": "Sum",
+            "Sum_By": "deaths",
+            "Color_By": "cause"
+          },
+          "expect": "show_stacked_graphs"
+        },
+        {
+          "chart": "Waffle",
+          "mapping": {
+            "X_Axis": "cause",
+            "Y_Axis": "Sum",
+            "Sum_By": "deaths",
+            "Cat_Layout": "waffle"
+          },
+          "expect": "show_parts_graph"
+        }
+      ]
+    },
+    {
+      "id": "unemployment-industries",
+      "file": "unemployment-industries.csv",
+      "title": "U.S. unemployment by industry, 2000\u20132010",
+      "rows": 1708,
+      "description": "Monthly unemployed-person counts and rates across 14 industry groups, spanning two recessions.",
+      "source": "U.S. Census Bureau Current Population Survey / Bureau of Labor Statistics, via vega-datasets",
+      "source_url": "https://github.com/vega/vega-datasets",
+      "license": "Public domain (U.S. Government work)",
+      "demonstrates": [
+        {
+          "chart": "Stream graph",
+          "mapping": {
+            "X_Axis": "year",
+            "Y_Axis": "Sum",
+            "Sum_By": "count",
+            "Color_By": "series",
+            "Stream_": true,
+            "Histogram_Bins_Size": 11
+          },
+          "expect": "show_hist_graph"
+        },
+        {
+          "chart": "Grouped bar",
+          "mapping": {
+            "X_Axis": "series",
+            "Y_Axis": "Sum",
+            "Sum_By": "count",
+            "Color_By": "series",
+            "Stack_Grouped_": true
+          },
+          "expect": "show_stacked_graphs"
+        },
+        {
+          "chart": "Line / time series",
+          "mapping": {
+            "X_Axis": "year",
+            "Y_Axis": "rate",
+            "Color_By": "series",
+            "Line_": true
+          },
+          "expect": "show_scatter_graph"
+        }
+      ]
+    },
+    {
+      "id": "gapminder",
+      "file": "gapminder.csv",
+      "title": "Gapminder: life expectancy, population, fertility",
+      "rows": 682,
+      "description": "Country-level life expectancy, population, and fertility every five years from 1955 to 2005, grouped into world regions.",
+      "source": "Gapminder Foundation, via vega-datasets",
+      "source_url": "https://www.gapminder.org/data/",
+      "license": "CC-BY-4.0",
+      "demonstrates": [
+        {
+          "chart": "Bubble scatter",
+          "mapping": {
+            "X_Axis": "fertility",
+            "Y_Axis": "life_expect",
+            "Size_By": "pop",
+            "Color_By": "cluster"
+          },
+          "expect": "show_scatter_graph"
+        },
+        {
+          "chart": "Faceted scatter",
+          "mapping": {
+            "X_Axis": "fertility",
+            "Y_Axis": "life_expect",
+            "Facet_Cols_By": "cluster"
+          },
+          "expect": "show_scatter_graph"
+        },
+        {
+          "chart": "Box plot over time",
+          "mapping": {
+            "X_Axis": "year",
+            "Y_Axis": "life_expect"
+          },
+          "expect": "show_scatter_graph"
+        }
+      ]
+    },
+    {
+      "id": "co2",
+      "file": "co2-concentration.csv",
+      "title": "Mauna Loa atmospheric CO\u2082",
+      "rows": 741,
+      "description": "The Keeling curve: monthly mean atmospheric CO\u2082 concentration measured at Mauna Loa Observatory.",
+      "source": "Scripps CO2 Program, via vega-datasets",
+      "source_url": "https://scrippsco2.ucsd.edu/",
+      "license": "CC-BY-4.0",
+      "demonstrates": [
+        {
+          "chart": "Line / time series",
+          "mapping": {
+            "X_Axis": "Date",
+            "Y_Axis": "CO2",
+            "Line_": true
+          },
+          "expect": "show_scatter_graph"
+        }
+      ]
+    },
+    {
+      "id": "barley",
+      "file": "barley.csv",
+      "title": "Minnesota barley yields, 1931\u20131932",
+      "rows": 120,
+      "description": "Yields for ten barley varieties at six Minnesota research stations across two years \u2014 the dataset behind Cleveland's classic dot plot.",
+      "source": "Wiebe, Reinbach-Welch & Cowan (1940), USDA Technical Bulletin 735; Minnesota Agricultural Experiment Station",
+      "source_url": "https://github.com/vega/vega-datasets",
+      "license": "Public domain (U.S. Government work, 1940)",
+      "demonstrates": [
+        {
+          "chart": "Marimekko",
+          "mapping": {
+            "X_Axis": "site",
+            "Y_Axis": "Sum",
+            "Sum_By": "yield",
+            "Color_By": "variety",
+            "Cat_Layout": "marimekko"
+          },
+          "expect": "show_parts_graph"
+        },
+        {
+          "chart": "Grouped bar",
+          "mapping": {
+            "X_Axis": "site",
+            "Y_Axis": "Sum",
+            "Sum_By": "yield",
+            "Color_By": "variety",
+            "Stack_Grouped_": true
+          },
+          "expect": "show_stacked_graphs"
+        },
+        {
+          "chart": "Faceted box plot",
+          "mapping": {
+            "X_Axis": "variety",
+            "Y_Axis": "yield",
+            "Facet_Rows_By": "site"
+          },
+          "expect": "show_box_graphs"
+        },
+        {
+          "chart": "Heatmap",
+          "mapping": {
+            "X_Axis": "variety",
+            "Y_Axis": "site",
+            "Map_XY_Cat_": true
+          },
+          "expect": "show_grid_graphs"
+        }
+      ]
+    },
+    {
+      "id": "us-budget-change",
+      "file": "us-budget-change.csv",
+      "title": "U.S. federal receipts, FY2015 \u2192 FY2016",
+      "rows": 8,
+      "description": "How each receipt category moved the federal government's total receipts between fiscal 2015 and 2016 \u2014 seven categories up, one down. Derived by summing the OMB receipts table by source category (figures in millions of dollars).",
+      "source": "Office of Management and Budget, Budget of the U.S. Government FY2016 \u2014 Receipts, via vega-datasets",
+      "source_url": "https://github.com/vega/vega-datasets",
+      "license": "Public domain (U.S. Government work)",
+      "demonstrates": [
+        {
+          "chart": "Waterfall",
+          "mapping": {
+            "X_Axis": "category",
+            "Y_Axis": "Sum",
+            "Sum_By": "change_musd",
+            "Cat_Layout": "waterfall"
+          },
+          "expect": "show_parts_graph"
+        },
+        {
+          "chart": "Treemap",
+          "mapping": {
+            "X_Axis": "category",
+            "Y_Axis": "Sum",
+            "Sum_By": "receipts_2016_musd",
+            "Cat_Layout": "treemap"
+          },
+          "expect": "show_parts_graph"
+        },
+        {
+          "chart": "Donut",
+          "mapping": {
+            "X_Axis": "category",
+            "Y_Axis": "Sum",
+            "Sum_By": "receipts_2016_musd",
+            "Cat_Layout": "donut"
+          },
+          "expect": "show_parts_graph"
+        }
+      ]
+    },
+    {
+      "id": "project-plan",
+      "file": "project-plan.csv",
+      "title": "Product build plan (synthetic)",
+      "rows": 18,
+      "description": "SYNTHETIC \u2014 invented for this example library, not observed data. An eighteen-task product plan with start/end days, owning team, phase, and completion, shaped to exercise a Gantt chart.",
+      "source": "Authored for crossex; no real project is described",
+      "source_url": null,
+      "license": "CC0-1.0",
+      "synthetic": true,
+      "demonstrates": [
+        {
+          "chart": "Gantt",
+          "mapping": {
+            "X_Axis": "start_day",
+            "Y_Axis": "task",
+            "End_By": "end_day",
+            "Color_By": "phase",
+            "Gantt_Progress_By": "percent_complete"
+          },
+          "expect": "show_gantt"
+        },
+        {
+          "chart": "Gantt by team",
+          "mapping": {
+            "X_Axis": "start_day",
+            "Y_Axis": "task",
+            "End_By": "end_day",
+            "Color_By": "team"
+          },
+          "expect": "show_gantt"
+        }
+      ]
+    }
+  ]
+}
